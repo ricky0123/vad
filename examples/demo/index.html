@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="vad.index.js"></script>
+    <script type="module">
+      import { interpolateInferno } from "https://cdn.skypack.dev/d3-scale-chromatic@3"
+
+      const myvad = await vad.VAD.new({
+        onFrameProcessed: (probs) => {
+          const element = document.getElementById("visualizer")
+          if (element !== null) {
+            element.style.backgroundColor = interpolateInferno(probs.isSpeech)
+          }
+        },
+        onSpeechEnd: (arr) => {
+          const wavBuffer = vad.encodeWAV(arr)
+          const base64 = vad.arrayBufferToBase64(wavBuffer)
+          const url = `data:audio/wav;base64,${base64}`
+          const audio = new Audio(url)
+          audio.play()
+        },
+      })
+
+      window.toggleVad = () => {
+        console.log("ran toggle vad")
+        if (myvad.listening === false) {
+          myvad.start()
+        } else {
+          myvad.pause()
+        }
+      }
+
+      myvad.start()
+    </script>
+  </head>
+  <style>
+    #visualizer {
+      width: 50px;
+      height: 50px;
+      -webkit-border-radius: 25px;
+      -moz-border-radius: 25px;
+      border-radius: 25px;
+    }
+  </style>
+  <body>
+    <button id="toggleVadButton" onclick="window.toggleVad()">
+      Start/Pause
+    </button>
+    <div id="visualizer"></div>
+  </body>
+</html>

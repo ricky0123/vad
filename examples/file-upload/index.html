@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>File Processing with VAD</title>
+    <script src="vad.index.js"></script>
+    <script type="module">
+      // Feed audio to vad through websocket
+      const ctx = new AudioContext()
+
+      const gainNode = new GainNode(ctx)
+
+      const myvad = await vad.AudioNodeVAD.new(ctx, {
+        onFrameProcessed: (probs) => {
+          const element = document.getElementById("frameCounter")
+          const val = parseInt(element.textContent)
+          element.textContent = val + 1
+        },
+        onSpeechStart: () => {
+          const element = document.getElementById("speechStartCounter")
+          const val = parseInt(element.textContent)
+          element.textContent = val + 1
+        },
+        onSpeechEnd: (arr) => {
+          const element = document.getElementById("speechEndCounter")
+          const val = parseInt(element.textContent)
+          element.textContent = val + 1
+        },
+      })
+      myvad.receive(gainNode)
+      // myvad.start()
+
+      window.submitFile = (ev) => {
+        ev.preventDefault()
+        const audioForm = document.getElementById("file-upload").files[0]
+        const audioDataUrl = URL.createObjectURL(audioForm)
+        const audio = Audio(audioDataUrl)
+        const audioNode = ctx.createMediaElementSource(audio)
+        audioNode.connect(gainNode)
+        audio.play()
+      }
+    </script>
+  </head>
+  <style>
+    table,
+    th,
+    td {
+      border: 1px solid;
+    }
+  </style>
+  <body>
+    <div>
+      <h3>File Uploader</h3>
+      <p>
+        Choose a file on your system and then click upload. Or, drag and drop a
+        file into the area below.
+      </p>
+      <form onsubmit="window.submitFile(event)">
+        <input id="file-upload" type="file" name="file" />
+        <br />
+        <input class="button" id="file-submit" type="submit" value="Upload" />
+      </form>
+      <h3>Results</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Frames</th>
+            <th>Speech starts</th>
+            <th>Speech ends</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td id="frameCounter">0</td>
+            <td id="speechStartCounter">0</td>
+            <td id="speechEndCounter">0</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>
