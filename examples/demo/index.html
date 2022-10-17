@@ -5,11 +5,11 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
-    <script src="vad.index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad/dist/vad.index.js"></script>
     <script type="module">
       import { interpolateInferno } from "https://cdn.skypack.dev/d3-scale-chromatic@3"
 
-      const myvad = await vad.VAD.new({
+      const myvad = await vad.MicVAD.new({
         onFrameProcessed: (probs) => {
           const element = document.getElementById("visualizer")
           if (element !== null) {

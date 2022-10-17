@@ -157,7 +157,8 @@ export class AudioNodeVAD {
   }
 
   init = async () => {
-    await this.ctx.audioWorklet.addModule("vad.worklet.js")
+    const workletPath = __webpack_public_path__ + `vad.worklet.js`
+    await this.ctx.audioWorklet.addModule(workletPath)
     const vadNode = new AudioWorkletNode(this.ctx, "vad-helper-worklet", {
       processorOptions: {
         frameSamples: this.options.frameSamples,
