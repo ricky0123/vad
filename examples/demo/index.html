@@ -32,6 +32,7 @@
         const audio = document.createElement("audio")
         audio.controls = true
         audio.src = audioUrl
+        entry.classList.add("newItem")
         entry.appendChild(audio)
         return entry
       }
@@ -55,6 +56,25 @@
       -webkit-border-radius: 25px;
       -moz-border-radius: 25px;
       border-radius: 25px;
+    }
+
+    .newItem {
+      max-height: 0;
+      opacity: 0;
+      animation: grow 1s ease-in-out forwards;
+      -webkit-animation: grow 1s ease-in-out forwards;
+    }
+    @-webkit-keyframes grow {
+      to {
+        max-height: 20px;
+        opacity: 1;
+      }
+    }
+    @keyframes grow {
+      to {
+        max-height: 20px;
+        opacity: 1;
+      }
     }
   </style>
   <body>
