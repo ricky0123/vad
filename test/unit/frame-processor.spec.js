@@ -41,12 +41,24 @@ describe("frame processor", function () {
     let [modelFunc, resetFunc, options] = getOptions()
     const frameProcessor = new vad.FrameProcessor(modelFunc, resetFunc, options)
     frameProcessor.resume()
-    await callProcess(frameProcessor, options.minSpeechFrames)
+    const arr1 = [...Array(options.minSpeechFrames).keys()]
+    for (const i of arr1) {
+      await frameProcessor.process(new Float32Array([i]))
+    }
     modelFunc.returnValue = { isSpeech: 0.1, notSpeech: 0.9 }
-    await callProcess(frameProcessor, options.redemptionFrames - 1)
+    const arr2 = Array.from(
+      { length: options.redemptionFrames - 1 },
+      (_, i) => i + options.minSpeechFrames
+    )
+    for (const i of arr2) {
+      await frameProcessor.process(new Float32Array([i]))
+    }
     sinon.assert.notCalled(options.signalSpeechEnd)
     await frameProcessor.process(new Float32Array())
-    sinon.assert.calledOnce(options.signalSpeechEnd)
+    sinon.assert.calledOnceWithExactly(
+      options.signalSpeechEnd,
+      new Float32Array([...arr1, ...arr2])
+    )
   })
 
   it("signalMisfire called", async function () {

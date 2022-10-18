@@ -101,7 +101,7 @@ export class FrameProcessor {
       this.audioBuffer = []
 
       if (audioBuffer.length >= this.options.minSpeechFrames) {
-        const audio = concatArrays(this.audioBuffer)
+        const audio = concatArrays(audioBuffer)
         this.options.signalSpeechEnd(audio)
       } else {
         this.options.signalMisfire()
