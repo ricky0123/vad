@@ -20,10 +20,21 @@
           const wavBuffer = vad.encodeWAV(arr)
           const base64 = vad.arrayBufferToBase64(wavBuffer)
           const url = `data:audio/wav;base64,${base64}`
-          const audio = new Audio(url)
-          audio.play()
+          const el = addAudio(url)
+          const speechList = document.getElementById("speech_list")
+          speechList.prepend(el)
         },
       })
+
+      function addAudio(audioUrl) {
+        //const audio = new Audio(audioUrl)
+        const entry = document.createElement("li")
+        const audio = document.createElement("audio")
+        audio.controls = true
+        audio.src = audioUrl
+        entry.appendChild(audio)
+        return entry
+      }
 
       window.toggleVad = () => {
         console.log("ran toggle vad")
@@ -47,9 +58,10 @@
     }
   </style>
   <body>
-    <button id="toggleVadButton" onclick="window.toggleVad()">
+    <button id="toggle_vad_button" onclick="window.toggleVad()">
       Start/Pause
     </button>
     <div id="visualizer"></div>
+    <ul id="speech_list"></ul>
   </body>
 </html>
