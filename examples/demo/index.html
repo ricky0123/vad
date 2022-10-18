@@ -11,10 +11,9 @@
 
       const myvad = await vad.MicVAD.new({
         onFrameProcessed: (probs) => {
-          const element = document.getElementById("visualizer")
-          if (element !== null) {
-            element.style.backgroundColor = interpolateInferno(probs.isSpeech)
-          }
+          document.body.style.backgroundColor = interpolateInferno(
+            probs.isSpeech / 2
+          )
         },
         onSpeechEnd: (arr) => {
           const wavBuffer = vad.encodeWAV(arr)
@@ -41,21 +40,26 @@
         console.log("ran toggle vad")
         if (myvad.listening === false) {
           myvad.start()
+          document.getElementById("toggle_vad_button").textContent = "pause"
         } else {
           myvad.pause()
+          document.getElementById("toggle_vad_button").textContent = "start"
         }
       }
 
-      myvad.start()
+      window.toggleVad()
     </script>
   </head>
   <style>
-    #visualizer {
-      width: 50px;
-      height: 50px;
-      -webkit-border-radius: 25px;
-      -moz-border-radius: 25px;
-      border-radius: 25px;
+    body {
+      background-color: black;
+      color: grey;
+    }
+    .main {
+      width: 250px;
+      margin: auto;
+      background-color: black;
+      position: relative;
     }
 
     .newItem {
@@ -78,10 +82,8 @@
     }
   </style>
   <body>
-    <button id="toggle_vad_button" onclick="window.toggleVad()">
-      Start/Pause
-    </button>
-    <div id="visualizer"></div>
+    <div id="main">hello</div>
+    <button id="toggle_vad_button" onclick="window.toggleVad()">Start</button>
     <ul id="speech_list"></ul>
   </body>
 </html>
