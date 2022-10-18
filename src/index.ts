@@ -79,6 +79,7 @@ export class MicVAD {
   audioContext: AudioContext
   stream: MediaStream
   audioNodeVAD: AudioNodeVAD
+  listening = false
 
   static async new(options: Partial<VadOptions> = {}) {
     const vad = new MicVAD({ ...defaultVadOptions, ...options })
@@ -111,6 +112,7 @@ export class MicVAD {
   }
 
   pause = () => {
+    this.listening = false
     this.audioNodeVAD.pause()
     if (this.stream instanceof MediaStream) {
       this.stream.getTracks()[0].enabled = false
@@ -118,6 +120,7 @@ export class MicVAD {
   }
 
   start = () => {
+    this.listening = true
     this.audioNodeVAD.start()
     if (this.stream instanceof MediaStream) {
       this.stream.getTracks()[0].enabled = true
