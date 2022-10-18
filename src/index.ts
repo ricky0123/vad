@@ -150,6 +150,7 @@ export class AudioNodeVAD {
   start = () => {
     log.debug("starting vad")
     this.frameProcessor.resume()
+    this.listening = true
   }
 
   receive = (node: AudioNode) => {

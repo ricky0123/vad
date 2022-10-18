@@ -37,7 +37,7 @@ export class FrameProcessor {
   speaking: boolean = false
   audioBuffer: Float32Array[]
   redemptionCounter = 0
-  active = true
+  active = false
 
   constructor(
     public modelProcessFunc: (
@@ -47,6 +47,7 @@ export class FrameProcessor {
     public options: AggregatorOptions
   ) {
     this.audioBuffer = []
+    this.reset()
   }
 
   reset = () => {

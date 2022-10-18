@@ -24,6 +24,7 @@ describe("frame processor", function () {
   it("onFrameProcessed called", async function () {
     let [modelFunc, resetFunc, options] = getOptions()
     const frameProcessor = new vad.FrameProcessor(modelFunc, resetFunc, options)
+    frameProcessor.resume()
     await frameProcessor.process(new Float32Array())
     sinon.assert.calledOnce(options.onFrameProcessed)
   })
@@ -31,6 +32,7 @@ describe("frame processor", function () {
   it("signalSpeechStart called", async function () {
     let [modelFunc, resetFunc, options] = getOptions()
     const frameProcessor = new vad.FrameProcessor(modelFunc, resetFunc, options)
+    frameProcessor.resume()
     await frameProcessor.process(new Float32Array())
     sinon.assert.calledOnce(options.signalSpeechStart)
   })
@@ -38,6 +40,7 @@ describe("frame processor", function () {
   it("signalSpeechEnd called", async function () {
     let [modelFunc, resetFunc, options] = getOptions()
     const frameProcessor = new vad.FrameProcessor(modelFunc, resetFunc, options)
+    frameProcessor.resume()
     await callProcess(frameProcessor, options.minSpeechFrames)
     modelFunc.returnValue = { isSpeech: 0.1, notSpeech: 0.9 }
     await callProcess(frameProcessor, options.redemptionFrames - 1)
@@ -49,6 +52,7 @@ describe("frame processor", function () {
   it("signalMisfire called", async function () {
     let [modelFunc, resetFunc, options] = getOptions()
     const frameProcessor = new vad.FrameProcessor(modelFunc, resetFunc, options)
+    frameProcessor.resume()
     await frameProcessor.process(new Float32Array())
     sinon.assert.calledOnce(options.signalSpeechStart)
     modelFunc.returnValue = { isSpeech: 0.1, notSpeech: 0.9 }
