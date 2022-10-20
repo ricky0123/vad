@@ -11,16 +11,15 @@
 
       const myvad = await vad.MicVAD.new({
         onFrameProcessed: (probs) => {
-          document.body.style.backgroundColor = interpolateInferno(
-            probs.isSpeech / 2
-          )
+          const indicatorColor = interpolateInferno(probs.isSpeech / 2)
+          document.body.style.setProperty("--indicator-color", indicatorColor)
         },
         onSpeechEnd: (arr) => {
           const wavBuffer = vad.encodeWAV(arr)
           const base64 = vad.arrayBufferToBase64(wavBuffer)
           const url = `data:audio/wav;base64,${base64}`
           const el = addAudio(url)
-          const speechList = document.getElementById("speech_list")
+          const speechList = document.getElementById("playlist")
           speechList.prepend(el)
         },
       })
@@ -51,39 +50,57 @@
     </script>
   </head>
   <style>
+    html {
+      box-sizing: border-box;
+    }
+    *,
+    *::after,
+    *::before {
+      box-sizing: inherit;
+    }
     body {
-      background-color: black;
-      color: grey;
+      --indicator-color: black;
+      background: radial-gradient(black 70%, var(--indicator-color));
+      min-height: 100vh;
+      color: red;
+      margin: 0;
     }
-    .main {
-      width: 250px;
-      margin: auto;
-      background-color: black;
-      position: relative;
+    .content {
+      width: 25vw;
+      margin-inline: auto;
+      padding-top: 100px;
     }
-
-    .newItem {
+    #playlist {
+      max-height: 400px;
+      overflow: scroll;
+    }
+    #playlist li:hover {
+      background-color: aliceblue;
+    }
+    #playlist li:first-child {
+      background-color: blue;
+    }
+    #playlist li {
       max-height: 0;
       opacity: 0;
       animation: grow 1s ease-in-out forwards;
-      -webkit-animation: grow 1s ease-in-out forwards;
-    }
-    @-webkit-keyframes grow {
-      to {
-        max-height: 20px;
-        opacity: 1;
-      }
     }
     @keyframes grow {
       to {
-        max-height: 20px;
+        max-height: 100px;
         opacity: 1;
       }
     }
   </style>
   <body>
-    <div id="main">hello</div>
-    <button id="toggle_vad_button" onclick="window.toggleVad()">Start</button>
-    <ul id="speech_list"></ul>
+    <div class="content-container">
+      <div class="content">
+        <h1>Voice Activity Detector (VAD) Demo <i class="fa fa-github"></i></h1>
+        <button id="toggle_vad_button" onclick="window.toggleVad()">
+          Start
+        </button>
+        <ol id="playlist" reversed></ol>
+      </div>
+    </div>
   </body>
 </html>
