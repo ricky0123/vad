@@ -4,7 +4,11 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>Demo of ricky0123/vad</title>
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css"
+    />
     <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad/dist/vad.index.js"></script>
     <script type="module">
       import { interpolateInferno } from "https://cdn.skypack.dev/d3-scale-chromatic@3"
@@ -25,7 +29,6 @@
       })
 
       function addAudio(audioUrl) {
-        //const audio = new Audio(audioUrl)
         const entry = document.createElement("li")
         const audio = document.createElement("audio")
         audio.controls = true
@@ -39,10 +42,14 @@
         console.log("ran toggle vad")
         if (myvad.listening === false) {
           myvad.start()
-          document.getElementById("toggle_vad_button").textContent = "pause"
+          document.getElementById("toggle_vad_button").textContent = "STOP VAD"
+          document.getElementById("indicator").textContent = "VAD is running"
         } else {
           myvad.pause()
-          document.getElementById("toggle_vad_button").textContent = "start"
+          document.getElementById("toggle_vad_button").textContent = "START VAD"
+          document.getElementById(
+            "indicator"
+          ).innerHTML = `VAD is <span style="color:red">stopped</span>`
         }
       }
 
@@ -60,9 +67,9 @@
     }
     body {
       --indicator-color: black;
-      background: radial-gradient(black 70%, var(--indicator-color));
+      background: radial-gradient(black 60%, var(--indicator-color));
       min-height: 100vh;
-      color: red;
+      color: white;
       margin: 0;
     }
     .content {
@@ -73,17 +80,28 @@
     #playlist {
       max-height: 400px;
       overflow: scroll;
+      list-style: none;
+      padding-left: 0;
     }
     #playlist li:hover {
-      background-color: aliceblue;
+      background-color: rgba(100, 100, 100, 0.33);
     }
     #playlist li:first-child {
-      background-color: blue;
+      border-left: 2px blue solid;
     }
     #playlist li {
       max-height: 0;
       opacity: 0;
       animation: grow 1s ease-in-out forwards;
+    }
+    button {
+      background-color: black;
+      border: white 1px solid;
+      color: white;
+    }
+    button:hover {
+      color: red;
+      border-color: red;
     }
     @keyframes grow {
       to {
@@ -91,14 +109,44 @@
         opacity: 1;
       }
     }
+    .control-row {
+      display: flex;
+      justify-content: space-between;
+    }
+    .header {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .github-icon {
+      color: white;
+      text-decoration: none;
+    }
+    .github-icon:hover {
+      color: red;
+      text-decoration: none;
+    }
   </style>
   <body>
     <div class="content-container">
       <div class="content">
-        <h1>Voice Activity Detector (VAD) Demo <i class="fa fa-github"></i></h1>
-        <button id="toggle_vad_button" onclick="window.toggleVad()">
-          Start
-        </button>
+        <div class="header">
+          <a
+            class="github-icon"
+            href="https://github.com/ricky0123/vad"
+            target="_blank"
+          >
+            <i class="fa fa-github"></i> /ricky0123/vad
+          </a>
+        </div>
+        <h1>Voice Activity Detector (VAD) Demo</h1>
+        <div class="control-row">
+          <div id="indicator">
+            VAD is <span style="color: red">stopped</span>
+          </div>
+          <button id="toggle_vad_button" onclick="window.toggleVad()">
+            START VAD
+          </button>
+        </div>
         <ol id="playlist" reversed></ol>
       </div>
     </div>
