@@ -14,6 +14,12 @@
     <script type="module">
       import { interpolateInferno } from "https://cdn.skypack.dev/d3-scale-chromatic@3"
 
+      const loading = setInterval(() => {
+        const indicator = document.getElementById("indicator")
+        const [message, ...dots] = indicator.innerHTML.split(".")
+        indicator.innerHTML = message + ".".repeat((dots.length + 1) % 7)
+      }, 200)
+
       const myvad = await vad.MicVAD.new({
         onFrameProcessed: (probs) => {
           const indicatorColor = interpolateInferno(probs.isSpeech / 2)
@@ -28,6 +34,9 @@
           speechList.prepend(el)
         },
       })
+
+      clearInterval(loading)
+      document.getElementById("toggle_vad_button").disabled = false
 
       function addAudio(audioUrl) {
         const entry = document.createElement("li")
@@ -156,9 +165,9 @@
         <h1>Voice Activity Detector (VAD) Demo</h1>
         <div class="control-row">
           <div id="indicator">
-            VAD is <span style="color: red">stopped</span>
+            VAD is <span style="color: red">LOADING</span>
           </div>
-          <button id="toggle_vad_button" onclick="window.toggleVad()">
+          <button id="toggle_vad_button" onclick="window.toggleVad()" disabled>
             START VAD
           </button>
         </div>
