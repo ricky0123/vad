@@ -1,5 +1,3 @@
-const CopyPlugin = require("copy-webpack-plugin")
-
 const babelLoader = {
   loader: "babel-loader",
   options: {
@@ -7,17 +5,6 @@ const babelLoader = {
       ["@babel/preset-env"],
       ["@babel/preset-typescript", { targets: "defaults" }],
     ],
-  },
-}
-
-const onnxAsDataUrl = {
-  test: /\.onnx$/i,
-  type: "asset/inline",
-  generator: {
-    dataUrl: {
-      encoding: "base64",
-      mimetype: "application/octet-stream",
-    },
   },
 }
 
@@ -32,13 +19,6 @@ module.exports = {
   resolve: {
     extensions: [".ts", ".js", ".json", ".wasm"],
   },
-  plugins: [
-    new CopyPlugin({
-      patterns: [
-        { from: "node_modules/onnxruntime-web/dist/*.wasm", to: "[name][ext]" },
-      ],
-    }),
-  ],
   module: {
     rules: [
       onnxAsResource,
@@ -48,6 +28,9 @@ module.exports = {
         use: babelLoader,
       },
     ],
+  },
+  externals: {
+    "onnxruntime-web": "ort",
   },
   output: {
     filename: "vad.[name].js",
