@@ -72,14 +72,27 @@
       color: white;
       margin: 0;
     }
-    .content {
-      width: 25vw;
-      margin-inline: auto;
-      padding-top: 100px;
+    h1 {
+      font-weight: bold;
+      color: #fff;
+      font-size: 16pt;
     }
+    .content {
+      padding-inline: 20px;
+      margin-inline: auto;
+      padding-top: 20px;
+    }
+    @media (min-width: 1250px) {
+      .content {
+        padding-top: 100px;
+        width: 800px;
+        padding-inline: 0;
+      }
+    }
+
     #playlist {
       max-height: 400px;
-      overflow: scroll;
+      overflow-y: scroll;
       list-style: none;
       padding-left: 0;
     }
@@ -93,6 +106,7 @@
       max-height: 0;
       opacity: 0;
       animation: grow 1s ease-in-out forwards;
+      padding-left: 5px;
     }
     button {
       background-color: black;
