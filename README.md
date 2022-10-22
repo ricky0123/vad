@@ -12,6 +12,6 @@ The API works as follows:
    const myvad = await vad.MicVAD.new(options)
    ```
 
-   `options` can include any of the parameters defined [here](./src/index.ts#14). It essentially consists of callbacks that run on every audio frame, whenever a speech start is detected, whenever speech ends, etc, as well as parameters that control the voice activity detection algorithm.
+   `options` can include any of the parameters defined [here](./src/index.ts#L14). It essentially consists of callbacks that run on every audio frame, whenever a speech start is detected, whenever speech ends, etc, as well as parameters that control the voice activity detection algorithm.
 
 2. Start and pause the VAD object as needed with `myvad.start()` and `myvad.pause()`. The object starts in the paused state.
