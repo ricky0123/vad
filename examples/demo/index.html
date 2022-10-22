@@ -20,23 +20,48 @@
         indicator.innerHTML = message + ".".repeat((dots.length + 1) % 7)
       }, 200)
 
-      const myvad = await vad.MicVAD.new({
-        onFrameProcessed: (probs) => {
-          const indicatorColor = interpolateInferno(probs.isSpeech / 2)
-          document.body.style.setProperty("--indicator-color", indicatorColor)
-        },
-        onSpeechEnd: (arr) => {
-          const wavBuffer = vad.encodeWAV(arr)
-          const base64 = vad.arrayBufferToBase64(wavBuffer)
-          const url = `data:audio/wav;base64,${base64}`
-          const el = addAudio(url)
-          const speechList = document.getElementById("playlist")
-          speechList.prepend(el)
-        },
-      })
+      try {
+        const myvad = await vad.MicVAD.new({
+          onFrameProcessed: (probs) => {
+            const indicatorColor = interpolateInferno(probs.isSpeech / 2)
+            document.body.style.setProperty("--indicator-color", indicatorColor)
+          },
+          onSpeechEnd: (arr) => {
+            const wavBuffer = vad.encodeWAV(arr)
+            const base64 = vad.arrayBufferToBase64(wavBuffer)
+            const url = `data:audio/wav;base64,${base64}`
+            const el = addAudio(url)
+            const speechList = document.getElementById("playlist")
+            speechList.prepend(el)
+          },
+        })
 
-      clearInterval(loading)
-      document.getElementById("toggle_vad_button").disabled = false
+        clearInterval(loading)
+        window.toggleVad = () => {
+          console.log("ran toggle vad")
+          if (myvad.listening === false) {
+            myvad.start()
+            document.getElementById("toggle_vad_button").textContent =
+              "STOP VAD"
+            document.getElementById("indicator").textContent = "VAD is running"
+          } else {
+            myvad.pause()
+            document.getElementById("toggle_vad_button").textContent =
+              "START VAD"
+            document.getElementById(
+              "indicator"
+            ).innerHTML = `VAD is <span style="color:red">stopped</span>`
+          }
+        }
+        window.toggleVad()
+        document.getElementById("toggle_vad_button").disabled = false
+      } catch (e) {
+        console.error("Failed:", e)
+        clearInterval(loading)
+        document.getElementById(
+          "indicator"
+        ).innerHTML = `<span style="color:red">VAD failed to load</span>`
+      }
 
       function addAudio(audioUrl) {
         const entry = document.createElement("li")
@@ -47,23 +72,6 @@
         entry.appendChild(audio)
         return entry
       }
-
-      window.toggleVad = () => {
-        console.log("ran toggle vad")
-        if (myvad.listening === false) {
-          myvad.start()
-          document.getElementById("toggle_vad_button").textContent = "STOP VAD"
-          document.getElementById("indicator").textContent = "VAD is running"
-        } else {
-          myvad.pause()
-          document.getElementById("toggle_vad_button").textContent = "START VAD"
-          document.getElementById(
-            "indicator"
-          ).innerHTML = `VAD is <span style="color:red">stopped</span>`
-        }
-      }
-
-      window.toggleVad()
     </script>
   </head>
   <style>
