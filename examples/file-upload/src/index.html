@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>File Processing with VAD</title>
+    <script src="main.js"></script>
+  </head>
+  <style>
+    table,
+    th,
+    td {
+      border: 1px solid;
+    }
+  </style>
+  <body>
+    <div>
+      <h3>File Uploader</h3>
+      <p>
+        Choose a file on your system and then click upload. Or, drag and drop a
+        file into the area below.
+      </p>
+      <form onsubmit="window.submitFile(event)">
+        <input id="file-upload" type="file" name="file" />
+        <br />
+        <input class="button" id="file-submit" type="submit" value="Upload" />
+      </form>
+      <h3>Results</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Frames</th>
+            <th>Speech starts</th>
+            <th>Speech ends</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td id="frameCounter">0</td>
+            <td id="speechStartCounter">0</td>
+            <td id="speechEndCounter">0</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>
