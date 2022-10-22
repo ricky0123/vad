@@ -2,7 +2,6 @@
   "name": "file-upload",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
     "build": "webpack",
     "server": "http-server dist/"
@@ -17,7 +16,7 @@
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
-    "@ricky0123/vad": "^0.0.96",
+    "@ricky0123/vad": "^0.0.98",
     "onnxruntime-web": "^1.12.1"
   }
 }

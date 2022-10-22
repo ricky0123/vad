@@ -13,28 +13,54 @@ const onnxAsResource = {
   type: "asset/resource",
 }
 
-module.exports = {
-  mode: "development",
-  entry: { index: "./src/index.ts", worklet: "./src/worklet.ts" },
-  resolve: {
-    extensions: [".ts", ".js", ".json", ".wasm"],
+module.exports = [
+  {
+    mode: "production",
+    entry: { worklet: "./src/worklet.ts" },
+    resolve: {
+      extensions: [".ts", ".js", ".json", ".wasm"],
+    },
+    module: {
+      rules: [
+        {
+          test: /\.(js|ts)$/,
+          exclude: /node_modules/,
+          use: babelLoader,
+        },
+      ],
+    },
+    output: {
+      filename: "vad.[name].js",
+      clean: true,
+    },
   },
-  module: {
-    rules: [
-      onnxAsResource,
-      {
-        test: /\.(js|ts)$/,
-        exclude: /node_modules/,
-        use: babelLoader,
+  {
+    mode: "production",
+    entry: { index: "./src/index.ts" },
+    resolve: {
+      extensions: [".ts", ".js", ".json", ".wasm"],
+    },
+    module: {
+      rules: [
+        onnxAsResource,
+        {
+          test: /\.(js|ts)$/,
+          exclude: /node_modules/,
+          use: babelLoader,
+        },
+      ],
+    },
+    externals: {
+      "onnxruntime-web": {
+        commonjs: "onnxruntime-web",
+        commonjs2: "onnxruntime-web",
+        amd: "onnxruntime-web",
+        root: "ort",
       },
-    ],
+    },
+    output: {
+      filename: "vad.[name].js",
+      library: { name: "vad", type: "umd" },
+    },
   },
-  externals: {
-    "onnxruntime-web": "ort",
-  },
-  output: {
-    filename: "vad.[name].js",
-    library: "vad",
-    clean: true,
-  },
-}
+]

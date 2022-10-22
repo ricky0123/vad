@@ -1,4 +1,4 @@
-import * as vad from "@ricky0123/vad/dist/vad.index"
+import * as vad from "@ricky0123/vad"
 
 async function main() {
   // Feed audio to vad through websocket
