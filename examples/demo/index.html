@@ -51,6 +51,8 @@
             document.getElementById(
               "indicator"
             ).innerHTML = `VAD is <span style="color:red">stopped</span>`
+            const indicatorColor = interpolateInferno(0)
+            document.body.style.setProperty("--indicator-color", indicatorColor)
           }
         }
         window.toggleVad()
@@ -85,7 +87,7 @@
     }
     body {
       --indicator-color: black;
-      background: radial-gradient(black 60%, var(--indicator-color));
+      background: radial-gradient(black 55%, var(--indicator-color));
       min-height: 100vh;
       color: white;
       margin: 0;
