@@ -16,7 +16,7 @@
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
-    "@ricky0123/vad": "^0.0.98",
-    "onnxruntime-web": "^1.12.1"
+    "@ricky0123/vad": "*",
+    "onnxruntime-web": "*"
   }
 }
