@@ -100,7 +100,6 @@ export class MicVAD {
         noiseSuppression: true,
       },
     })
-    this.stream.getTracks()[0].enabled = false
 
     this.audioContext = new AudioContext()
     const source = new MediaStreamAudioSourceNode(this.audioContext, {
@@ -114,17 +113,11 @@ export class MicVAD {
   pause = () => {
     this.listening = false
     this.audioNodeVAD.pause()
-    if (this.stream instanceof MediaStream) {
-      this.stream.getTracks()[0].enabled = false
-    }
   }
 
   start = () => {
     this.listening = true
     this.audioNodeVAD.start()
-    if (this.stream instanceof MediaStream) {
-      this.stream.getTracks()[0].enabled = true
-    }
   }
 }
 
