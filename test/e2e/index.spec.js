@@ -3,6 +3,7 @@ const { suite } = require("selenium-webdriver/testing")
 const { testServer } = require("../utils")
 const chrome = require("selenium-webdriver/chrome")
 const chai = require("chai")
+const path = require("path")
 const assert = chai.assert
 
 suite(function (env) {
@@ -15,6 +16,9 @@ suite(function (env) {
     before(async function () {
       ;({ server, url } = await testServer({
         "/index.html": `${__dirname}/index.html`,
+        "/onnxruntime-web": path.resolve(
+          `${__dirname}/../../node_modules/onnxruntime-web/dist`
+        ),
       }))
 
       const chromeOptions = new chrome.Options().addArguments()

@@ -1,6 +1,7 @@
 const express = require("express")
 const portfinder = require("portfinder")
 const path = require("path")
+const fs = require("fs")
 
 const distDir = path.resolve(__dirname, "../dist")
 
@@ -10,9 +11,14 @@ exports.testServer = async function testServer(files) {
   app.use("/", express.static(distDir))
   Object.entries(files).forEach((entry) => {
     const [path, file] = entry
-    app.get(path, (req, res) => {
-      res.sendFile(file)
-    })
+
+    if (fs.lstatSync(file).isDirectory()) {
+      app.use("/onnxruntime-web", express.static(file))
+    } else {
+      app.get(path, (req, res) => {
+        res.sendFile(file)
+      })
+    }
   })
 
   const port = await portfinder.getPortPromise()
