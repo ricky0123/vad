@@ -16,9 +16,7 @@ The API works as follows:
 
 2. Start and pause the VAD object as needed with `myvad.start()` and `myvad.pause()`. The object starts in the paused state.
 
-# Citations
-
-## References
+# References
 
 <a id="1">[1]</a>
 Silero Team. (2021).
