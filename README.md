@@ -1,5 +1,7 @@
 # Voice Activity Detection for the Browser
 
+[![npm version](https://badge.fury.io/js/@ricky0123%2Fvad.svg)](https://badge.fury.io/js/@ricky0123%2Fvad)
+
 This package aims to provide an accurate, user-friendly voice activity detector that runs in the browser. Currently, it runs [Silero VAD](https://github.com/snakers4/silero-vad) [[1]](#1) in the browser using [ONNX Runtime Web](https://github.com/microsoft/onnxruntime/tree/main/js/web).
 
 A demo is hosted at [vad-demo-script.vercel.app](https://vad-demo-script.vercel.app/). The source code for the demo can be found [here](./examples/demo/). A separate demo showing how to use the VAD with a bundler like webpack can be found [here](./examples/file-upload/).
