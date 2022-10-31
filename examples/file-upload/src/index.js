@@ -30,7 +30,7 @@ async function main() {
     ev.preventDefault()
     const audioForm = document.getElementById("file-upload").files[0]
     const audioDataUrl = URL.createObjectURL(audioForm)
-    const audio = Audio(audioDataUrl)
+    const audio = new Audio(audioDataUrl)
     const audioNode = ctx.createMediaElementSource(audio)
     audioNode.connect(gainNode)
     audio.play()
