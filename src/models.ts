@@ -18,6 +18,7 @@ export class Silero {
   _session: ort.InferenceSession
   _h: ort.Tensor
   _c: ort.Tensor
+  _sr: ort.Tensor
 
   static new = async () => {
     const model = new Silero()
@@ -29,6 +30,8 @@ export class Silero {
     log.debug("initializing vad")
     const modelArrayBuffer = await fetch(modelUrl).then((r) => r.arrayBuffer())
     this._session = await ort.InferenceSession.create(modelArrayBuffer)
+    // @ts-ignore
+    this._sr = new ort.Tensor("int64", [16000n])
     this.reset_state()
     log.debug("vad is initialized")
   }
@@ -43,13 +46,15 @@ export class Silero {
     const t = new ort.Tensor("float32", audioFrame, [1, audioFrame.length])
     const inputs = {
       input: t,
-      h0: this._h,
-      c0: this._c,
+      h: this._h,
+      c: this._c,
+      sr: this._sr,
     }
     const out = await this._session.run(inputs)
     this._h = out.hn
     this._c = out.cn
-    const [notSpeech, isSpeech] = out.output.data as Float32Array
+    const [isSpeech] = out.output.data as Float32Array
+    const notSpeech = 1 - isSpeech
     return { notSpeech, isSpeech }
   }
 }
