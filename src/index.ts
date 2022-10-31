@@ -24,7 +24,7 @@ interface VadOptions {
   minSpeechFrames: number
 }
 
-export function minSamplesForTargetMS(
+export function minFramesForTargetMS(
   targetDuration: number,
   frameSamples: number,
   sr = 16000
