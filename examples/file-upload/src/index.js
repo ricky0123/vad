@@ -6,7 +6,7 @@ async function main() {
 
   const gainNode = new GainNode(ctx)
 
-  const myvad = await vad.AudioNodeVAD.new(ctx, {
+  const myvad = await vad.AudioSegmentVAD.new({
     onFrameProcessed: (probs) => {
       const element = document.getElementById("frameCounter")
       const val = parseInt(element.textContent)
@@ -23,17 +23,12 @@ async function main() {
       element.textContent = val + 1
     },
   })
-  myvad.receive(gainNode)
-  myvad.start()
 
-  window.submitFile = (ev) => {
+  window.submitFile = async (ev) => {
     ev.preventDefault()
     const audioForm = document.getElementById("file-upload").files[0]
-    const audioDataUrl = URL.createObjectURL(audioForm)
-    const audio = new Audio(audioDataUrl)
-    const audioNode = ctx.createMediaElementSource(audio)
-    audioNode.connect(gainNode)
-    audio.play()
+    const { audio, sampleRate } = await vad.audioFileToArray(audioForm)
+    await myvad.run(audio, sampleRate)
   }
 }
 main()
