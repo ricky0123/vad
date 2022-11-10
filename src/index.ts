@@ -2,6 +2,7 @@ import { FrameProcessor } from "./frame-processor"
 import { log } from "./logging"
 import { Message } from "./messages"
 import { Silero, SpeechProbabilities } from "./models"
+import { Resampler } from "./resampler"
 
 export { encodeWAV } from "./audio"
 export { FrameProcessor } from "./frame-processor"
@@ -158,41 +159,36 @@ export class FileVAD {
     this.frameProcessor.resume()
   }
 
-  run = async (audio: Blob) => {
-    const ctx = new OfflineAudioContext(2, 44100 * 10000, 44100)
-    const workletPath = __webpack_public_path__ + `vad.worklet.js`
-    await ctx.audioWorklet.addModule(workletPath)
-    const vadNode = new AudioWorkletNode(ctx, "vad-helper-worklet", {
-      processorOptions: {
-        frameSamples: this.options.frameSamples,
-      },
+  run = async (formattedAudio: Blob) => {
+    const { audio, sampleRate } = await audioFileToArray(formattedAudio)
+    const resampler = new Resampler({
+      nativeSampleRate: sampleRate,
+      targetSampleRate: 16000,
+      targetFrameSize: this.options.frameSamples,
     })
-    vadNode.port.onmessage = async (ev: MessageEvent) => {
-      switch (ev.data?.message) {
-        case Message.AudioFrame:
-          const buffer: ArrayBuffer = ev.data.data
-          const frame = new Float32Array(buffer)
-          await this.frameProcessor.process(frame)
-          break
-
-        default:
-          break
-      }
+    const frames = resampler.process(audio)
+    for (const f of frames) {
+      await this.frameProcessor.process(f)
     }
-    const source = ctx.createBufferSource()
-    const reader = new FileReader()
+  }
+}
+
+async function audioFileToArray(audioFileData: Blob) {
+  const ctx = new OfflineAudioContext(1, 1, 44100)
+  const reader = new FileReader()
+  let audioBuffer: AudioBuffer | null = null
+  await new Promise<void>((res) => {
     reader.addEventListener("loadend", (ev) => {
       const audioData = reader.result as ArrayBuffer
       ctx.decodeAudioData(
         audioData,
         (buffer) => {
-          source.buffer = buffer
-          source.connect(vadNode)
-          source.start()
+          audioBuffer = buffer
           ctx
             .startRendering()
             .then((renderedBuffer) => {
               console.log("Rendering completed successfully")
+              res()
             })
             .catch((err) => {
               console.error(`Rendering failed: ${err}`)
@@ -203,8 +199,19 @@ export class FileVAD {
         }
       )
     })
-    reader.readAsArrayBuffer(audio)
+    reader.readAsArrayBuffer(audioFileData)
+  })
+  if (audioBuffer === null) {
+    throw Error("some shit")
   }
+  let _audioBuffer = audioBuffer as AudioBuffer
+  let out = new Float32Array(_audioBuffer.length)
+  for (let i = 0; i < _audioBuffer.length; i++) {
+    for (let j = 0; j < _audioBuffer.numberOfChannels; j++) {
+      out[i] += _audioBuffer.getChannelData(j)[i]
+    }
+  }
+  return { audio: out, sampleRate: _audioBuffer.sampleRate }
 }
 
 export class AudioNodeVAD {

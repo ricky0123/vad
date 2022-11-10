@@ -50,7 +50,7 @@ suite(function (env) {
         })
       )
 
-      await new Promise((res) => setTimeout(res, 500))
+      await new Promise((res) => setTimeout(res, 200))
       driver.findElement(By.id("file-upload")).sendKeys(`${__dirname}/test.wav`)
       driver.findElement(By.id("file-submit")).submit()
 
