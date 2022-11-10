@@ -2,10 +2,11 @@ import { FrameProcessor } from "./frame-processor"
 import { log } from "./logging"
 import { Message } from "./messages"
 import { Silero, SpeechProbabilities } from "./models"
+import { Resampler } from "./resampler"
 
 export { encodeWAV } from "./audio"
 export { FrameProcessor } from "./frame-processor"
-export { arrayBufferToBase64 } from "./utils"
+export { arrayBufferToBase64, audioFileToArray } from "./utils"
 
 log.debug("WELCOME TO VAD")
 
@@ -118,6 +119,56 @@ export class MicVAD {
   start = () => {
     this.listening = true
     this.audioNodeVAD.start()
+  }
+}
+
+export class AudioSegmentVAD {
+  frameProcessor: FrameProcessor
+  speaking: boolean = false
+
+  static async new(options: Partial<VadOptions> = {}) {
+    const vad = new AudioSegmentVAD({ ...defaultVadOptions, ...options })
+    await vad.init()
+    return vad
+  }
+
+  constructor(public options: VadOptions) {
+    validateOptions(options)
+  }
+
+  init = async () => {
+    const model = await Silero.new()
+
+    this.frameProcessor = new FrameProcessor(model.process, model.reset_state, {
+      onFrameProcessed: this.options.onFrameProcessed,
+      signalSpeechStart: () => {
+        this.speaking = true
+        this.options.onSpeechStart()
+      },
+      signalSpeechEnd: (audio) => {
+        this.speaking = false
+        this.options.onSpeechEnd(audio)
+      },
+      signalMisfire: this.options.signalMisfire,
+      positiveSpeechThreshold: this.options.positiveSpeechThreshold,
+      negativeSpeechThreshold: this.options.negativeSpeechThreshold,
+      redemptionFrames: this.options.redemptionFrames,
+      preSpeechPadFrames: this.options.preSpeechPadFrames,
+      minSpeechFrames: this.options.minSpeechFrames,
+    })
+    this.frameProcessor.resume()
+  }
+
+  run = async (audio: Float32Array, sampleRate: number) => {
+    const resampler = new Resampler({
+      nativeSampleRate: sampleRate,
+      targetSampleRate: 16000,
+      targetFrameSize: this.options.frameSamples,
+    })
+    const frames = resampler.process(audio)
+    for (const f of frames) {
+      await this.frameProcessor.process(f)
+    }
   }
 }
 
