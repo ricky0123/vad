@@ -8,15 +8,7 @@
     <script src="/onnxruntime-web/ort.js"></script>
     <script src="vad.index.js"></script>
     <script type="module">
-      // Feed audio to vad through websocket
-      const ctx = new AudioContext()
-      window.resumeCtx = () => {
-        ctx.resume()
-      }
-
-      const gainNode = new GainNode(ctx)
-
-      const myvad = await vad.AudioNodeVAD.new(ctx, {
+      const myvad = await vad.FileVAD.new({
         onFrameProcessed: (probs) => {
           const element = document.getElementById("frameCounter")
           const val = parseInt(element.textContent)
@@ -33,20 +25,10 @@
           element.textContent = val + 1
         },
       })
-      myvad.receive(gainNode)
-      myvad.start()
-
-      window.submitFile = (ev) => {
+      window.submitFile = async (ev) => {
         ev.preventDefault()
-        const audioForm = document.getElementById("file-upload").files[0]
-        console.log("creating object url...")
-        const audioDataUrl = URL.createObjectURL(audioForm)
-        console.log("...created object url")
-        const audio = new Audio(audioDataUrl)
-        const audioNode = ctx.createMediaElementSource(audio)
-        audioNode.connect(gainNode)
-        console.log("created audio", audio)
-        audio.play()
+        const audio = document.getElementById("file-upload").files[0]
+        await myvad.run(audio)
       }
     </script>
   </head>
@@ -86,9 +68,6 @@
           </tr>
         </tbody>
       </table>
-      <button id="start-audio" onclick="window.resumeCtx()">
-        Start Audio Context
-      </button>
     </div>
   </body>
 </html>

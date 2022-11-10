@@ -20,7 +20,8 @@
     "demo": "./examples/demo/run-local.js",
     "server": "http-server dist/",
     "test-unit": "node test/unit/run.js",
-    "test-e2e": "mocha test/e2e/*.spec.js --timeout 60000"
+    "test-e2e-mic": "mocha test/e2e-mic/*.spec.js --timeout 60000",
+    "test-e2e-file": "mocha test/e2e-file/*.spec.js --timeout 60000"
   },
   "author": "Ricky <rickycontact9@gmail.com>",
   "license": "ISC",

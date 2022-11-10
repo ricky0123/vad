@@ -121,6 +121,92 @@ export class MicVAD {
   }
 }
 
+export class FileVAD {
+  frameProcessor: FrameProcessor
+  speaking: boolean = false
+
+  static async new(options: Partial<VadOptions> = {}) {
+    const vad = new FileVAD({ ...defaultVadOptions, ...options })
+    await vad.init()
+    return vad
+  }
+
+  constructor(public options: VadOptions) {
+    validateOptions(options)
+  }
+
+  init = async () => {
+    const model = await Silero.new()
+
+    this.frameProcessor = new FrameProcessor(model.process, model.reset_state, {
+      onFrameProcessed: this.options.onFrameProcessed,
+      signalSpeechStart: () => {
+        this.speaking = true
+        this.options.onSpeechStart()
+      },
+      signalSpeechEnd: (audio) => {
+        this.speaking = false
+        this.options.onSpeechEnd(audio)
+      },
+      signalMisfire: this.options.signalMisfire,
+      positiveSpeechThreshold: this.options.positiveSpeechThreshold,
+      negativeSpeechThreshold: this.options.negativeSpeechThreshold,
+      redemptionFrames: this.options.redemptionFrames,
+      preSpeechPadFrames: this.options.preSpeechPadFrames,
+      minSpeechFrames: this.options.minSpeechFrames,
+    })
+    this.frameProcessor.resume()
+  }
+
+  run = async (audio: Blob) => {
+    const ctx = new OfflineAudioContext(2, 44100 * 10000, 44100)
+    const workletPath = __webpack_public_path__ + `vad.worklet.js`
+    await ctx.audioWorklet.addModule(workletPath)
+    const vadNode = new AudioWorkletNode(ctx, "vad-helper-worklet", {
+      processorOptions: {
+        frameSamples: this.options.frameSamples,
+      },
+    })
+    vadNode.port.onmessage = async (ev: MessageEvent) => {
+      switch (ev.data?.message) {
+        case Message.AudioFrame:
+          const buffer: ArrayBuffer = ev.data.data
+          const frame = new Float32Array(buffer)
+          await this.frameProcessor.process(frame)
+          break
+
+        default:
+          break
+      }
+    }
+    const source = ctx.createBufferSource()
+    const reader = new FileReader()
+    reader.addEventListener("loadend", (ev) => {
+      const audioData = reader.result as ArrayBuffer
+      ctx.decodeAudioData(
+        audioData,
+        (buffer) => {
+          source.buffer = buffer
+          source.connect(vadNode)
+          source.start()
+          ctx
+            .startRendering()
+            .then((renderedBuffer) => {
+              console.log("Rendering completed successfully")
+            })
+            .catch((err) => {
+              console.error(`Rendering failed: ${err}`)
+            })
+        },
+        (e) => {
+          console.log(`Error with decoding audio data: ${e}`)
+        }
+      )
+    })
+    reader.readAsArrayBuffer(audio)
+  }
+}
+
 export class AudioNodeVAD {
   listening: boolean = false
   speaking: boolean = false
