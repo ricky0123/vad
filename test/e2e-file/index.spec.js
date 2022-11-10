@@ -54,7 +54,7 @@ suite(function (env) {
       driver.findElement(By.id("file-upload")).sendKeys(`${__dirname}/test.wav`)
       driver.findElement(By.id("file-submit")).submit()
 
-      await new Promise((res) => setTimeout(res, 500))
+      await new Promise((res) => setTimeout(res, 400))
       await Promise.all(
         counters.map(async (elId) => {
           const curVal = await elementToInt(driver, elId)

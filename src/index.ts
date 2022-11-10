@@ -6,7 +6,7 @@ import { Resampler } from "./resampler"
 
 export { encodeWAV } from "./audio"
 export { FrameProcessor } from "./frame-processor"
-export { arrayBufferToBase64 } from "./utils"
+export { arrayBufferToBase64, audioFileToArray } from "./utils"
 
 log.debug("WELCOME TO VAD")
 
@@ -122,12 +122,12 @@ export class MicVAD {
   }
 }
 
-export class FileVAD {
+export class AudioSegmentVAD {
   frameProcessor: FrameProcessor
   speaking: boolean = false
 
   static async new(options: Partial<VadOptions> = {}) {
-    const vad = new FileVAD({ ...defaultVadOptions, ...options })
+    const vad = new AudioSegmentVAD({ ...defaultVadOptions, ...options })
     await vad.init()
     return vad
   }
@@ -159,8 +159,7 @@ export class FileVAD {
     this.frameProcessor.resume()
   }
 
-  run = async (formattedAudio: Blob) => {
-    const { audio, sampleRate } = await audioFileToArray(formattedAudio)
+  run = async (audio: Float32Array, sampleRate: number) => {
     const resampler = new Resampler({
       nativeSampleRate: sampleRate,
       targetSampleRate: 16000,
@@ -171,47 +170,6 @@ export class FileVAD {
       await this.frameProcessor.process(f)
     }
   }
-}
-
-async function audioFileToArray(audioFileData: Blob) {
-  const ctx = new OfflineAudioContext(1, 1, 44100)
-  const reader = new FileReader()
-  let audioBuffer: AudioBuffer | null = null
-  await new Promise<void>((res) => {
-    reader.addEventListener("loadend", (ev) => {
-      const audioData = reader.result as ArrayBuffer
-      ctx.decodeAudioData(
-        audioData,
-        (buffer) => {
-          audioBuffer = buffer
-          ctx
-            .startRendering()
-            .then((renderedBuffer) => {
-              console.log("Rendering completed successfully")
-              res()
-            })
-            .catch((err) => {
-              console.error(`Rendering failed: ${err}`)
-            })
-        },
-        (e) => {
-          console.log(`Error with decoding audio data: ${e}`)
-        }
-      )
-    })
-    reader.readAsArrayBuffer(audioFileData)
-  })
-  if (audioBuffer === null) {
-    throw Error("some shit")
-  }
-  let _audioBuffer = audioBuffer as AudioBuffer
-  let out = new Float32Array(_audioBuffer.length)
-  for (let i = 0; i < _audioBuffer.length; i++) {
-    for (let j = 0; j < _audioBuffer.numberOfChannels; j++) {
-      out[i] += _audioBuffer.getChannelData(j)[i]
-    }
-  }
-  return { audio: out, sampleRate: _audioBuffer.sampleRate }
 }
 
 export class AudioNodeVAD {
