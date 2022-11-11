@@ -10,6 +10,8 @@ export { arrayBufferToBase64, audioFileToArray } from "./utils"
 
 log.debug("WELCOME TO VAD")
 
+declare var __webpack_public_path__: string
+
 const RECOMMENDED_FRAME_SAMPLES = [512, 1024, 1536]
 
 interface VadOptions {

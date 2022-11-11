@@ -59,7 +59,7 @@ module.exports = [
       },
     },
     output: {
-      filename: "vad.[name].js",
+      filename: "[name].js",
       library: { name: "vad", type: "umd" },
     },
   },
