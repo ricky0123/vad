@@ -66,6 +66,22 @@ export class FrameProcessor {
     this.active = true
   }
 
+  endSegment = () => {
+    const audioBuffer = this.audioBuffer
+    this.audioBuffer = []
+
+    if (this.speaking) {
+      if (audioBuffer.length >= this.options.minSpeechFrames) {
+        const audio = concatArrays(audioBuffer)
+        this.options.signalSpeechEnd(audio)
+      } else {
+        this.options.signalMisfire()
+      }
+    }
+
+    this.reset()
+  }
+
   process = async (frame: Float32Array): Promise<void> => {
     if (!this.active) {
       return

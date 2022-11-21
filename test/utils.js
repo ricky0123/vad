@@ -5,6 +5,8 @@ const fs = require("fs")
 
 const distDir = path.resolve(__dirname, "../dist")
 
+exports.audioSamplePath = path.resolve(__dirname, "./test.wav")
+
 exports.testServer = async function testServer(files) {
   const app = express()
 
