@@ -1,29 +1,24 @@
-import { FrameProcessor } from "./frame-processor"
+import {
+  SegmentFrameProcessor,
+  SegmentFrameProcessorInterface,
+} from "./frame-processor"
 import { log } from "./logging"
-import { Message } from "./messages"
 import { Silero, SpeechProbabilities } from "./models"
 import { Resampler } from "./resampler"
 
+export {
+  SegmentFrameProcessor,
+  RealTimeFrameProcessor,
+} from "./frame-processor"
 export { encodeWAV } from "./audio"
-export { FrameProcessor } from "./frame-processor"
-export { arrayBufferToBase64, audioFileToArray } from "./utils"
+export * from "./utils"
 
 const RECOMMENDED_FRAME_SAMPLES = [512, 1024, 1536]
 
 /**
  * Options to customize the behavior of the VAD.
  */
-export interface VadOptions {
-  /** Callback to run when speech start is detected */
-  onSpeechStart: () => any
-
-  /**
-   * Callback to run when speech end is detected.
-   * Takes as arg a Float32Array of audio samples between -1 and 1, sample rate 16000.
-   * This will not run if the audio segment is smaller than `minSpeechFrames`.
-   */
-  onSpeechEnd: (audio: Float32Array) => any
-
+interface CommonVadOptions {
   /** Callback to run after each frame. The size (number of samples) of a frame is given by `frameSamples`. */
   onFrameProcessed: (probabilities: SpeechProbabilities) => any
 
@@ -66,21 +61,24 @@ export interface VadOptions {
   minSpeechFrames: number
 }
 
-export function minFramesForTargetMS(
-  targetDuration: number,
-  frameSamples: number,
-  sr = 16000
-): number {
-  return Math.ceil((targetDuration * sr) / 1000 / frameSamples)
+export interface RealTimeVadOptions extends CommonVadOptions {
+  /** Callback to run when speech start is detected */
+  onSpeechStart: () => any
+
+  /**
+   * Callback to run when speech end is detected.
+   * Takes as arg a Float32Array of audio samples between -1 and 1, sample rate 16000.
+   * This will not run if the audio segment is smaller than `minSpeechFrames`.
+   */
+  onSpeechEnd: (audio: Float32Array) => any
 }
 
-export const defaultVadOptions: VadOptions = {
-  onSpeechStart: () => {
-    log.debug("Detected speech start")
-  },
-  onSpeechEnd: () => {
-    log.debug("Detected speech end")
-  },
+export interface SegmentVadOptions extends CommonVadOptions {
+  onSpeechStart: (start: number) => any
+  onSpeechEnd: (audio: Float32Array, end: number) => any
+}
+
+const defaultCommonVadOptions: CommonVadOptions = {
   onFrameProcessed: () => {},
   signalMisfire: () => {},
   positiveSpeechThreshold: 0.5,
@@ -91,7 +89,20 @@ export const defaultVadOptions: VadOptions = {
   minSpeechFrames: 3,
 }
 
-export function validateOptions(options: VadOptions) {
+export const defaultRealtimeVadOptions: RealTimeVadOptions = {
+  ...defaultCommonVadOptions,
+  onSpeechStart: () => {
+    log.debug("Detected speech start")
+  },
+  onSpeechEnd: () => {
+    log.debug("Detected speech end")
+  },
+}
+
+export const defaultSegmentVadOptions: SegmentVadOptions =
+  defaultRealtimeVadOptions
+
+export function validateOptions(options: CommonVadOptions) {
   if (!RECOMMENDED_FRAME_SAMPLES.includes(options.frameSamples)) {
     log.warn("You are using an unusual frame size")
   }
@@ -118,51 +129,61 @@ export function validateOptions(options: VadOptions) {
 }
 
 export class AudioSegmentVAD {
-  frameProcessor: FrameProcessor
+  frameProcessor: SegmentFrameProcessorInterface
   speaking: boolean = false
 
-  static async new(options: Partial<VadOptions> = {}) {
-    const vad = new AudioSegmentVAD({ ...defaultVadOptions, ...options })
+  static async new(options: Partial<SegmentVadOptions> = {}) {
+    const vad = new AudioSegmentVAD({ ...defaultSegmentVadOptions, ...options })
     await vad.init()
     return vad
   }
 
-  constructor(public options: VadOptions) {
+  constructor(public options: SegmentVadOptions) {
     validateOptions(options)
   }
 
   init = async () => {
     const model = await Silero.new()
 
-    this.frameProcessor = new FrameProcessor(model.process, model.reset_state, {
-      onFrameProcessed: this.options.onFrameProcessed,
-      signalSpeechStart: () => {
-        this.speaking = true
-        this.options.onSpeechStart()
-      },
-      signalSpeechEnd: (audio) => {
-        this.speaking = false
-        this.options.onSpeechEnd(audio)
-      },
-      signalMisfire: this.options.signalMisfire,
-      positiveSpeechThreshold: this.options.positiveSpeechThreshold,
-      negativeSpeechThreshold: this.options.negativeSpeechThreshold,
-      redemptionFrames: this.options.redemptionFrames,
-      preSpeechPadFrames: this.options.preSpeechPadFrames,
-      minSpeechFrames: this.options.minSpeechFrames,
-    })
+    this.frameProcessor = new SegmentFrameProcessor(
+      model.process,
+      model.reset_state,
+      {
+        onFrameProcessed: this.options.onFrameProcessed,
+        signalSpeechStart: (start) => {
+          this.speaking = true
+          this.options.onSpeechStart(start)
+        },
+        signalSpeechEnd: (audio, end) => {
+          this.speaking = false
+          this.options.onSpeechEnd(audio, end)
+        },
+        signalMisfire: this.options.signalMisfire,
+        positiveSpeechThreshold: this.options.positiveSpeechThreshold,
+        negativeSpeechThreshold: this.options.negativeSpeechThreshold,
+        redemptionFrames: this.options.redemptionFrames,
+        preSpeechPadFrames: this.options.preSpeechPadFrames,
+        minSpeechFrames: this.options.minSpeechFrames,
+      }
+    )
     this.frameProcessor.resume()
   }
 
   run = async (audio: Float32Array, sampleRate: number) => {
-    const resampler = new Resampler({
+    const resamplerOptions = {
       nativeSampleRate: sampleRate,
       targetSampleRate: 16000,
       targetFrameSize: this.options.frameSamples,
-    })
+    }
+    const resampler = new Resampler(resamplerOptions)
     const frames = resampler.process(audio)
-    for (const f of frames) {
-      await this.frameProcessor.process(f)
+    for (const i of [...Array(frames.length)].keys()) {
+      const [start, end] = [
+        (i * this.options.frameSamples) / 16,
+        ((i + 1) * this.options.frameSamples) / 16,
+      ]
+      const f = frames[i]
+      await this.frameProcessor.process(f, { start, end })
     }
     this.frameProcessor.endSegment()
   }

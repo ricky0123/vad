@@ -3,18 +3,45 @@ Some of this code, together with the default options found in index.ts,
 were taken (or took inspiration) from https://github.com/snakers4/silero-vad
 */
 
-import { Model, Silero, SpeechProbabilities } from "./models"
+import { SpeechProbabilities } from "./models"
 
-export interface AggregatorOptions {
+interface _CommonFrameProcessorOptions {
   onFrameProcessed: (probabilities: SpeechProbabilities) => any
-  signalSpeechStart: () => any
-  signalSpeechEnd: (audio: Float32Array) => any
   signalMisfire: () => any
   positiveSpeechThreshold: number
   negativeSpeechThreshold: number
   redemptionFrames: number
   preSpeechPadFrames: number
   minSpeechFrames: number
+}
+
+export interface RealTimeFrameProcessorOptions
+  extends _CommonFrameProcessorOptions {
+  signalSpeechStart: () => any
+  signalSpeechEnd: (audio: Float32Array) => any
+}
+
+export interface SegmentFrameProcessorOptions
+  extends _CommonFrameProcessorOptions {
+  signalSpeechStart: (startMS: number) => any
+  signalSpeechEnd: (audio: Float32Array, endMS: number) => any
+}
+
+export interface RealTimeFrameProcessorInterface {
+  resume: () => void
+  process: (arr: Float32Array) => void
+  endSegment: () => void
+}
+
+export interface SegmentFrameProcessorInterface {
+  resume: () => void
+  process: (arr: Float32Array, frameData: FrameData) => Promise<void>
+  endSegment: () => void
+}
+
+export interface FrameData {
+  start: number
+  end: number
 }
 
 const concatArrays = (arrays: Float32Array[]): Float32Array => {
@@ -33,7 +60,7 @@ const concatArrays = (arrays: Float32Array[]): Float32Array => {
   return outArray
 }
 
-export class FrameProcessor {
+abstract class _FrameProcessor {
   speaking: boolean = false
   audioBuffer: Float32Array[]
   redemptionCounter = 0
@@ -44,7 +71,7 @@ export class FrameProcessor {
       frame: Float32Array
     ) => Promise<SpeechProbabilities>,
     public modelResetFunc: () => any,
-    public options: AggregatorOptions
+    public options: _CommonFrameProcessorOptions
   ) {
     this.audioBuffer = []
     this.reset()
@@ -73,7 +100,7 @@ export class FrameProcessor {
     if (this.speaking) {
       if (audioBuffer.length >= this.options.minSpeechFrames) {
         const audio = concatArrays(audioBuffer)
-        this.options.signalSpeechEnd(audio)
+        this.speechEndCallback(audio)
       } else {
         this.options.signalMisfire()
       }
@@ -82,7 +109,13 @@ export class FrameProcessor {
     this.reset()
   }
 
-  process = async (frame: Float32Array): Promise<void> => {
+  abstract speechStartCallback(start?: number): any
+  abstract speechEndCallback(audio: Float32Array, end?: number): any
+
+  process = async (
+    frame: Float32Array,
+    frameData?: FrameData
+  ): Promise<void> => {
     if (!this.active) {
       return
     }
@@ -102,7 +135,7 @@ export class FrameProcessor {
       !this.speaking
     ) {
       this.speaking = true
-      this.options.signalSpeechStart()
+      this.speechStartCallback(frameData?.start)
     }
 
     if (
@@ -118,7 +151,7 @@ export class FrameProcessor {
 
       if (audioBuffer.length >= this.options.minSpeechFrames) {
         const audio = concatArrays(audioBuffer)
-        this.options.signalSpeechEnd(audio)
+        this.speechEndCallback(audio, frameData?.end)
       } else {
         this.options.signalMisfire()
       }
@@ -129,5 +162,51 @@ export class FrameProcessor {
         this.audioBuffer.shift()
       }
     }
+  }
+}
+
+export class RealTimeFrameProcessor
+  extends _FrameProcessor
+  implements RealTimeFrameProcessorInterface
+{
+  constructor(
+    public modelProcessFunc: (
+      frame: Float32Array
+    ) => Promise<SpeechProbabilities>,
+    public modelResetFunc: () => any,
+    public options: RealTimeFrameProcessorOptions
+  ) {
+    super(modelProcessFunc, modelResetFunc, options)
+  }
+
+  speechStartCallback(start?: number) {
+    this.options.signalSpeechStart()
+  }
+
+  speechEndCallback(audio: Float32Array, end?: number) {
+    this.options.signalSpeechEnd(audio)
+  }
+}
+
+export class SegmentFrameProcessor
+  extends _FrameProcessor
+  implements SegmentFrameProcessorInterface
+{
+  constructor(
+    public modelProcessFunc: (
+      frame: Float32Array
+    ) => Promise<SpeechProbabilities>,
+    public modelResetFunc: () => any,
+    public options: SegmentFrameProcessorOptions
+  ) {
+    super(modelProcessFunc, modelResetFunc, options)
+  }
+
+  speechStartCallback(start?: number) {
+    this.options.signalSpeechStart(start)
+  }
+
+  speechEndCallback(audio: Float32Array, end?: number) {
+    this.options.signalSpeechEnd(audio, end)
   }
 }

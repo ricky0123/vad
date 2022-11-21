@@ -1,8 +1,3 @@
-/*
-Some of the code in this file was copied from https://github.com/linto-ai/WebVoiceSDK
-Particularly: https://github.com/linto-ai/WebVoiceSDK/blob/master/src/webvoicesdk/workers/downsampler.blob.js
-*/
-
 import { log } from "./logging"
 
 interface ResamplerOptions {
@@ -26,7 +21,9 @@ export class Resampler {
   process = (audioFrame: Float32Array): Float32Array[] => {
     const outputFrames: Array<Float32Array> = []
 
-    this.inputBuffer.push(...audioFrame)
+    for (const sample of audioFrame) {
+      this.inputBuffer.push(sample)
+    }
 
     while (
       (this.inputBuffer.length * this.options.targetSampleRate) /

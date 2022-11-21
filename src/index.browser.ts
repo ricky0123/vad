@@ -1,14 +1,11 @@
-import type { VadOptions } from "./index-common"
-import {
-  defaultVadOptions,
-  FrameProcessor,
-  validateOptions,
-} from "./index-common"
+import type { RealTimeVadOptions } from "./index-common"
+import { defaultRealtimeVadOptions, validateOptions } from "./index-common"
+import { RealTimeFrameProcessor } from "./frame-processor"
 import { log } from "./logging"
 import { Message } from "./messages"
 import { Silero } from "./models"
 export * from "./index-common"
-export type { VadOptions }
+export type { RealTimeVadOptions as VadOptions }
 
 declare var __webpack_public_path__: string
 
@@ -18,13 +15,13 @@ export class MicVAD {
   audioNodeVAD: AudioNodeVAD
   listening = false
 
-  static async new(options: Partial<VadOptions> = {}) {
-    const vad = new MicVAD({ ...defaultVadOptions, ...options })
+  static async new(options: Partial<RealTimeVadOptions> = {}) {
+    const vad = new MicVAD({ ...defaultRealtimeVadOptions, ...options })
     await vad.init()
     return vad
   }
 
-  constructor(public options: VadOptions) {
+  constructor(public options: RealTimeVadOptions) {
     validateOptions(options)
   }
 
@@ -61,16 +58,22 @@ export class MicVAD {
 export class AudioNodeVAD {
   listening: boolean = false
   speaking: boolean = false
-  frameProcessor: FrameProcessor
+  frameProcessor: RealTimeFrameProcessor
   entryNode: AudioNode
 
-  static async new(ctx: AudioContext, options: Partial<VadOptions> = {}) {
-    const vad = new AudioNodeVAD(ctx, { ...defaultVadOptions, ...options })
+  static async new(
+    ctx: AudioContext,
+    options: Partial<RealTimeVadOptions> = {}
+  ) {
+    const vad = new AudioNodeVAD(ctx, {
+      ...defaultRealtimeVadOptions,
+      ...options,
+    })
     await vad.init()
     return vad
   }
 
-  constructor(public ctx: AudioContext, public options: VadOptions) {
+  constructor(public ctx: AudioContext, public options: RealTimeVadOptions) {
     validateOptions(options)
   }
 
@@ -102,23 +105,27 @@ export class AudioNodeVAD {
 
     const model = await Silero.new()
 
-    this.frameProcessor = new FrameProcessor(model.process, model.reset_state, {
-      onFrameProcessed: this.options.onFrameProcessed,
-      signalSpeechStart: () => {
-        this.speaking = true
-        this.options.onSpeechStart()
-      },
-      signalSpeechEnd: (audio) => {
-        this.speaking = false
-        this.options.onSpeechEnd(audio)
-      },
-      signalMisfire: this.options.signalMisfire,
-      positiveSpeechThreshold: this.options.positiveSpeechThreshold,
-      negativeSpeechThreshold: this.options.negativeSpeechThreshold,
-      redemptionFrames: this.options.redemptionFrames,
-      preSpeechPadFrames: this.options.preSpeechPadFrames,
-      minSpeechFrames: this.options.minSpeechFrames,
-    })
+    this.frameProcessor = new RealTimeFrameProcessor(
+      model.process,
+      model.reset_state,
+      {
+        onFrameProcessed: this.options.onFrameProcessed,
+        signalSpeechStart: () => {
+          this.speaking = true
+          this.options.onSpeechStart()
+        },
+        signalSpeechEnd: (audio) => {
+          this.speaking = false
+          this.options.onSpeechEnd(audio)
+        },
+        signalMisfire: this.options.signalMisfire,
+        positiveSpeechThreshold: this.options.positiveSpeechThreshold,
+        negativeSpeechThreshold: this.options.negativeSpeechThreshold,
+        redemptionFrames: this.options.redemptionFrames,
+        preSpeechPadFrames: this.options.preSpeechPadFrames,
+        minSpeechFrames: this.options.minSpeechFrames,
+      }
+    )
 
     vadNode.port.onmessage = async (ev: MessageEvent) => {
       switch (ev.data?.message) {

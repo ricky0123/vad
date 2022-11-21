@@ -1,3 +1,11 @@
+export function minFramesForTargetMS(
+  targetDuration: number,
+  frameSamples: number,
+  sr = 16000
+): number {
+  return Math.ceil((targetDuration * sr) / 1000 / frameSamples)
+}
+
 export function arrayBufferToBase64(buffer: ArrayBuffer) {
   var binary = ""
   var bytes = new Uint8Array(buffer)

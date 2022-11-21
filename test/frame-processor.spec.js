@@ -40,7 +40,7 @@ describe("frame processor algorithm", function () {
   it("preSpeechPadFrames", async function () {
     let [modelFunc, resetFunc, options] = getOptions()
     returnNotSpeech(modelFunc, options.negativeSpeechThreshold)
-    const frameProcessor = new vad.FrameProcessor(modelFunc, resetFunc, options)
+    const frameProcessor = new vad.RealTimeFrameProcessor(modelFunc, resetFunc, options)
     frameProcessor.resume()
     const arr = [
       ...Array(
@@ -73,7 +73,7 @@ describe("frame processor algorithm", function () {
 describe("frame processor callbacks", function () {
   it("onFrameProcessed called", async function () {
     let [modelFunc, resetFunc, options] = getOptions()
-    const frameProcessor = new vad.FrameProcessor(modelFunc, resetFunc, options)
+    const frameProcessor = new vad.RealTimeFrameProcessor(modelFunc, resetFunc, options)
     frameProcessor.resume()
     await frameProcessor.process(new Float32Array())
     sinon.assert.calledOnce(options.onFrameProcessed)
@@ -81,7 +81,7 @@ describe("frame processor callbacks", function () {
 
   it("signalSpeechStart called", async function () {
     let [modelFunc, resetFunc, options] = getOptions()
-    const frameProcessor = new vad.FrameProcessor(modelFunc, resetFunc, options)
+    const frameProcessor = new vad.RealTimeFrameProcessor(modelFunc, resetFunc, options)
     frameProcessor.resume()
     await frameProcessor.process(new Float32Array())
     sinon.assert.calledOnce(options.signalSpeechStart)
@@ -89,7 +89,7 @@ describe("frame processor callbacks", function () {
 
   it("signalSpeechEnd called", async function () {
     let [modelFunc, resetFunc, options] = getOptions()
-    const frameProcessor = new vad.FrameProcessor(modelFunc, resetFunc, options)
+    const frameProcessor = new vad.RealTimeFrameProcessor(modelFunc, resetFunc, options)
     frameProcessor.resume()
     const arr1 = [...Array(options.minSpeechFrames).keys()]
     for (const i of arr1) {
@@ -113,7 +113,7 @@ describe("frame processor callbacks", function () {
 
   it("signalMisfire called", async function () {
     let [modelFunc, resetFunc, options] = getOptions()
-    const frameProcessor = new vad.FrameProcessor(modelFunc, resetFunc, options)
+    const frameProcessor = new vad.RealTimeFrameProcessor(modelFunc, resetFunc, options)
     frameProcessor.resume()
     await frameProcessor.process(new Float32Array())
     sinon.assert.calledOnce(options.signalSpeechStart)
