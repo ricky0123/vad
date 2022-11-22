@@ -22,18 +22,11 @@ describe("audio segment api", function () {
     const [audioData, sampleRate] = loadAudio(audioSamplePath)
     // true endpoint are about 2.1 sec to 3.2 sec
     let endpoints = []
-    const options = {
-      onSpeechStart: (start) => {
-        endpoints.push([start])
+    const myvad = await vad.AudioSegmentVAD.new({
+      onSpeechEnd: (data) => {
+        endpoints.push([data.start, data.end])
       },
-      signalMisfire: () => {
-        endpoints.pop()
-      },
-      onSpeechEnd: (audio, end) => {
-        endpoints[endpoints.length - 1].push(end)
-      },
-    }
-    const myvad = await vad.AudioSegmentVAD.new(options)
+    })
     await myvad.run(audioData, sampleRate)
     assert.equal(endpoints.length, 1)
     const [start, end] = endpoints[0]

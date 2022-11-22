@@ -35,11 +35,7 @@ suite(function (env) {
     })
 
     it("simple vad test", async function () {
-      const counters = [
-        "frameCounter",
-        "speechStartCounter",
-        "speechEndCounter",
-      ]
+      const counters = ["speechSegmentCounter"]
       await driver.get(url)
 
       await driver.manage().setTimeouts({ implicit: 500 })

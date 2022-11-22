@@ -1,2 +1,9 @@
-export * from "./index-common"
-export type {RealTimeVadOptions as VadOptions} from "./index-common"
+import * as _utils from "./utils"
+export const utils = {
+  minFramesForTargetMS: _utils.minFramesForTargetMS,
+  arrayBufferToBase64: _utils.arrayBufferToBase64,
+}
+
+export { AudioSegmentVAD } from "./audio-segment-vad"
+export type { SegmentVadOptions } from "./audio-segment-vad"
+export { FrameProcessor } from "./frame-processor"

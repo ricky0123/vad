@@ -4,44 +4,89 @@ were taken (or took inspiration) from https://github.com/snakers4/silero-vad
 */
 
 import { SpeechProbabilities } from "./models"
+import { Message } from "./messages"
+import { log } from "./logging"
 
-interface _CommonFrameProcessorOptions {
-  onFrameProcessed: (probabilities: SpeechProbabilities) => any
-  signalMisfire: () => any
+const RECOMMENDED_FRAME_SAMPLES = [512, 1024, 1536]
+
+export interface FrameProcessorOptions {
+  /** Threshold over which values returned by the Silero VAD model will be considered as positively indicating speech.
+   * The Silero VAD model is run on each frame. This number should be between 0 and 1.
+   */
   positiveSpeechThreshold: number
+
+  /** Threshold under which values returned by the Silero VAD model will be considered as indicating an absence of speech.
+   * Note that the creators of the Silero VAD have historically set this number at 0.15 less than `positiveSpeechThreshold`.
+   */
   negativeSpeechThreshold: number
+
+  /** After a VAD value under the `negativeSpeechThreshold` is observed, the algorithm will wait `redemptionFrames` frames
+   * before running `onSpeechEnd`. If the model returns a value over `positiveSpeechThreshold` during this grace period, then
+   * the algorithm will consider the previously-detected "speech end" as having been a false negative.
+   */
   redemptionFrames: number
+
+  /** Number of audio samples (under a sample rate of 16000) to comprise one "frame" to feed to the Silero VAD model.
+   * The `frame` serves as a unit of measurement of lengths of audio segments and many other parameters are defined in terms of
+   * frames. The authors of the Silero VAD model offer the following warning:
+   * > WARNING! Silero VAD models were trained using 512, 1024, 1536 samples for 16000 sample rate and 256, 512, 768 samples for 8000 sample rate.
+   * > Values other than these may affect model perfomance!!
+   * In this context, audio fed to the VAD model always has sample rate 16000. It is probably a good idea to leave this at 1536.
+   */
+  frameSamples: number
+
+  /** Number of frames to prepend to the audio segment that will be passed to `onSpeechEnd`. */
   preSpeechPadFrames: number
+
+  /** If an audio segment is detected as a speech segment according to initial algorithm but it has fewer than `minSpeechFrames`,
+   * it will be discarded and `onVadMisfire` will be run instead of `onSpeechEnd`.
+   */
   minSpeechFrames: number
 }
 
-export interface RealTimeFrameProcessorOptions
-  extends _CommonFrameProcessorOptions {
-  signalSpeechStart: () => any
-  signalSpeechEnd: (audio: Float32Array) => any
+export const defaultFrameProcessorOptions: FrameProcessorOptions = {
+  positiveSpeechThreshold: 0.5,
+  negativeSpeechThreshold: 0.5 - 0.15,
+  preSpeechPadFrames: 1,
+  redemptionFrames: 2,
+  frameSamples: 1536,
+  minSpeechFrames: 3,
 }
 
-export interface SegmentFrameProcessorOptions
-  extends _CommonFrameProcessorOptions {
-  signalSpeechStart: (startMS: number) => any
-  signalSpeechEnd: (audio: Float32Array, endMS: number) => any
+export function validateOptions(options: FrameProcessorOptions) {
+  if (!RECOMMENDED_FRAME_SAMPLES.includes(options.frameSamples)) {
+    log.warn("You are using an unusual frame size")
+  }
+  if (
+    options.positiveSpeechThreshold < 0 ||
+    options.negativeSpeechThreshold > 1
+  ) {
+    log.error("postiveSpeechThreshold should be a number between 0 and 1")
+  }
+  if (
+    options.negativeSpeechThreshold < 0 ||
+    options.negativeSpeechThreshold > options.positiveSpeechThreshold
+  ) {
+    log.error(
+      "negativeSpeechThreshold should be between 0 and postiveSpeechThreshold"
+    )
+  }
+  if (options.preSpeechPadFrames < 0) {
+    log.error("preSpeechPadFrames should be positive")
+  }
+  if (options.redemptionFrames < 0) {
+    log.error("preSpeechPadFrames should be positive")
+  }
 }
 
-export interface RealTimeFrameProcessorInterface {
+export interface FrameProcessorInterface {
   resume: () => void
-  process: (arr: Float32Array) => void
-  endSegment: () => void
-}
-
-export interface SegmentFrameProcessorInterface {
-  resume: () => void
-  process: (arr: Float32Array, frameData: FrameData) => Promise<void>
-  endSegment: () => void
-}
-
-export interface FrameData {
-  start: number
-  end: number
+  process: (arr: Float32Array) => Promise<{
+    probs: SpeechProbabilities
+    msg?: Message
+    audio?: Float32Array
+  }>
+  endSegment: () => { msg?: Message; audio?: Float32Array }
 }
 
 const concatArrays = (arrays: Float32Array[]): Float32Array => {
@@ -60,7 +105,7 @@ const concatArrays = (arrays: Float32Array[]): Float32Array => {
   return outArray
 }
 
-abstract class _FrameProcessor {
+export class FrameProcessor implements FrameProcessorInterface {
   speaking: boolean = false
   audioBuffer: Float32Array[]
   redemptionCounter = 0
@@ -71,7 +116,7 @@ abstract class _FrameProcessor {
       frame: Float32Array
     ) => Promise<SpeechProbabilities>,
     public modelResetFunc: () => any,
-    public options: _CommonFrameProcessorOptions
+    public options: FrameProcessorOptions
   ) {
     this.audioBuffer = []
     this.reset()
@@ -96,31 +141,24 @@ abstract class _FrameProcessor {
   endSegment = () => {
     const audioBuffer = this.audioBuffer
     this.audioBuffer = []
+    this.reset()
 
     if (this.speaking) {
       if (audioBuffer.length >= this.options.minSpeechFrames) {
         const audio = concatArrays(audioBuffer)
-        this.speechEndCallback(audio)
+        return { msg: Message.SpeechEnd, audio }
       } else {
-        this.options.signalMisfire()
+        return { msg: Message.SpeechMisfire }
       }
     }
-
-    this.reset()
+    return {}
   }
 
-  abstract speechStartCallback(start?: number): any
-  abstract speechEndCallback(audio: Float32Array, end?: number): any
-
-  process = async (
-    frame: Float32Array,
-    frameData?: FrameData
-  ): Promise<void> => {
+  process = async (frame: Float32Array) => {
     if (!this.active) {
       return
     }
     const probs = await this.modelProcessFunc(frame)
-    this.options.onFrameProcessed(probs)
     this.audioBuffer.push(frame)
 
     if (
@@ -135,7 +173,7 @@ abstract class _FrameProcessor {
       !this.speaking
     ) {
       this.speaking = true
-      this.speechStartCallback(frameData?.start)
+      return { probs, msg: Message.SpeechStart }
     }
 
     if (
@@ -151,9 +189,9 @@ abstract class _FrameProcessor {
 
       if (audioBuffer.length >= this.options.minSpeechFrames) {
         const audio = concatArrays(audioBuffer)
-        this.speechEndCallback(audio, frameData?.end)
+        return { probs, msg: Message.SpeechEnd, audio }
       } else {
-        this.options.signalMisfire()
+        return { probs, msg: Message.SpeechMisfire }
       }
     }
 
@@ -162,51 +200,6 @@ abstract class _FrameProcessor {
         this.audioBuffer.shift()
       }
     }
-  }
-}
-
-export class RealTimeFrameProcessor
-  extends _FrameProcessor
-  implements RealTimeFrameProcessorInterface
-{
-  constructor(
-    public modelProcessFunc: (
-      frame: Float32Array
-    ) => Promise<SpeechProbabilities>,
-    public modelResetFunc: () => any,
-    public options: RealTimeFrameProcessorOptions
-  ) {
-    super(modelProcessFunc, modelResetFunc, options)
-  }
-
-  speechStartCallback(start?: number) {
-    this.options.signalSpeechStart()
-  }
-
-  speechEndCallback(audio: Float32Array, end?: number) {
-    this.options.signalSpeechEnd(audio)
-  }
-}
-
-export class SegmentFrameProcessor
-  extends _FrameProcessor
-  implements SegmentFrameProcessorInterface
-{
-  constructor(
-    public modelProcessFunc: (
-      frame: Float32Array
-    ) => Promise<SpeechProbabilities>,
-    public modelResetFunc: () => any,
-    public options: SegmentFrameProcessorOptions
-  ) {
-    super(modelProcessFunc, modelResetFunc, options)
-  }
-
-  speechStartCallback(start?: number) {
-    this.options.signalSpeechStart(start)
-  }
-
-  speechEndCallback(audio: Float32Array, end?: number) {
-    this.options.signalSpeechEnd(audio, end)
+    return { probs }
   }
 }

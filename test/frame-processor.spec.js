@@ -6,7 +6,7 @@ function getOptions(overrides) {
     onFrameProcessed: sinon.stub(),
     signalSpeechStart: sinon.stub(),
     signalSpeechEnd: sinon.stub(),
-    signalMisfire: sinon.stub(),
+    onVadMisfire: sinon.stub(),
     positiveSpeechThreshold: 0.6,
     negativeSpeechThreshold: 0.4,
     redemptionFrames: 4,
@@ -111,7 +111,7 @@ describe("frame processor callbacks", function () {
     )
   })
 
-  it("signalMisfire called", async function () {
+  it("onVadMisfire called", async function () {
     let [modelFunc, resetFunc, options] = getOptions()
     const frameProcessor = new vad.RealTimeFrameProcessor(modelFunc, resetFunc, options)
     frameProcessor.resume()
@@ -120,8 +120,8 @@ describe("frame processor callbacks", function () {
     returnNotSpeech(modelFunc, options.negativeSpeechThreshold)
     await callProcess(frameProcessor, options.redemptionFrames - 1)
     sinon.assert.notCalled(options.signalSpeechEnd)
-    sinon.assert.notCalled(options.signalMisfire)
+    sinon.assert.notCalled(options.onVadMisfire)
     await callProcess(frameProcessor, options.minSpeechFrames)
-    sinon.assert.calledOnce(options.signalMisfire)
+    sinon.assert.calledOnce(options.onVadMisfire)
   })
 })
