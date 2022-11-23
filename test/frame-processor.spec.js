@@ -1,12 +1,16 @@
 const sinon = require("sinon")
 const vad = require("../dist/index.node")
+const { assert } = require("chai")
 
+/**
+ * @param {vad.FrameProcessorOptions} overrides
+ */
 function getOptions(overrides) {
-  const opts = {
-    onFrameProcessed: sinon.stub(),
-    signalSpeechStart: sinon.stub(),
-    signalSpeechEnd: sinon.stub(),
-    onVadMisfire: sinon.stub(),
+  /**
+   * @type {vad.FrameProcessorOptions}
+   */
+  const options = {
+    frameSamples: 1536,
     positiveSpeechThreshold: 0.6,
     negativeSpeechThreshold: 0.4,
     redemptionFrames: 4,
@@ -16,8 +20,8 @@ function getOptions(overrides) {
   }
   let modelFunc = sinon.stub()
   modelFunc.callsFake(async () => modelFunc.returnValue)
-  returnSpeech(modelFunc, opts.positiveSpeechThreshold)
-  return [modelFunc, sinon.stub(), opts]
+  returnSpeech(modelFunc, options.positiveSpeechThreshold)
+  return { modelFunc, resetFunc: sinon.stub(), options }
 }
 
 function returnNotSpeech(modelFunc, negativeThreshold) {
@@ -30,17 +34,19 @@ function returnSpeech(modelFunc, positiveThreshold) {
   modelFunc.returnValue = { isSpeech, notSpeech: 1 - isSpeech }
 }
 
-async function callProcess(frameProcessor, n) {
-  for (const _ of Array(n).fill(0)) {
-    await frameProcessor.process(new Float32Array())
+function assertArrayEqual(arrX, arrY) {
+  for (let i = 0; i <= Math.max(arrY.length - 1, arrX.length - 1); i++) {
+    assert.strictEqual(arrY[i], arrX[i])
   }
 }
 
 describe("frame processor algorithm", function () {
-  it("preSpeechPadFrames", async function () {
-    let [modelFunc, resetFunc, options] = getOptions()
+  it("prepend `preSpeechPadFrames` of audio", async function () {
+    let msg, audio
+
+    let { modelFunc, resetFunc, options } = getOptions()
     returnNotSpeech(modelFunc, options.negativeSpeechThreshold)
-    const frameProcessor = new vad.RealTimeFrameProcessor(modelFunc, resetFunc, options)
+    const frameProcessor = new vad.FrameProcessor(modelFunc, resetFunc, options)
     frameProcessor.resume()
     const arr = [
       ...Array(
@@ -48,80 +54,84 @@ describe("frame processor algorithm", function () {
       ).keys(),
     ]
     for (const x of arr.slice(0, options.preSpeechPadFrames)) {
-      await frameProcessor.process(new Float32Array([x]))
+      ;({ msg, audio } = await frameProcessor.process(new Float32Array([x])))
+      assert.isNotOk(msg)
+      assert.isNotOk(audio)
     }
     returnSpeech(modelFunc, options.positiveSpeechThreshold)
-    await frameProcessor.process(new Float32Array([options.preSpeechPadFrames]))
+    ;({ msg, audio } = await frameProcessor.process(
+      new Float32Array([options.preSpeechPadFrames])
+    ))
+    assert.strictEqual(msg, vad.Message.SpeechStart)
+    assert.isNotOk(audio)
     returnNotSpeech(modelFunc, options.negativeSpeechThreshold)
     for (const x of arr.slice(
       options.preSpeechPadFrames + 1,
       options.preSpeechPadFrames + options.redemptionFrames
     )) {
-      await frameProcessor.process(new Float32Array([x]))
+      ;({ msg, audio } = await frameProcessor.process(new Float32Array([x])))
+      assert.isNotOk(msg)
+      assert.isNotOk(audio)
     }
-    sinon.assert.notCalled(options.signalSpeechEnd)
-    await frameProcessor.process(
+    ;({ msg, audio } = await frameProcessor.process(
       new Float32Array([options.preSpeechPadFrames + options.redemptionFrames])
-    )
-    sinon.assert.calledOnceWithExactly(
-      options.signalSpeechEnd,
-      new Float32Array(arr)
-    )
-  })
-})
-
-describe("frame processor callbacks", function () {
-  it("onFrameProcessed called", async function () {
-    let [modelFunc, resetFunc, options] = getOptions()
-    const frameProcessor = new vad.RealTimeFrameProcessor(modelFunc, resetFunc, options)
-    frameProcessor.resume()
-    await frameProcessor.process(new Float32Array())
-    sinon.assert.calledOnce(options.onFrameProcessed)
+    ))
+    assert.strictEqual(msg, vad.Message.SpeechEnd)
+    assertArrayEqual(audio, new Float32Array(arr))
   })
 
-  it("signalSpeechStart called", async function () {
-    let [modelFunc, resetFunc, options] = getOptions()
-    const frameProcessor = new vad.RealTimeFrameProcessor(modelFunc, resetFunc, options)
+  it("messages.SpeechStart sent", async function () {
+    let { modelFunc, resetFunc, options } = getOptions()
+    const frameProcessor = new vad.FrameProcessor(modelFunc, resetFunc, options)
     frameProcessor.resume()
-    await frameProcessor.process(new Float32Array())
-    sinon.assert.calledOnce(options.signalSpeechStart)
+    const { msg } = await frameProcessor.process(new Float32Array())
+    assert.strictEqual(msg, vad.Message.SpeechStart)
   })
 
-  it("signalSpeechEnd called", async function () {
-    let [modelFunc, resetFunc, options] = getOptions()
-    const frameProcessor = new vad.RealTimeFrameProcessor(modelFunc, resetFunc, options)
+  it("messages.SpeechEnd sent", async function () {
+    let msg, audio
+
+    let { modelFunc, resetFunc, options } = getOptions()
+    const frameProcessor = new vad.FrameProcessor(modelFunc, resetFunc, options)
     frameProcessor.resume()
-    const arr1 = [...Array(options.minSpeechFrames).keys()]
-    for (const i of arr1) {
-      await frameProcessor.process(new Float32Array([i]))
+    const arr = [
+      ...Array(options.minSpeechFrames + options.redemptionFrames).keys(),
+    ]
+    ;({ msg } = await frameProcessor.process([arr[0]]))
+    assert.strictEqual(msg, vad.Message.SpeechStart)
+    for (const i of arr.slice(1, options.minSpeechFrames)) {
+      ;({ msg } = await frameProcessor.process(new Float32Array([i])))
+      assert.isNotOk(msg)
     }
     returnNotSpeech(modelFunc, options.negativeSpeechThreshold)
-    const arr2 = Array.from(
-      { length: options.redemptionFrames - 1 },
-      (_, i) => i + options.minSpeechFrames
-    )
-    for (const i of arr2) {
-      await frameProcessor.process(new Float32Array([i]))
+    for (const i of arr.slice(options.minSpeechFrames, -1)) {
+      ;({ msg } = await frameProcessor.process(new Float32Array([i])))
+      assert.isNotOk(msg)
     }
-    sinon.assert.notCalled(options.signalSpeechEnd)
-    await frameProcessor.process(new Float32Array())
-    sinon.assert.calledOnceWithExactly(
-      options.signalSpeechEnd,
-      new Float32Array([...arr1, ...arr2])
-    )
+    ;({ msg, audio } = await frameProcessor.process(
+      new Float32Array([arr[arr.length - 1]])
+    ))
+    assert.strictEqual(msg, vad.Message.SpeechEnd)
+    assertArrayEqual(audio, arr)
   })
 
   it("onVadMisfire called", async function () {
-    let [modelFunc, resetFunc, options] = getOptions()
-    const frameProcessor = new vad.RealTimeFrameProcessor(modelFunc, resetFunc, options)
+    let msg, audio
+    let { modelFunc, resetFunc, options } = getOptions({
+      minSpeechFrames: 5,
+      redemptionFrames: 2,
+    })
+    const frameProcessor = new vad.FrameProcessor(modelFunc, resetFunc, options)
     frameProcessor.resume()
-    await frameProcessor.process(new Float32Array())
-    sinon.assert.calledOnce(options.signalSpeechStart)
+    ;({ msg } = await frameProcessor.process(new Float32Array([1])))
+    assert.strictEqual(msg, vad.Message.SpeechStart)
     returnNotSpeech(modelFunc, options.negativeSpeechThreshold)
-    await callProcess(frameProcessor, options.redemptionFrames - 1)
-    sinon.assert.notCalled(options.signalSpeechEnd)
-    sinon.assert.notCalled(options.onVadMisfire)
-    await callProcess(frameProcessor, options.minSpeechFrames)
-    sinon.assert.calledOnce(options.onVadMisfire)
+    for (let i = 1; i <= options.redemptionFrames - 1; i++) {
+      ;({ msg } = await frameProcessor.process(new Float32Array([1])))
+      assert.isNotOk(msg)
+    }
+    ;({ msg, audio } = await frameProcessor.process(new Float32Array([1])))
+    assert.strictEqual(msg, vad.Message.SpeechMisfire)
+    assert.isNotOk(audio)
   })
 })

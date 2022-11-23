@@ -7,3 +7,5 @@ export const utils = {
 export { AudioSegmentVAD } from "./audio-segment-vad"
 export type { SegmentVadOptions } from "./audio-segment-vad"
 export { FrameProcessor } from "./frame-processor"
+export type { FrameProcessorOptions } from "./frame-processor"
+export { Message } from "./messages"
