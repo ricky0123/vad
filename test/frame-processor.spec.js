@@ -36,8 +36,16 @@ function returnSpeech(modelFunc, positiveThreshold) {
 
 function assertArrayEqual(arrX, arrY) {
   for (let i = 0; i <= Math.max(arrY.length - 1, arrX.length - 1); i++) {
-    assert.strictEqual(arrY[i], arrX[i])
+    assert.strictEqual(arrY[i], arrX[i], `arrX ${arrX} != arrY ${arrY}`)
   }
+}
+
+function ints1To(end) {
+  let out = []
+  for (let i = 1; i <= end; i++) {
+    out.push(i)
+  }
+  return out
 }
 
 describe("frame processor algorithm", function () {
@@ -48,36 +56,38 @@ describe("frame processor algorithm", function () {
     returnNotSpeech(modelFunc, options.negativeSpeechThreshold)
     const frameProcessor = new vad.FrameProcessor(modelFunc, resetFunc, options)
     frameProcessor.resume()
-    const arr = [
-      ...Array(
-        options.preSpeechPadFrames + options.redemptionFrames + 1
-      ).keys(),
-    ]
-    for (const x of arr.slice(0, options.preSpeechPadFrames)) {
-      ;({ msg, audio } = await frameProcessor.process(new Float32Array([x])))
+    for (let i = 1; i <= options.preSpeechPadFrames; i++) {
+      ;({ msg, audio } = await frameProcessor.process(new Float32Array([i])))
       assert.isNotOk(msg)
       assert.isNotOk(audio)
     }
     returnSpeech(modelFunc, options.positiveSpeechThreshold)
-    ;({ msg, audio } = await frameProcessor.process(
-      new Float32Array([options.preSpeechPadFrames])
-    ))
+    ;({ msg, audio } = await frameProcessor.process(new Float32Array([1])))
     assert.strictEqual(msg, vad.Message.SpeechStart)
     assert.isNotOk(audio)
+    for (let i = 2; i <= options.minSpeechFrames; i++) {
+      ;({ msg, audio } = await frameProcessor.process(new Float32Array([i])))
+      assert.isNotOk(msg)
+      assert.isNotOk(audio)
+    }
     returnNotSpeech(modelFunc, options.negativeSpeechThreshold)
-    for (const x of arr.slice(
-      options.preSpeechPadFrames + 1,
-      options.preSpeechPadFrames + options.redemptionFrames
-    )) {
-      ;({ msg, audio } = await frameProcessor.process(new Float32Array([x])))
+    for (i = 1; i <= options.redemptionFrames - 1; i++) {
+      ;({ msg, audio } = await frameProcessor.process(new Float32Array([i])))
       assert.isNotOk(msg)
       assert.isNotOk(audio)
     }
     ;({ msg, audio } = await frameProcessor.process(
-      new Float32Array([options.preSpeechPadFrames + options.redemptionFrames])
+      new Float32Array([options.redemptionFrames])
     ))
     assert.strictEqual(msg, vad.Message.SpeechEnd)
-    assertArrayEqual(audio, new Float32Array(arr))
+    assertArrayEqual(
+      audio,
+      new Float32Array([
+        ...ints1To(options.preSpeechPadFrames),
+        ...ints1To(options.minSpeechFrames),
+        ...ints1To(options.redemptionFrames),
+      ])
+    )
   })
 
   it("messages.SpeechStart sent", async function () {
@@ -158,5 +168,70 @@ describe("frame processor algorithm", function () {
     ;({ msg, audio } = await frameProcessor.process(new Float32Array([1])))
     assert.strictEqual(msg, vad.Message.VadMisfire)
     assert.isNotOk(audio)
+  })
+
+  it("endSegment+vadMisfire with redemptionFrames > minSpeechFrames", async function () {
+    let msg, audio
+    let { modelFunc, resetFunc, options } = getOptions({
+      minSpeechFrames: 4,
+      redemptionFrames: 3,
+    })
+    const nSpeechFrames = 3
+    const frameProcessor = new vad.FrameProcessor(modelFunc, resetFunc, options)
+    frameProcessor.resume()
+    ;({ msg } = await frameProcessor.process(new Float32Array([1])))
+    assert.strictEqual(msg, vad.Message.SpeechStart)
+    for (let i = 1; i <= nSpeechFrames - 1; i++) {
+      ;({ msg } = await frameProcessor.process(new Float32Array([1])))
+      assert.isNotOk(msg)
+    }
+    returnNotSpeech(modelFunc, options.negativeSpeechThreshold)
+    for (let i = 1; i <= options.redemptionFrames - 1; i++) {
+      ;({ msg } = await frameProcessor.process(new Float32Array([1])))
+      assert.isNotOk(msg)
+    }
+    ;({ msg, audio } = frameProcessor.endSegment())
+    assert.strictEqual(msg, vad.Message.VadMisfire)
+    assert.isNotOk(audio)
+  })
+
+  it("endSegment+nothing", async function () {
+    let msg, audio
+    let { modelFunc, resetFunc, options } = getOptions()
+    const frameProcessor = new vad.FrameProcessor(modelFunc, resetFunc, options)
+    frameProcessor.resume()
+    returnNotSpeech(modelFunc, options.negativeSpeechThreshold)
+    ;({ msg } = await frameProcessor.process(new Float32Array([1])))
+    assert.isNotOk(msg)
+    ;({ msg, audio } = frameProcessor.endSegment())
+    assert.isNotOk(msg)
+    assert.isNotOk(audio)
+  })
+
+  it("endSegment+speechEnd with redemptionFrames > minSpeechFrames", async function () {
+    let msg, audio
+    let { modelFunc, resetFunc, options } = getOptions({
+      minSpeechFrames: 4,
+      redemptionFrames: 3,
+    })
+    const frameProcessor = new vad.FrameProcessor(modelFunc, resetFunc, options)
+    frameProcessor.resume()
+    ;({ msg } = await frameProcessor.process(new Float32Array([1])))
+    assert.strictEqual(msg, vad.Message.SpeechStart)
+    for (let i = 1; i <= options.minSpeechFrames - 1; i++) {
+      ;({ msg } = await frameProcessor.process(new Float32Array([1])))
+      assert.isNotOk(msg)
+    }
+    returnNotSpeech(modelFunc, options.negativeSpeechThreshold)
+    for (let i = 1; i <= options.redemptionFrames - 1; i++) {
+      ;({ msg } = await frameProcessor.process(new Float32Array([1])))
+      assert.isNotOk(msg)
+    }
+    ;({ msg, audio } = frameProcessor.endSegment())
+    assert.strictEqual(msg, vad.Message.SpeechEnd)
+    assertArrayEqual(
+      audio,
+      Array(options.minSpeechFrames + options.redemptionFrames - 1).fill(1)
+    )
   })
 })

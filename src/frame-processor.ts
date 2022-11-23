@@ -107,7 +107,7 @@ const concatArrays = (arrays: Float32Array[]): Float32Array => {
 
 export class FrameProcessor implements FrameProcessorInterface {
   speaking: boolean = false
-  audioBuffer: Float32Array[]
+  audioBuffer: { frame: Float32Array; isSpeech: boolean }[]
   redemptionCounter = 0
   active = false
 
@@ -141,11 +141,16 @@ export class FrameProcessor implements FrameProcessorInterface {
   endSegment = () => {
     const audioBuffer = this.audioBuffer
     this.audioBuffer = []
+    const speaking = this.speaking
     this.reset()
 
-    if (this.speaking) {
-      if (audioBuffer.length >= this.options.minSpeechFrames) {
-        const audio = concatArrays(audioBuffer)
+    if (speaking) {
+      if (
+        audioBuffer.reduce((acc, item) => {
+          return acc + +item.isSpeech
+        }, 0) >= this.options.minSpeechFrames
+      ) {
+        const audio = concatArrays(audioBuffer.map((item) => item.frame))
         return { msg: Message.SpeechEnd, audio }
       } else {
         return { msg: Message.VadMisfire }
@@ -159,7 +164,10 @@ export class FrameProcessor implements FrameProcessorInterface {
       return {}
     }
     const probs = await this.modelProcessFunc(frame)
-    this.audioBuffer.push(frame)
+    this.audioBuffer.push({
+      frame,
+      isSpeech: probs.isSpeech >= this.options.positiveSpeechThreshold,
+    })
 
     if (
       probs.isSpeech >= this.options.positiveSpeechThreshold &&
@@ -187,8 +195,12 @@ export class FrameProcessor implements FrameProcessorInterface {
       const audioBuffer = this.audioBuffer
       this.audioBuffer = []
 
-      if (audioBuffer.length >= this.options.minSpeechFrames) {
-        const audio = concatArrays(audioBuffer)
+      if (
+        audioBuffer.reduce((acc, item) => {
+          return acc + +item.isSpeech
+        }, 0) >= this.options.minSpeechFrames
+      ) {
+        const audio = concatArrays(audioBuffer.map((item) => item.frame))
         return { probs, msg: Message.SpeechEnd, audio }
       } else {
         return { probs, msg: Message.VadMisfire }
