@@ -6,21 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>File Processing with VAD</title>
     <script src="/onnxruntime-web/ort.js"></script>
-    <script src="index.js"></script>
+    <script src="index.browser.js"></script>
     <script type="module">
       const myvad = await vad.AudioSegmentVAD.new({
-        onFrameProcessed: (probs) => {
-          const element = document.getElementById("frameCounter")
-          const val = parseInt(element.textContent)
-          element.textContent = val + 1
-        },
-        onSpeechStart: () => {
-          const element = document.getElementById("speechStartCounter")
-          const val = parseInt(element.textContent)
-          element.textContent = val + 1
-        },
-        onSpeechEnd: (arr) => {
-          const element = document.getElementById("speechEndCounter")
+        onSpeechEnd: (data) => {
+          const element = document.getElementById("speechSegmentCounter")
           const val = parseInt(element.textContent)
           element.textContent = val + 1
         },
@@ -28,7 +18,9 @@
       window.submitFile = async (ev) => {
         ev.preventDefault()
         const audioFile = document.getElementById("file-upload").files[0]
-        const { audio, sampleRate } = await vad.audioFileToArray(audioFile)
+        const { audio, sampleRate } = await vad.utils.audioFileToArray(
+          audioFile
+        )
         await myvad.run(audio, sampleRate)
       }
     </script>
@@ -56,16 +48,12 @@
       <table>
         <thead>
           <tr>
-            <th>Frames</th>
-            <th>Speech starts</th>
-            <th>Speech ends</th>
+            <th>Speech Segments</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td id="frameCounter">0</td>
-            <td id="speechStartCounter">0</td>
-            <td id="speechEndCounter">0</td>
+            <td id="speechSegmentCounter">0</td>
           </tr>
         </tbody>
       </table>

@@ -1,7 +1,4 @@
-/*
-Some of the code in this file was copied from https://github.com/linto-ai/WebVoiceSDK
-Particularly: https://github.com/linto-ai/WebVoiceSDK/blob/master/src/webvoicesdk/workers/downsampler.blob.js
-*/
+import { log } from "./logging"
 
 interface ResamplerOptions {
   nativeSampleRate: number
@@ -13,13 +10,20 @@ export class Resampler {
   inputBuffer: Array<number>
 
   constructor(public options: ResamplerOptions) {
+    if (options.nativeSampleRate < 16000) {
+      log.error(
+        "nativeSampleRate is too low. Should have 16000 = targetSampleRate <= nativeSampleRate"
+      )
+    }
     this.inputBuffer = []
   }
 
   process = (audioFrame: Float32Array): Float32Array[] => {
     const outputFrames: Array<Float32Array> = []
 
-    this.inputBuffer.push(...audioFrame)
+    for (const sample of audioFrame) {
+      this.inputBuffer.push(sample)
+    }
 
     while (
       (this.inputBuffer.length * this.options.targetSampleRate) /

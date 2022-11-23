@@ -10,7 +10,7 @@
       href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css"
     />
     <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad/dist/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad/dist/index.browser.js"></script>
     <script type="module">
       import { interpolateInferno } from "https://cdn.skypack.dev/d3-scale-chromatic@3"
 
@@ -29,8 +29,8 @@
             document.body.style.setProperty("--indicator-color", indicatorColor)
           },
           onSpeechEnd: (arr) => {
-            const wavBuffer = vad.encodeWAV(arr)
-            const base64 = vad.arrayBufferToBase64(wavBuffer)
+            const wavBuffer = vad.utils.encodeWAV(arr)
+            const base64 = vad.utils.arrayBufferToBase64(wavBuffer)
             const url = `data:audio/wav;base64,${base64}`
             const el = addAudio(url)
             const speechList = document.getElementById("playlist")

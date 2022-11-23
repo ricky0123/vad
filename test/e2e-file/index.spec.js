@@ -1,6 +1,6 @@
 const { By, Builder, ThenableWebDriver } = require("selenium-webdriver")
 const { suite } = require("selenium-webdriver/testing")
-const { testServer } = require("../utils")
+const { testServer, audioSamplePath } = require("../utils")
 const chrome = require("selenium-webdriver/chrome")
 const chai = require("chai")
 const path = require("path")
@@ -35,11 +35,7 @@ suite(function (env) {
     })
 
     it("simple vad test", async function () {
-      const counters = [
-        "frameCounter",
-        "speechStartCounter",
-        "speechEndCounter",
-      ]
+      const counters = ["speechSegmentCounter"]
       await driver.get(url)
 
       await driver.manage().setTimeouts({ implicit: 500 })
@@ -51,7 +47,7 @@ suite(function (env) {
       )
 
       await new Promise((res) => setTimeout(res, 200))
-      driver.findElement(By.id("file-upload")).sendKeys(`${__dirname}/test.wav`)
+      driver.findElement(By.id("file-upload")).sendKeys(audioSamplePath)
       driver.findElement(By.id("file-submit")).submit()
 
       await new Promise((res) => setTimeout(res, 400))

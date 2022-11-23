@@ -1,4 +1,10 @@
-import * as ort from "onnxruntime-web"
+let ort
+// @ts-ignore
+if (IN_BROWSER) {
+  ort = require("onnxruntime-web")
+} else {
+  ort = require("onnxruntime-node")
+}
 
 // @ts-ignore
 import modelUrl from "../silero_vad.onnx"
@@ -15,10 +21,10 @@ export interface Model {
 }
 
 export class Silero {
-  _session: ort.InferenceSession
-  _h: ort.Tensor
-  _c: ort.Tensor
-  _sr: ort.Tensor
+  _session
+  _h
+  _c
+  _sr
 
   static new = async () => {
     const model = new Silero()
@@ -30,7 +36,6 @@ export class Silero {
     log.debug("initializing vad")
     const modelArrayBuffer = await fetch(modelUrl).then((r) => r.arrayBuffer())
     this._session = await ort.InferenceSession.create(modelArrayBuffer)
-    // @ts-ignore
     this._sr = new ort.Tensor("int64", [16000n])
     this.reset_state()
     log.debug("vad is initialized")
