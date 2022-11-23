@@ -1,6 +1,6 @@
 export enum Message {
-  AudioFrame,
-  SpeechStart,
-  SpeechMisfire,
-  SpeechEnd,
+  AudioFrame = "AUDIO_FRAME",
+  SpeechStart = "SPEECH_START",
+  VadMisfire = "VAD_MISFIRE",
+  SpeechEnd = "SPEECH_END",
 }

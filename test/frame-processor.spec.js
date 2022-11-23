@@ -131,7 +131,32 @@ describe("frame processor algorithm", function () {
       assert.isNotOk(msg)
     }
     ;({ msg, audio } = await frameProcessor.process(new Float32Array([1])))
-    assert.strictEqual(msg, vad.Message.SpeechMisfire)
+    assert.strictEqual(msg, vad.Message.VadMisfire)
+    assert.isNotOk(audio)
+  })
+
+  it("vad misfire with redemptionFrames > minSpeechFrames", async function () {
+    let msg, audio
+    let { modelFunc, resetFunc, options } = getOptions({
+      minSpeechFrames: 4,
+      redemptionFrames: 3,
+    })
+    const nSpeechFrames = 3
+    const frameProcessor = new vad.FrameProcessor(modelFunc, resetFunc, options)
+    frameProcessor.resume()
+    ;({ msg } = await frameProcessor.process(new Float32Array([1])))
+    assert.strictEqual(msg, vad.Message.SpeechStart)
+    for (let i = 1; i <= nSpeechFrames - 1; i++) {
+      ;({ msg } = await frameProcessor.process(new Float32Array([1])))
+      assert.isNotOk(msg)
+    }
+    returnNotSpeech(modelFunc, options.negativeSpeechThreshold)
+    for (let i = 1; i <= options.redemptionFrames - 1; i++) {
+      ;({ msg } = await frameProcessor.process(new Float32Array([1])))
+      assert.isNotOk(msg)
+    }
+    ;({ msg, audio } = await frameProcessor.process(new Float32Array([1])))
+    assert.strictEqual(msg, vad.Message.VadMisfire)
     assert.isNotOk(audio)
   })
 })

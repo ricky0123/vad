@@ -31,6 +31,6 @@ describe("audio segment api", function () {
     assert.equal(endpoints.length, 1)
     const [start, end] = endpoints[0]
     assert.isTrue(1900 <= start && start <= 2400)
-    assert.isTrue(3200 <= end && end <= 4200)
+    assert.isTrue(3600 <= end && end <= 4600, `Unexpected "end" value: ${end}`)
   })
 })

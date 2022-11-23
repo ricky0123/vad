@@ -148,7 +148,7 @@ export class FrameProcessor implements FrameProcessorInterface {
         const audio = concatArrays(audioBuffer)
         return { msg: Message.SpeechEnd, audio }
       } else {
-        return { msg: Message.SpeechMisfire }
+        return { msg: Message.VadMisfire }
       }
     }
     return {}
@@ -191,7 +191,7 @@ export class FrameProcessor implements FrameProcessorInterface {
         const audio = concatArrays(audioBuffer)
         return { probs, msg: Message.SpeechEnd, audio }
       } else {
-        return { probs, msg: Message.SpeechMisfire }
+        return { probs, msg: Message.VadMisfire }
       }
     }
 
