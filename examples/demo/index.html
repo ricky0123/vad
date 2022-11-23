@@ -29,8 +29,8 @@
             document.body.style.setProperty("--indicator-color", indicatorColor)
           },
           onSpeechEnd: (arr) => {
-            const wavBuffer = vad.encodeWAV(arr)
-            const base64 = vad.arrayBufferToBase64(wavBuffer)
+            const wavBuffer = vad.utils.encodeWAV(arr)
+            const base64 = vad.utils.arrayBufferToBase64(wavBuffer)
             const url = `data:audio/wav;base64,${base64}`
             const el = addAudio(url)
             const speechList = document.getElementById("playlist")

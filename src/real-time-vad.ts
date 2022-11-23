@@ -51,6 +51,7 @@ export class MicVAD {
   audioContext: AudioContext
   stream: MediaStream
   audioNodeVAD: AudioNodeVAD
+  listening = false
 
   static async new(options: Partial<RealTimeVadOptions> = {}) {
     const vad = new MicVAD({ ...defaultRealtimeVadOptions, ...options })
@@ -83,10 +84,12 @@ export class MicVAD {
 
   pause = () => {
     this.audioNodeVAD.pause()
+    this.listening = false
   }
 
   start = () => {
     this.audioNodeVAD.start()
+    this.listening = true
   }
 }
 
@@ -124,7 +127,9 @@ export class AudioNodeVAD {
 
   processFrame = async (frame: Float32Array) => {
     const { probs, msg, audio } = await this.frameProcessor.process(frame)
-    this.options.onFrameProcessed(probs)
+    if (probs !== undefined) {
+      this.options.onFrameProcessed(probs)
+    }
     switch (msg) {
       case Message.SpeechStart:
         this.options.onSpeechStart()
@@ -132,9 +137,11 @@ export class AudioNodeVAD {
 
       case Message.SpeechMisfire:
         this.options.onVadMisfire()
+        break
 
       case Message.SpeechEnd:
         this.options.onSpeechEnd(audio)
+        break
 
       default:
         break

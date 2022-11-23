@@ -48,7 +48,7 @@ export const defaultFrameProcessorOptions: FrameProcessorOptions = {
   positiveSpeechThreshold: 0.5,
   negativeSpeechThreshold: 0.5 - 0.15,
   preSpeechPadFrames: 1,
-  redemptionFrames: 2,
+  redemptionFrames: 8,
   frameSamples: 1536,
   minSpeechFrames: 3,
 }
@@ -82,7 +82,7 @@ export function validateOptions(options: FrameProcessorOptions) {
 export interface FrameProcessorInterface {
   resume: () => void
   process: (arr: Float32Array) => Promise<{
-    probs: SpeechProbabilities
+    probs?: SpeechProbabilities
     msg?: Message
     audio?: Float32Array
   }>
@@ -156,7 +156,7 @@ export class FrameProcessor implements FrameProcessorInterface {
 
   process = async (frame: Float32Array) => {
     if (!this.active) {
-      return
+      return {}
     }
     const probs = await this.modelProcessFunc(frame)
     this.audioBuffer.push(frame)

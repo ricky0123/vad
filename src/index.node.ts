@@ -2,6 +2,7 @@ import * as _utils from "./utils"
 export const utils = {
   minFramesForTargetMS: _utils.minFramesForTargetMS,
   arrayBufferToBase64: _utils.arrayBufferToBase64,
+  encodeWAV: _utils.encodeWAV,
 }
 
 export { AudioSegmentVAD } from "./audio-segment-vad"
