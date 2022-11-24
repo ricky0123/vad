@@ -16,7 +16,7 @@ const babelRule = {
   use: babelLoader,
 }
 
-const onnxRule = {
+const onnxInlineRule = {
   test: /\.onnx$/i,
   type: "asset/inline",
   generator: {
@@ -25,6 +25,11 @@ const onnxRule = {
       mimetype: "application/octet-stream",
     },
   },
+}
+
+const onnxResourceRule = {
+  test: /\.onnx$/i,
+  type: "asset/resource",
 }
 
 /**
@@ -61,7 +66,7 @@ const browserConfig = {
     extensions: [".ts", ".js", ".json", ".wasm"],
   },
   module: {
-    rules: [onnxRule, babelRule],
+    rules: [onnxResourceRule, babelRule],
   },
   plugins: [
     new webpack.DefinePlugin({
@@ -90,7 +95,7 @@ const nodeConfig = {
     extensions: [".ts", ".js", ".json", ".wasm"],
   },
   module: {
-    rules: [onnxRule, babelRule],
+    rules: [onnxInlineRule, babelRule],
   },
   plugins: [
     new webpack.DefinePlugin({
