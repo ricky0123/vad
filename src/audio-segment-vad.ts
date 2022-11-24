@@ -16,17 +16,10 @@ interface SegmentVadSpeechData {
   end: number
 }
 
-export interface SegmentVadOptions extends FrameProcessorOptions {
-  onSpeechEnd: (audio: SegmentVadSpeechData) => any
-}
+export interface SegmentVadOptions extends FrameProcessorOptions {}
 
 export const defaultSegmentVadOptions: SegmentVadOptions = {
   ...defaultFrameProcessorOptions,
-  onSpeechEnd: (audio) => {
-    log.debug(
-      `Speech detected from ${audio.start} to ${audio.end} milliseconds`
-    )
-  },
 }
 
 export class AudioSegmentVAD {
@@ -56,7 +49,10 @@ export class AudioSegmentVAD {
     this.frameProcessor.resume()
   }
 
-  run = async (inputAudio: Float32Array, sampleRate: number) => {
+  run = async function* (
+    inputAudio: Float32Array,
+    sampleRate: number
+  ): AsyncGenerator<SegmentVadSpeechData> {
     const resamplerOptions = {
       nativeSampleRate: sampleRate,
       targetSampleRate: 16000,
@@ -75,7 +71,7 @@ export class AudioSegmentVAD {
 
         case Message.SpeechEnd:
           end = ((i + 1) * this.options.frameSamples) / 16
-          this.options.onSpeechEnd({ audio, start, end })
+          yield { audio, start, end }
           break
 
         default:
@@ -84,11 +80,11 @@ export class AudioSegmentVAD {
     }
     const { msg, audio } = this.frameProcessor.endSegment()
     if (msg == Message.SpeechEnd) {
-      this.options.onSpeechEnd({
+      yield {
         audio,
         start,
         end: (frames.length * this.options.frameSamples) / 16,
-      })
+      }
     }
   }
 }

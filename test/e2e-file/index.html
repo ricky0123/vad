@@ -8,20 +8,18 @@
     <script src="/onnxruntime-web/ort.js"></script>
     <script src="index.browser.js"></script>
     <script type="module">
-      const myvad = await vad.AudioSegmentVAD.new({
-        onSpeechEnd: (data) => {
-          const element = document.getElementById("speechSegmentCounter")
-          const val = parseInt(element.textContent)
-          element.textContent = val + 1
-        },
-      })
+      const myvad = await vad.AudioSegmentVAD.new()
       window.submitFile = async (ev) => {
         ev.preventDefault()
         const audioFile = document.getElementById("file-upload").files[0]
         const { audio, sampleRate } = await vad.utils.audioFileToArray(
           audioFile
         )
-        await myvad.run(audio, sampleRate)
+        for await (const { start, end } of myvad.run(audio, sampleRate)) {
+          const element = document.getElementById("speechSegmentCounter")
+          const val = parseInt(element.textContent)
+          element.textContent = val + 1
+        }
       }
     </script>
   </head>
