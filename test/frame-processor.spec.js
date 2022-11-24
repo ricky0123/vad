@@ -125,7 +125,7 @@ describe("frame processor algorithm", function () {
     assertArrayEqual(audio, arr)
   })
 
-  it("onVadMisfire called", async function () {
+  it("onVADMisfire called", async function () {
     let msg, audio
     let { modelFunc, resetFunc, options } = getOptions({
       minSpeechFrames: 5,
@@ -141,7 +141,7 @@ describe("frame processor algorithm", function () {
       assert.isNotOk(msg)
     }
     ;({ msg, audio } = await frameProcessor.process(new Float32Array([1])))
-    assert.strictEqual(msg, vad.Message.VadMisfire)
+    assert.strictEqual(msg, vad.Message.VADMisfire)
     assert.isNotOk(audio)
   })
 
@@ -166,7 +166,7 @@ describe("frame processor algorithm", function () {
       assert.isNotOk(msg)
     }
     ;({ msg, audio } = await frameProcessor.process(new Float32Array([1])))
-    assert.strictEqual(msg, vad.Message.VadMisfire)
+    assert.strictEqual(msg, vad.Message.VADMisfire)
     assert.isNotOk(audio)
   })
 
@@ -191,7 +191,7 @@ describe("frame processor algorithm", function () {
       assert.isNotOk(msg)
     }
     ;({ msg, audio } = frameProcessor.endSegment())
-    assert.strictEqual(msg, vad.Message.VadMisfire)
+    assert.strictEqual(msg, vad.Message.VADMisfire)
     assert.isNotOk(audio)
   })
 

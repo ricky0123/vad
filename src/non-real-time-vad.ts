@@ -10,28 +10,28 @@ import { Message } from "./messages"
 import { Silero } from "./models"
 import { Resampler } from "./resampler"
 
-interface SegmentVadSpeechData {
+interface NonRealTimeVADSpeechData {
   audio: Float32Array
   start: number
   end: number
 }
 
-export interface SegmentVadOptions extends FrameProcessorOptions {}
+export interface NonRealTimeVADOptions extends FrameProcessorOptions {}
 
-export const defaultSegmentVadOptions: SegmentVadOptions = {
+export const defaultNonRealTimeVADOptions: NonRealTimeVADOptions = {
   ...defaultFrameProcessorOptions,
 }
 
-export class AudioSegmentVAD {
+export class NonRealTimeVAD {
   frameProcessor: FrameProcessorInterface
 
-  static async new(options: Partial<SegmentVadOptions> = {}) {
-    const vad = new AudioSegmentVAD({ ...defaultSegmentVadOptions, ...options })
+  static async new(options: Partial<NonRealTimeVADOptions> = {}) {
+    const vad = new NonRealTimeVAD({ ...defaultNonRealTimeVADOptions, ...options })
     await vad.init()
     return vad
   }
 
-  constructor(public options: SegmentVadOptions) {
+  constructor(public options: NonRealTimeVADOptions) {
     validateOptions(options)
   }
 
@@ -52,7 +52,7 @@ export class AudioSegmentVAD {
   run = async function* (
     inputAudio: Float32Array,
     sampleRate: number
-  ): AsyncGenerator<SegmentVadSpeechData> {
+  ): AsyncGenerator<NonRealTimeVADSpeechData> {
     const resamplerOptions = {
       nativeSampleRate: sampleRate,
       targetSampleRate: 16000,

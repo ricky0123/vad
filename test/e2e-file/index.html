@@ -8,7 +8,7 @@
     <script src="/onnxruntime-web/ort.js"></script>
     <script src="index.browser.js"></script>
     <script type="module">
-      const myvad = await vad.AudioSegmentVAD.new()
+      const myvad = await vad.NonRealTimeVAD.new()
       window.submitFile = async (ev) => {
         ev.preventDefault()
         const audioFile = document.getElementById("file-upload").files[0]

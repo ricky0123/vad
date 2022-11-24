@@ -5,8 +5,8 @@ export const utils = {
   encodeWAV: _utils.encodeWAV,
 }
 
-export { AudioSegmentVAD } from "./audio-segment-vad"
-export type { SegmentVadOptions } from "./audio-segment-vad"
+export { NonRealTimeVAD } from "./non-real-time-vad"
+export type { NonRealTimeVADOptions } from "./non-real-time-vad"
 export { FrameProcessor } from "./frame-processor"
 export type { FrameProcessorOptions } from "./frame-processor"
 export { Message } from "./messages"

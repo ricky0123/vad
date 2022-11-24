@@ -22,7 +22,7 @@ describe("audio segment api", function () {
     const [audioData, sampleRate] = loadAudio(audioSamplePath)
     // true endpoint are about 2.1 sec to 3.2 sec
     let endpoints = []
-    const myvad = await vad.AudioSegmentVAD.new()
+    const myvad = await vad.NonRealTimeVAD.new()
     for await (const { audio, start, end } of myvad.run(
       audioData,
       sampleRate

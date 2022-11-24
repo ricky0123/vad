@@ -39,7 +39,7 @@ export interface FrameProcessorOptions {
   preSpeechPadFrames: number
 
   /** If an audio segment is detected as a speech segment according to initial algorithm but it has fewer than `minSpeechFrames`,
-   * it will be discarded and `onVadMisfire` will be run instead of `onSpeechEnd`.
+   * it will be discarded and `onVADMisfire` will be run instead of `onSpeechEnd`.
    */
   minSpeechFrames: number
 }
@@ -153,7 +153,7 @@ export class FrameProcessor implements FrameProcessorInterface {
         const audio = concatArrays(audioBuffer.map((item) => item.frame))
         return { msg: Message.SpeechEnd, audio }
       } else {
-        return { msg: Message.VadMisfire }
+        return { msg: Message.VADMisfire }
       }
     }
     return {}
@@ -203,7 +203,7 @@ export class FrameProcessor implements FrameProcessorInterface {
         const audio = concatArrays(audioBuffer.map((item) => item.frame))
         return { probs, msg: Message.SpeechEnd, audio }
       } else {
-        return { probs, msg: Message.VadMisfire }
+        return { probs, msg: Message.VADMisfire }
       }
     }
 

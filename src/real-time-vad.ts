@@ -10,14 +10,14 @@ import { Silero, SpeechProbabilities } from "./models"
 
 declare var __webpack_public_path__: string
 
-interface RealTimeVadCallbacks {
+interface RealTimeVADCallbacks {
   /** Callback to run after each frame. The size (number of samples) of a frame is given by `frameSamples`. */
   onFrameProcessed: (probabilities: SpeechProbabilities) => any
 
   /** Callback to run if speech start was detected but `onSpeechEnd` will not be run because the
    * audio segment is smaller than `minSpeechFrames`.
    */
-  onVadMisfire: () => any
+  onVADMisfire: () => any
 
   /** Callback to run when speech start is detected */
   onSpeechStart: () => any
@@ -29,15 +29,15 @@ interface RealTimeVadCallbacks {
    */
   onSpeechEnd: (audio: Float32Array) => any
 }
-export interface RealTimeVadOptions
+export interface RealTimeVADOptions
   extends FrameProcessorOptions,
-    RealTimeVadCallbacks {}
+    RealTimeVADCallbacks {}
 
-export const defaultRealtimeVadOptions: RealTimeVadOptions = {
+export const defaultRealtimeVADOptions: RealTimeVADOptions = {
   ...defaultFrameProcessorOptions,
   onFrameProcessed: (probabilities) => {},
-  onVadMisfire: () => {
-    log.debug("Vad misfire")
+  onVADMisfire: () => {
+    log.debug("VAD misfire")
   },
   onSpeechStart: () => {
     log.debug("Detected speech start")
@@ -53,13 +53,13 @@ export class MicVAD {
   audioNodeVAD: AudioNodeVAD
   listening = false
 
-  static async new(options: Partial<RealTimeVadOptions> = {}) {
-    const vad = new MicVAD({ ...defaultRealtimeVadOptions, ...options })
+  static async new(options: Partial<RealTimeVADOptions> = {}) {
+    const vad = new MicVAD({ ...defaultRealtimeVADOptions, ...options })
     await vad.init()
     return vad
   }
 
-  constructor(public options: RealTimeVadOptions) {
+  constructor(public options: RealTimeVADOptions) {
     validateOptions(options)
   }
 
@@ -99,17 +99,17 @@ export class AudioNodeVAD {
 
   static async new(
     ctx: AudioContext,
-    options: Partial<RealTimeVadOptions> = {}
+    options: Partial<RealTimeVADOptions> = {}
   ) {
     const vad = new AudioNodeVAD(ctx, {
-      ...defaultRealtimeVadOptions,
+      ...defaultRealtimeVADOptions,
       ...options,
     })
     await vad.init()
     return vad
   }
 
-  constructor(public ctx: AudioContext, public options: RealTimeVadOptions) {
+  constructor(public ctx: AudioContext, public options: RealTimeVADOptions) {
     validateOptions(options)
   }
 
@@ -135,8 +135,8 @@ export class AudioNodeVAD {
         this.options.onSpeechStart()
         break
 
-      case Message.VadMisfire:
-        this.options.onVadMisfire()
+      case Message.VADMisfire:
+        this.options.onVADMisfire()
         break
 
       case Message.SpeechEnd:

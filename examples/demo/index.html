@@ -41,7 +41,7 @@
         window.myvad = myvad
 
         clearInterval(loading)
-        window.toggleVad = () => {
+        window.toggleVAD = () => {
           console.log("ran toggle vad")
           if (myvad.listening === false) {
             myvad.start()
@@ -59,7 +59,7 @@
             document.body.style.setProperty("--indicator-color", indicatorColor)
           }
         }
-        window.toggleVad()
+        window.toggleVAD()
         document.getElementById("toggle_vad_button").disabled = false
       } catch (e) {
         console.error("Failed:", e)
@@ -181,7 +181,7 @@
           <div id="indicator">
             VAD is <span style="color: red">LOADING</span>
           </div>
-          <button id="toggle_vad_button" onclick="window.toggleVad()" disabled>
+          <button id="toggle_vad_button" onclick="window.toggleVAD()" disabled>
             START VAD
           </button>
         </div>
