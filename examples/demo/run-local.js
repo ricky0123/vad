@@ -18,7 +18,10 @@ async function main() {
       encoding: "ascii",
     }
   )
-  index = index.replace("https://cdn.jsdelivr.net/npm/@ricky0123/vad/dist", "")
+  index = index.replace(
+    /https:\/\/cdn\.jsdelivr\.net\/npm\/@ricky0123\/vad@\d+\.\d+\.\d+\/dist/g,
+    ""
+  )
   app.get("/index.html", (req, res) => {
     res.set("Content-Type", "text/html")
     res.send(Buffer.from(index))
