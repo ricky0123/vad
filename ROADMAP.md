@@ -7,3 +7,4 @@
 1. create simple node demo
 1. Turn README into comprehensive documentation
 1. expand landing page with live demo and explanation of what this is
+1. cypress e2e
