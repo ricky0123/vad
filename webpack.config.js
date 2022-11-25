@@ -1,19 +1,17 @@
 const webpack = require("webpack")
 
-const babelLoader = {
-  loader: "babel-loader",
-  options: {
-    presets: [
-      ["@babel/preset-env", { targets: "defaults" }],
-      ["@babel/preset-typescript"],
-    ],
-  },
-}
-
 const babelRule = {
   test: /\.(js|ts)$/,
   exclude: /node_modules/,
-  use: babelLoader,
+  use: {
+    loader: "babel-loader",
+    options: {
+      presets: [
+        ["@babel/preset-env", { targets: "defaults" }],
+        ["@babel/preset-typescript"],
+      ],
+    },
+  },
 }
 
 const onnxInlineRule = {
