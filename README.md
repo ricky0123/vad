@@ -63,7 +63,15 @@ For a server-side node project, run
 npm i @ricky0123 onnxruntime-node
 ```
 
-Note that here we use `onnxruntime-node` instead of `onnxruntime-web`.
+and in your code
+
+```js
+const vad = require("@ricky0123/vad/dist/index.node")
+const myvad = await vad.NonRealTimeVad.new()
+// ...
+```
+
+Note the weird import and that we install `onnxruntime-node` instead of `onnxruntime-web`.
 
 ## Customizing the behavior of the VAD algorithm
 
