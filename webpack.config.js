@@ -4,8 +4,8 @@ const babelLoader = {
   loader: "babel-loader",
   options: {
     presets: [
-      ["@babel/preset-env"],
-      ["@babel/preset-typescript", { targets: "defaults" }],
+      ["@babel/preset-env", { targets: "defaults" }],
+      ["@babel/preset-typescript"],
     ],
   },
 }
