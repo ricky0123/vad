@@ -46,6 +46,10 @@ module.exports = {
           from: "node_modules/@ricky0123/vad/dist/*.worklet.js",
           to: "[name][ext]",
         },
+        {
+          from: "node_modules/@ricky0123/vad/dist/*.onnx",
+          to: "[name][ext]",
+        },
         { from: "node_modules/onnxruntime-web/dist/*.wasm", to: "[name][ext]" },
       ],
     }),
@@ -53,7 +57,7 @@ module.exports = {
 }
 ```
 
-With other bundlers, you will have to make sure that you are serving the onnxruntime-web wasm files and the worklet file from this project.
+With other bundlers, you will have to make sure that you are serving the onnxruntime-web wasm files and the worklet file and onnx file from this project.
 
 ### Node
 
