@@ -31,7 +31,9 @@ interface RealTimeVADCallbacks {
 }
 export interface RealTimeVADOptions
   extends FrameProcessorOptions,
-    RealTimeVADCallbacks {}
+    RealTimeVADCallbacks {
+      deviceId?: string
+    }
 
 export const defaultRealtimeVADOptions: RealTimeVADOptions = {
   ...defaultFrameProcessorOptions,
@@ -55,10 +57,9 @@ export class MicVAD {
 
   static async new(
     options: Partial<RealTimeVADOptions> = {},
-    deviceId?: string
   ) {
     const vad = new MicVAD({ ...defaultRealtimeVADOptions, ...options })
-    await vad.init(deviceId)
+    await vad.init(options.deviceId)
     return vad
   }
 
