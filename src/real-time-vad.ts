@@ -57,7 +57,7 @@ export class MicVAD {
 
   static async new(options: Partial<RealTimeVADOptions> = {}) {
     const vad = new MicVAD({ ...defaultRealtimeVADOptions, ...options })
-    await vad.init(options.deviceId)
+    await vad.init()
     return vad
   }
 
@@ -65,10 +65,10 @@ export class MicVAD {
     validateOptions(options)
   }
 
-  init = async (deviceId?: string) => {
+  init = async () => {
     this.stream = await navigator.mediaDevices.getUserMedia({
       audio: {
-        ...(deviceId && { deviceId }),
+        ...(this.options.deviceId && { deviceId: this.options.deviceId }),
         channelCount: 1,
         echoCancellation: true,
         autoGainControl: true,
