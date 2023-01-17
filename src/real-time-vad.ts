@@ -29,10 +29,20 @@ interface RealTimeVADCallbacks {
    */
   onSpeechEnd: (audio: Float32Array) => any
 }
+
+/**
+ * Customizable audio constraints for the VAD.
+ * Excludes certain constraints that are set for the user by default.
+ */
+type AudioConstraints = Omit<
+  MediaTrackConstraints,
+  "channelCount" | "echoCancellation" | "autoGainControl" | "noiseSuppression"
+>
+
 export interface RealTimeVADOptions
   extends FrameProcessorOptions,
     RealTimeVADCallbacks {
-  deviceId?: string
+  additionalAudioConstraints?: AudioConstraints
 }
 
 export const defaultRealtimeVADOptions: RealTimeVADOptions = {
@@ -68,7 +78,7 @@ export class MicVAD {
   init = async () => {
     this.stream = await navigator.mediaDevices.getUserMedia({
       audio: {
-        ...(this.options.deviceId && { deviceId: this.options.deviceId }),
+        ...this.options.additionalAudioConstraints,
         channelCount: 1,
         echoCancellation: true,
         autoGainControl: true,
