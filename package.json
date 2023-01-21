@@ -1,6 +1,6 @@
 {
   "name": "@ricky0123/vad",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Powerful, user-friendly voice activity detector (VAD) for the browser",
   "keywords": [
     "speech-recognition",
