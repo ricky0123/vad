@@ -152,7 +152,7 @@ myvad.start()
 It also takes 
 
 * the algorithm-modifying parameters defined [above](#customizing-the-behavior-of-the-vad-algorithm).
-* an parameter `additionalAudioConstraints` that is a [`MediaTrackConstraints`](https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackConstraints) object (minus a few keys that are set by default and not currently overridable). You can use this to, eg, force the use of a specific microphone by supplying the argument `additionalAudioConstraints: { exact: "...your.device.id" }`
+* a parameter `additionalAudioConstraints` that is a [`MediaTrackConstraints`](https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackConstraints) object (minus a few keys that are set by default and not currently overridable). You can use this to, eg, force the use of a specific microphone by supplying the argument `additionalAudioConstraints: {devicedId: {exact: "...your.device.id"}}`
 
 ## References
 
