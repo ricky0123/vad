@@ -15,8 +15,15 @@ To use the VAD via a script tag in the browser, include the following script tag
 <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad/dist/index.browser.js"></script>
 <script>
   async function main() {
-    const myvad = await vad.MicVAD.new()
-    ...
+    const myvad = await vad.MicVAD.new({
+      onSpeechStart: () => {
+        console.log("Speech start detected")
+      },
+      onSpeechEnd: (audio) => {
+        // do something with `audio` (Float32Array of audio samples at sample rate 16000)...
+      }
+    })
+    myvad.start()
   }
   main()
 </script>
@@ -24,13 +31,23 @@ To use the VAD via a script tag in the browser, include the following script tag
 
 ### Bundler
 
-To use the VAD in a webpack project, run
+To use the VAD in a frontend project managed by a bundler like Webpack, run
 
 ```sh
 npm i @ricky0123/vad onnxruntime-web
 ```
 
-and add the following to your webpack.config.js:
+and use the following import in your code:
+
+```typescript
+import { MicVAD } from "@ricky0123/vad"
+const myvad = await vad.MicVAD.new({
+  // ... callbacks/options
+})
+myvad.start()
+```
+
+If you are using Webpack 5, then add the following to your webpack.config.js:
 
 ```js
 const CopyPlugin = require("copy-webpack-plugin")
@@ -75,7 +92,7 @@ const myvad = await vad.NonRealTimeVad.new()
 // ...
 ```
 
-Note the weird import and that we install `onnxruntime-node` instead of `onnxruntime-web`.
+Note the weird import and that we install `onnxruntime-node` instead of `onnxruntime-web`. The weird import is temporary. In the future, I will break off the node api into a separate package.
 
 ## Customizing the behavior of the VAD algorithm
 
