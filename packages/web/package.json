@@ -13,6 +13,7 @@
   ],
   "homepage": "https://github.com/ricky0123/vad",
   "version": "0.0.2",
+  "license": "ISC",
   "main": "dist/index.js",
   "devDependencies": {
     "@ricky0123/vad-common": "*",
