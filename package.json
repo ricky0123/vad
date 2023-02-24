@@ -4,7 +4,8 @@
   "license": "ISC",
   "scripts": {
     "build": "nx run-many --target=build --skip-nx-cache",
-    "test": "nx run-many --target=test --skip-nx-cache"
+    "test": "nx run-many --target=test --skip-nx-cache",
+    "format": "prettier --write '{packages,examples}/**/*.ts'"
   },
   "private": false,
   "dependencies": {
