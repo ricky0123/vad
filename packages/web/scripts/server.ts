@@ -1,11 +1,12 @@
 import express from "express"
 import fs from "fs"
 
-export const server = async (files: { prefix: string, localPath: string }[]) => {
+export const server = async (
+  files: { prefix: string; localPath: string }[]
+) => {
   const app = express()
 
-  files.forEach(({prefix, localPath}) => {
-
+  files.forEach(({ prefix, localPath }) => {
     if (fs.lstatSync(localPath).isDirectory()) {
       app.use(prefix, express.static(localPath))
     } else {
