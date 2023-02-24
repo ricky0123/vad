@@ -1,7 +1,7 @@
 # Voice Activity Detection for the Browser
 
-[![npm version](https://badge.fury.io/js/@ricky0123%2Fvad-web.svg)](https://badge.fury.io/js/@ricky0123%2Fvad-web)
-[![npm version](https://badge.fury.io/js/@ricky0123%2Fvad-node.svg)](https://badge.fury.io/js/@ricky0123%2Fvad-node)
+![npm (scoped)](https://img.shields.io/npm/v/@ricky0123/vad-web?color=blue&label=%40ricky0123%2Fvad-web&style=plastic)
+![npm (scoped)](https://img.shields.io/npm/v/@ricky0123/vad-web?color=blue&label=%40ricky0123%2Fvad-node&style=plastic)
 
 > :warning: This project no longer publishes to the `@ricky0123/vad` npm package. Please use the new platform-specific packages: `@ricky0123/vad-web`, `@ricky0123/vad-node`, etc.
 
