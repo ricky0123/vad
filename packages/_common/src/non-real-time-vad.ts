@@ -10,7 +10,7 @@ import { Message } from "./messages"
 import { ModelFetcher, ONNXRuntimeAPI, Silero } from "./models"
 import { Resampler } from "./resampler"
 
-export type StaticThis<T> = { new (): T };
+export type StaticThis<T> = { new (): T }
 
 interface NonRealTimeVADSpeechData {
   audio: Float32Array
@@ -32,9 +32,11 @@ export class NonRealTimeVAD {
   configure() {
     // set org, modelFetcher
     throw new Error()
-  } 
+  }
 
-  static async new<T extends NonRealTimeVAD>(options: Partial<NonRealTimeVADOptions> = {}): Promise<T> {
+  static async new<T extends NonRealTimeVAD>(
+    options: Partial<NonRealTimeVADOptions> = {}
+  ): Promise<T> {
     const vad = new this({
       ...defaultNonRealTimeVADOptions,
       ...options,

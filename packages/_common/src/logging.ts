@@ -1,7 +1,7 @@
 export const LOG_PREFIX = "[VAD]"
 
 const levels = ["error", "debug", "warn"] as const
-type Level = typeof levels[number]
+type Level = (typeof levels)[number]
 type LogFn = (...args: any) => void
 type Logger = Record<Level, LogFn>
 
