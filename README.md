@@ -44,7 +44,7 @@ and use the following import in your code:
 
 ```typescript
 import { MicVAD } from "@ricky0123/vad-web"
-const myvad = await vad.MicVAD.new({
+const myvad = await MicVAD.new({
   // ... callbacks/options
 })
 myvad.start()
