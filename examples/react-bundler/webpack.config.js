@@ -1,7 +1,21 @@
 const CopyPlugin = require("copy-webpack-plugin")
 
 module.exports = {
-  entry: './src/index.jsx',
+  entry: "./src/index.jsx",
+  module: {
+    rules: [
+      {
+        test: /\.m?jsx?$/,
+        exclude: /node_modules/,
+        use: {
+          loader: "babel-loader",
+          options: {
+            presets: [["@babel/preset-react"]],
+          },
+        },
+      },
+    ],
+  },
   plugins: [
     new CopyPlugin({
       patterns: [

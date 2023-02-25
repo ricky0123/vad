@@ -29,7 +29,6 @@ module.exports = {
       root: "ort",
     },
     react: "react",
-    "@ricky0123/vad-web": "vad",
   },
   output: {
     clean: true,
