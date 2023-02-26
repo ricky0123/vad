@@ -29,3 +29,9 @@ export function useVAD(args: Partial<RealTimeVADOptions>) {
     startVAD,
   }
 }
+
+export { utils, FrameProcessor, Message } from "@ricky0123/vad-web"
+export type {
+  FrameProcessorOptions,
+  RealTimeVADOptions,
+} from "@ricky0123/vad-web"
