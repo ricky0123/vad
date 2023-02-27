@@ -20,7 +20,7 @@ function InactiveDemo({ startDemo }: { startDemo: () => void }) {
     <div className="flex justify-center mt-[100px]">
       <button
         onClick={startDemo}
-        className="text-xl text-black font-bold px-3 py-2 rounded bg-gradient-to-r from-pink-600 to-rose-600 hover:from-slate-800 hover:to-stone-800 hover:text-white"
+        className="text-xl text-black font-bold px-3 py-2 rounded bg-gradient-to-r from-pink-600 to-rose-600 hover:from-slate-800 hover:to-neutral-800 hover:text-white"
       >
         Start demo
       </button>

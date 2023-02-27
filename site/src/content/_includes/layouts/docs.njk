@@ -4,15 +4,19 @@ layout: layouts/base.njk
 
 <div class="flex">
   <div class="flex flex-col w-1/6 mr-4">
-    {% for doc in collections.docs %}
+    {% for doc in collections.sidebarItems %}
       {% if doc.url == page.url %}
+      <div>
         <a href="{{ doc.url }}" class="text-slate-400 hover:text-white mb-1">
-          -> {{ doc.data.title }}
+          -> {{ doc.data.sidebarLabel }}
         </a>
+      </div>
       {% else %}
+      <div>
         <a href="{{ doc.url }}" class="text-slate-400 hover:text-white mb-1">
-          {{ doc.data.title }}
+          {{ doc.data.sidebarLabel }}
         </a>
+      </div>
       {% endif %}
     {% endfor %}
   </div>

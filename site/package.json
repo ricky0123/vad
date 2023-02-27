@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "./scripts/build.sh",
-    "start": "./scripts/start.sh"
+    "start": "./scripts/start.sh",
+    "clean": "rm -rf dist"
   },
   "keywords": [],
   "author": "",

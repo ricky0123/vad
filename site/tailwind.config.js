@@ -4,19 +4,40 @@ module.exports = {
   theme: {
     extend: {
       typography: (theme) => {
-        const hTags = ["h1", "h2", "h3", "h4", "h5", "h6"]
-        const hTagOverrides = Object.fromEntries(
-          hTags.map((tag) => [
-            tag,
-            {
-              color: theme("colors.rose.600"),
-              fontWeight: "inherit",
-            },
-          ])
-        )
         return {
           DEFAULT: {
-            css: hTagOverrides,
+            css: {
+              h1: {
+                color: theme("colors.rose.600"),
+                fontWeight: "inherit",
+              },
+              h2: {
+                color: theme("colors.rose.600"),
+                fontWeight: "inherit",
+              },
+              h3: {
+                color: theme("colors.rose.600"),
+                fontWeight: "inherit",
+              },
+              h4: {
+                color: theme("colors.rose.600"),
+                fontWeight: "inherit",
+              },
+              h5: {
+                color: theme("colors.rose.600"),
+                fontWeight: "inherit",
+              },
+              h6: {
+                color: theme("colors.rose.600"),
+                fontWeight: "inherit",
+              },
+              "code::before": {
+                content: '""',
+              },
+              "code::after": {
+                content: '""',
+              },
+            },
           },
         }
       },
