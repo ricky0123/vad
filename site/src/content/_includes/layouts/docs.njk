@@ -1,0 +1,24 @@
+---
+layout: layouts/base.njk
+---
+
+<div class="flex">
+  <div class="flex flex-col w-1/6 mr-4">
+    {% for doc in collections.docs %}
+      {% if doc.url == page.url %}
+        <a href="{{ doc.url }}" class="text-slate-400 hover:text-white mb-1">
+          -> {{ doc.data.title }}
+        </a>
+      {% else %}
+        <a href="{{ doc.url }}" class="text-slate-400 hover:text-white mb-1">
+          {{ doc.data.title }}
+        </a>
+      {% endif %}
+    {% endfor %}
+  </div>
+  <div class="max-w-5xl">
+    <article class="prose prose-invert max-w-none pb-5">
+      {{ content | safe }}
+    </article>
+  </div>
+</div>

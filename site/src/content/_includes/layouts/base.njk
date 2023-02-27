@@ -1,0 +1,37 @@
+---
+title: VAD
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="/style.css" />
+    <link
+      href="https://unpkg.com/prismjs@1.20.0/themes/prism-okaidia.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-black text-slate-300">
+    <div class="w-3/4 mx-auto px-3">
+      <div class="flex flex-col">
+        <nav>
+          <div class="flex py-8 px-10 mb-2 mx-auto text-rose-600">
+            <div class="hover:text-white mr-7">
+              <a href="/"> home </a>
+            </div>
+            <div class="hover:text-white mr-7">
+              <a href="/docs/quick-start"> docs </a>
+            </div>
+            <div class="hover:text-white">
+              <a href="http://github.com/ricky0123/vad">github</a>
+            </div>
+          </div>
+        </nav>
+        {{ content | safe }}
+      </div>
+    </div>
+  </body>
+</html>
