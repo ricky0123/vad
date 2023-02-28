@@ -24,6 +24,7 @@
     "tailwindcss": "^3.2.7"
   },
   "dependencies": {
+    "@ricky0123/vad-react": "file:../packages/react",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   }

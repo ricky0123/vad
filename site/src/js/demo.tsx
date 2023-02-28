@@ -1,5 +1,6 @@
 import React, { useState } from "react"
 import { createRoot } from "react-dom/client"
+import { useVAD } from "@ricky0123/vad-react"
 
 const domContainer = document.querySelector("#demo") as Element
 const root = createRoot(domContainer)
@@ -29,5 +30,35 @@ function InactiveDemo({ startDemo }: { startDemo: () => void }) {
 }
 
 function ActiveDemo() {
-  return <div>demo</div>
+  const vad = useVAD({
+    startOnLoad: true,
+    onSpeechEnd: (audio) => {
+      console.log("speech ended")
+    },
+  })
+
+  if (vad.loading) {
+    return <Loading />
+  }
+
+  if (vad.errored) {
+    return <Errored />
+  }
+
+  return (
+    <div>
+      {vad.listening && "going"}
+      {!vad.listening && "paused"}
+      {vad.userSpeaking && "speaking"}
+      {!vad.userSpeaking && "not speaking"}
+    </div>
+  )
+}
+
+function Loading() {
+  return <div>Loading</div>
+}
+
+function Errored() {
+  return <div>Errored</div>
 }

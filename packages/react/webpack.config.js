@@ -29,6 +29,7 @@ module.exports = {
       root: "ort",
     },
     react: "react",
+    "react-dom": "reactDOM",
   },
   output: {
     clean: true,

@@ -8,7 +8,7 @@ layout: layouts/base.njk
       {% if doc.url == page.url %}
       <div>
         <a href="{{ doc.url }}" class="text-slate-400 hover:text-white mb-1">
-          -> {{ doc.data.sidebarLabel }}
+          <span class="text-blue-500">-></span> {{ doc.data.sidebarLabel }}
         </a>
       </div>
       {% else %}
