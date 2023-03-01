@@ -7,4 +7,6 @@ tags: docs
 
 # User guide for use in React projects
 
-Docs coming soon.
+See the [bundling](/docs/browser/#bundling) instructions.
+
+Only the [useVAD](/docs/API/#usevad) API is supported.
