@@ -1,3 +1,20 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.low-energy-spin {
+  animation: spin 2.5s linear forwards infinite;
+}
+
+.high-energy-spin {
+  animation: spin 0.6s linear forwards infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
