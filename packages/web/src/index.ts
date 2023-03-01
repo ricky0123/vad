@@ -21,5 +21,5 @@ export const utils = { audioFileToArray, ..._utils }
 
 export { FrameProcessor, Message, NonRealTimeVAD }
 export type { FrameProcessorOptions, NonRealTimeVADOptions }
-export { MicVAD, AudioNodeVAD } from "./real-time-vad"
+export { MicVAD, AudioNodeVAD, defaultRealTimeVADOptions } from "./real-time-vad"
 export type { RealTimeVADOptions } from "./real-time-vad"

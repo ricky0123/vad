@@ -48,7 +48,7 @@ export interface RealTimeVADOptions
   additionalAudioConstraints?: AudioConstraints
 }
 
-export const defaultRealtimeVADOptions: RealTimeVADOptions = {
+export const defaultRealTimeVADOptions: RealTimeVADOptions = {
   ...defaultFrameProcessorOptions,
   onFrameProcessed: (probabilities) => {},
   onVADMisfire: () => {
@@ -69,7 +69,7 @@ export class MicVAD {
   listening = false
 
   static async new(options: Partial<RealTimeVADOptions> = {}) {
-    const vad = new MicVAD({ ...defaultRealtimeVADOptions, ...options })
+    const vad = new MicVAD({ ...defaultRealTimeVADOptions, ...options })
     await vad.init()
     return vad
   }
@@ -118,7 +118,7 @@ export class AudioNodeVAD {
     options: Partial<RealTimeVADOptions> = {}
   ) {
     const vad = new AudioNodeVAD(ctx, {
-      ...defaultRealtimeVADOptions,
+      ...defaultRealTimeVADOptions,
       ...options,
     })
     await vad.init()

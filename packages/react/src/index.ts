@@ -1,37 +1,122 @@
-import { MicVAD, RealTimeVADOptions } from "@ricky0123/vad-web"
+import { MicVAD, defaultRealTimeVADOptions } from "@ricky0123/vad-web"
+import type { RealTimeVADOptions } from "@ricky0123/vad-web"
 import { useEffect, useState } from "react"
 
-export function useVAD(args: Partial<RealTimeVADOptions>) {
-  const [vadRunning, setVadRunning] = useState<boolean>(false)
+interface ReactOptions {
+  startOnLoad: boolean
+}
+
+export interface ReactRealTimeVADOptions
+  extends RealTimeVADOptions,
+    ReactOptions {}
+
+const defaultReactOptions = {
+  startOnLoad: true,
+}
+
+export const defaultReactRealTimeVADOptions = {
+  ...defaultRealTimeVADOptions,
+  ...defaultReactOptions,
+}
+
+const reactOptionKeys = Object.keys(defaultReactOptions)
+const vadOptionKeys = Object.keys(defaultRealTimeVADOptions)
+
+const _filter = (keys: string[], obj: any) => {
+  return keys.reduce((acc, key) => {
+    acc[key] = obj[key]
+    return acc
+  }, {})
+}
+
+function useOptions(
+  options: Partial<ReactRealTimeVADOptions>
+): [ReactOptions, RealTimeVADOptions] {
+  options = { ...defaultReactRealTimeVADOptions, ...options }
+  const reactOptions = _filter(reactOptionKeys, options) as ReactOptions
+  const vadOptions = _filter(vadOptionKeys, options) as RealTimeVADOptions
+  return [reactOptions, vadOptions]
+}
+
+export function useVAD(options: Partial<ReactRealTimeVADOptions>) {
+  const [reactOptions, vadOptions] = useOptions(options)
+  const [userSpeaking, setUserSpeaking] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [errored, setErrored] = useState<false | { message: string }>(false)
+  const [listening, setListening] = useState(false)
   const [vad, setVAD] = useState<MicVAD | null>(null)
-  const pauseVAD = () => {
-    vad?.pause()
-    setVadRunning(false)
-  }
-  const startVAD = () => {
-    vad?.start()
-    setVadRunning(true)
-  }
   useEffect(() => {
     ;(async () => {
-      const myvad = await MicVAD.new(args)
+      const userOnSpeechStart = vadOptions.onSpeechStart
+      vadOptions.onSpeechStart = () => {
+        setUserSpeaking(true)
+        userOnSpeechStart()
+      }
+      const userOnSpeechEnd = vadOptions.onSpeechEnd
+      vadOptions.onSpeechEnd = (audio) => {
+        setUserSpeaking(false)
+        userOnSpeechEnd(audio)
+      }
+      const userOnVADMisfire = vadOptions.onVADMisfire
+      vadOptions.onVADMisfire = () => {
+        setUserSpeaking(false)
+        userOnVADMisfire()
+      }
+
+      let myvad: MicVAD | null
+      try {
+        myvad = await MicVAD.new(vadOptions)
+      } catch (e) {
+        setLoading(false)
+        if (e instanceof Error) {
+          setErrored({ message: e.message })
+        } else {
+          setErrored({ message: e })
+        }
+        return
+      }
       setVAD(myvad)
-      myvad.start()
-      setVadRunning(true)
+      setLoading(false)
+      if (reactOptions.startOnLoad) {
+        myvad?.start()
+        setListening(true)
+      }
     })()
     return function cleanUp() {
-      pauseVAD()
+      if (!loading && !errored) {
+        vad?.pause()
+        setListening(false)
+      }
     }
   }, [])
+  const pause = () => {
+    if (!loading && !errored) {
+      vad?.pause()
+      setListening(false)
+    }
+  }
+  const start = () => {
+    if (!loading && !errored) {
+      vad?.start()
+      setListening(true)
+    }
+  }
+  const toggle = () => {
+    if (listening) {
+      pause()
+    } else {
+      start()
+    }
+  }
   return {
-    vadRunning,
-    pauseVAD,
-    startVAD,
+    listening,
+    errored,
+    loading,
+    userSpeaking,
+    pause,
+    start,
+    toggle,
   }
 }
 
-export { utils, FrameProcessor, Message } from "@ricky0123/vad-web"
-export type {
-  FrameProcessorOptions,
-  RealTimeVADOptions,
-} from "@ricky0123/vad-web"
+export { utils } from "@ricky0123/vad-web"

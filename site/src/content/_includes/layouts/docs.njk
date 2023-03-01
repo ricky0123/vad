@@ -1,0 +1,27 @@
+---
+layout: layouts/base.njk
+---
+
+<div class="flex">
+  <div class="flex flex-col w-1/6 mr-4 mt-1 leading-relaxed">
+    {% for doc in collections.sidebarItems %} {% if doc.url == page.url %}
+    <div>
+      <span class="text-blue-500">-></span>
+      <a href="{{ doc.url }}" class="text-slate-400 hover:text-white mb-1">
+        {{ doc.data.sidebarLabel }}
+      </a>
+    </div>
+    {% else %}
+    <div>
+      <a href="{{ doc.url }}" class="text-slate-400 hover:text-white mb-1">
+        {{ doc.data.sidebarLabel }}
+      </a>
+    </div>
+    {% endif %} {% endfor %}
+  </div>
+  <div class="max-w-5xl">
+    <article class="prose prose-invert max-w-none pb-5">
+      {{ content | safe }}
+    </article>
+  </div>
+</div>

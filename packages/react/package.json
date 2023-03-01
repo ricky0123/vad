@@ -13,7 +13,7 @@
     "react"
   ],
   "homepage": "https://github.com/ricky0123/vad",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "license": "ISC",
   "main": "dist/index.js",
   "devDependencies": {
@@ -31,7 +31,8 @@
     "onnxruntime-web": "^1.14.0"
   },
   "peerDependencies": {
-    "react": "^18"
+    "react": "^18",
+    "react-dom": "^18"
   },
   "scripts": {
     "build": "webpack && tsc -p tsconfig.types.json"
