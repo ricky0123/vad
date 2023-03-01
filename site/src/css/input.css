@@ -18,3 +18,25 @@
     transform: rotate(360deg);
   }
 }
+
+#playlist li:first-child {
+  max-height: 0;
+  opacity: 0;
+  animation: grow 1s ease-in-out forwards;
+}
+
+@keyframes grow {
+  to {
+    max-height: 100px;
+    opacity: 1;
+  }
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}

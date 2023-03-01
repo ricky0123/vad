@@ -101,6 +101,13 @@ export function useVAD(options: Partial<ReactRealTimeVADOptions>) {
       setListening(true)
     }
   }
+  const toggle = () => {
+    if (listening) {
+      pause()
+    } else {
+      start()
+    }
+  }
   return {
     listening,
     errored,
@@ -108,6 +115,7 @@ export function useVAD(options: Partial<ReactRealTimeVADOptions>) {
     userSpeaking,
     pause,
     start,
+    toggle,
   }
 }
 
