@@ -65,7 +65,7 @@ export function useVAD(options: Partial<ReactRealTimeVADOptions>) {
 
       let myvad: MicVAD | null
       try {
-        myvad = await MicVAD.new({})
+        myvad = await MicVAD.new(vadOptions)
       } catch (e) {
         setLoading(false)
         if (e instanceof Error) {
