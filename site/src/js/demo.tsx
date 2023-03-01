@@ -11,7 +11,7 @@ function Demo() {
   const [demoStarted, setDemoStarted] = useState(false)
 
   return (
-    <div className="mt-[100px] flex justify-center">
+    <div className="mt-[80px] flex justify-center">
       {!demoStarted && (
         <StartDemoButton startDemo={() => setDemoStarted(true)} />
       )}
