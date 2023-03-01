@@ -40,3 +40,14 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none; /* Safari and Chrome */
 }
+
+h1 a,
+h2 a,
+h3 a,
+h4 a,
+h5 a,
+h6 a {
+  text-decoration: none !important;
+  font-weight: inherit !important;
+  color: inherit !important;
+}

@@ -7,7 +7,7 @@ tags: docs
 
 # User guide for browser use
 
-The `@ricky0123/vad-web` aims to provide an accurate, user-friendly voice activity detector (VAD) that runs in the browser.
+The `@ricky0123/vad-web` package aims to provide an accurate, user-friendly voice activity detector (VAD) that runs in the browser.
 
 ## Script tags quick start
 
@@ -86,4 +86,4 @@ Note that you will need to install `copy-webpack-plugin` in order for the webpac
 
 ## API
 
-`@ricky0123/vad-web` supports
+`@ricky0123/vad-web` supports the [`MicVAD`](/docs/API/#micvad) and [`NonRealTimeVAD`](/docs/API/#nonrealtimevad) APIs.

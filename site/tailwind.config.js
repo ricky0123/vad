@@ -9,33 +9,42 @@ module.exports = {
             css: {
               h1: {
                 color: theme("colors.rose.600"),
-                fontWeight: "inherit",
               },
               h2: {
                 color: theme("colors.rose.600"),
-                fontWeight: "inherit",
+                "::before": {
+                  content: '"# "',
+                },
               },
               h3: {
                 color: theme("colors.rose.600"),
-                fontWeight: "inherit",
+                "::before": {
+                  content: '"## "',
+                },
               },
               h4: {
                 color: theme("colors.rose.600"),
-                fontWeight: "inherit",
+                "::before": {
+                  content: '"### "',
+                },
               },
               h5: {
                 color: theme("colors.rose.600"),
-                fontWeight: "inherit",
+                "::before": {
+                  content: '"#### "',
+                },
               },
               h6: {
                 color: theme("colors.rose.600"),
-                fontWeight: "inherit",
+                "::before": {
+                  content: '"##### "',
+                },
               },
-              "code::before": {
-                content: '""',
+              "blockquote p:first-of-type::before": {
+                content: "",
               },
-              "code::after": {
-                content: '""',
+              "blockquote p:last-of-type::after": {
+                content: "",
               },
             },
           },
