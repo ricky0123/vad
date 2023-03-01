@@ -6,3 +6,5 @@ tags: docs
 ---
 
 # User guide for use in React projects
+
+Docs coming soon.
