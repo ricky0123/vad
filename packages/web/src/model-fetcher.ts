@@ -1,5 +1,5 @@
 // @ts-ignore
-const modelUrl = "/silero_vad.onnx"
+const modelUrl = new URL("silero_vad.onnx", import.meta.url)
 export const modelFetcher = async () => {
   return await fetch(modelUrl).then((r) => r.arrayBuffer())
 }
