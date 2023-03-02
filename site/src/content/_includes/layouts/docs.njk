@@ -2,8 +2,8 @@
 layout: layouts/base.njk
 ---
 
-<div>
-  <div class="pb-5 leading-relaxed px-5 md:w-[768px] md:mx-auto">
+<div class="xl:flex xl:w-[1280px] xl:mx-auto">
+  <div class="pb-5 leading-relaxed px-5 md:w-[768px] md:mx-auto xl:w-[256px] xl:mx-0 xl:pl-[100px]">
     {% for doc in collections.sidebarItems %}
       {% if doc.url == page.url %}
       <div>
@@ -24,4 +24,5 @@ layout: layouts/base.njk
   <article class="prose prose-invert max-w-none pb-5 px-5 md:w-[768px] md:mx-auto">
     {{ content | safe }}
   </article>
+  <div class="xl:w-[256px]" />
 </div>
