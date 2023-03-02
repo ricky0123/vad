@@ -5,6 +5,24 @@ const bundleConfig = ({ mode, suffix }) => {
   return {
     mode,
     entry: { index: "./dist/index.js" },
+    module: {
+      rules: [
+        {
+          test: /\.onnx/,
+          type: "asset/resource",
+          generator: {
+            filename: "[name][ext]",
+          },
+        },
+        {
+          test: /vad\.\worklet\.bundle\..*\.js/,
+          type: "asset/resource",
+          generator: {
+            filename: "[name][ext]",
+          },
+        },
+      ],
+    },
     externals: {
       "onnxruntime-web": {
         commonjs: "onnxruntime-web",

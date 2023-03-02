@@ -1,4 +1,4 @@
-import { useVAD, utils } from "@ricky0123/vad-react"
+import { useMicVAD, utils } from "@ricky0123/vad-react"
 import React, { useState } from "react"
 import { createRoot } from "react-dom/client"
 import { motion } from "framer-motion"
@@ -35,7 +35,7 @@ function StartDemoButton({ startDemo }: { startDemo: () => void }) {
 
 function ActiveDemo() {
   const [audioList, setAudioList] = useState<string[]>([])
-  const vad = useVAD({
+  const vad = useMicVAD({
     startOnLoad: true,
     onSpeechEnd: (audio) => {
       const wavBuffer = utils.encodeWAV(audio)
@@ -44,14 +44,6 @@ function ActiveDemo() {
       setAudioList((old) => [url, ...old])
     },
   })
-
-  const toggleVAD = () => {
-    if (vad.listening) {
-      vad.pause()
-    } else {
-      vad.start()
-    }
-  }
 
   if (vad.loading) {
     return <Loading />
@@ -72,7 +64,7 @@ function ActiveDemo() {
         <div className="w-24 flex justify-start items-center">
           <div
             className="underline underline-offset-2 text-rose-600 grow"
-            onClick={toggleVAD}
+            onClick={vad.toggle}
           >
             {vad.listening && "Pause"}
             {!vad.listening && "Start"}
