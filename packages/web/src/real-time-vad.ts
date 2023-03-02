@@ -11,8 +11,6 @@ import {
 } from "./_common"
 import { modelFetcher } from "./model-fetcher"
 
-declare var __webpack_public_path__: string
-
 interface RealTimeVADCallbacks {
   /** Callback to run after each frame. The size (number of samples) of a frame is given by `frameSamples`. */
   onFrameProcessed: (probabilities: SpeechProbabilities) => any
@@ -46,6 +44,7 @@ export interface RealTimeVADOptions
   extends FrameProcessorOptions,
     RealTimeVADCallbacks {
   additionalAudioConstraints?: AudioConstraints
+  workletURL: string
 }
 
 export const defaultRealTimeVADOptions: RealTimeVADOptions = {
@@ -60,6 +59,7 @@ export const defaultRealTimeVADOptions: RealTimeVADOptions = {
   onSpeechEnd: () => {
     log.debug("Detected speech end")
   },
+  workletURL: "vad.worklet.bundle.min.js",
 }
 
 export class MicVAD {
@@ -171,8 +171,7 @@ export class AudioNodeVAD {
   }
 
   init = async () => {
-    const workletPath = __webpack_public_path__ + `vad.worklet.js`
-    await this.ctx.audioWorklet.addModule(workletPath)
+    await this.ctx.audioWorklet.addModule(this.options.workletURL)
     const vadNode = new AudioWorkletNode(this.ctx, "vad-helper-worklet", {
       processorOptions: {
         frameSamples: this.options.frameSamples,

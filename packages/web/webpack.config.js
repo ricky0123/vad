@@ -1,39 +1,37 @@
-/**
- *
- * @param {any[]} configs
- */
-function addClean(configs) {
-  return configs.map((cfg, i) => {
-    if (i == 0) {
-      cfg.output.clean = true
-    }
-    return cfg
-  })
-}
+let configs = []
 
-const workletConfig = {
-  mode: "production",
-  entry: { worklet: "./dist/worklet.js" },
-  output: {
-    filename: "vad.[name].js",
-  },
-}
+let inputs = [
+  { mode: "production", suffix: "min" },
+  { mode: "development", suffix: "dev" },
+]
 
-const browserConfig = {
-  mode: "production",
-  entry: { index: "./dist/index.js" },
-  externals: {
-    "onnxruntime-web": {
-      commonjs: "onnxruntime-web",
-      commonjs2: "onnxruntime-web",
-      amd: "onnxruntime-web",
-      root: "ort",
+inputs.forEach(({ mode, suffix }) => {
+  const workletConfig = {
+    mode,
+    entry: { worklet: "./dist/worklet.js" },
+    output: {
+      filename: `vad.worklet.bundle.${suffix}.js`,
     },
-  },
-  output: {
-    filename: "bundle.min.js",
-    library: { name: "vad", type: "umd" },
-  },
-}
+  }
 
-module.exports = addClean([workletConfig, browserConfig])
+  const browserConfig = {
+    mode,
+    entry: { index: "./dist/index.js" },
+    externals: {
+      "onnxruntime-web": {
+        commonjs: "onnxruntime-web",
+        commonjs2: "onnxruntime-web",
+        amd: "onnxruntime-web",
+        root: "ort",
+      },
+    },
+    output: {
+      filename: `bundle.${suffix}.js`,
+      library: { name: "vad", type: "umd" },
+    },
+  }
+
+  configs.push(workletConfig, browserConfig)
+})
+
+module.exports = configs
