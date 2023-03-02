@@ -12,7 +12,7 @@
     "offline-speech-recognition"
   ],
   "homepage": "https://github.com/ricky0123/vad",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "license": "ISC",
   "main": "dist/index.js",
   "devDependencies": {
@@ -29,6 +29,7 @@
   "scripts": {
     "build": "./scripts/build.sh",
     "test-server": "tsc -p ./scripts/tsconfig.json && node ./scripts/test-server.js",
-    "test": "playwright test"
+    "test": "playwright test",
+    "clean": "rm -rf dist"
   }
 }

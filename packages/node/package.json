@@ -12,12 +12,13 @@
     "offline-speech-recognition"
   ],
   "homepage": "https://github.com/ricky0123/vad",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "license": "ISC",
   "main": "dist/index.js",
   "scripts": {
     "build": "./scripts/build.sh",
-    "test": "mocha test/*.spec.js"
+    "test": "mocha test/*.spec.js",
+    "clean": "rm -rf dist"
   },
   "devDependencies": {
     "@ricky0123/vad-common": "*",
