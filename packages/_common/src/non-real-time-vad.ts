@@ -5,12 +5,9 @@ import {
   FrameProcessorOptions,
   validateOptions,
 } from "./frame-processor"
-import { log } from "./logging"
 import { Message } from "./messages"
 import { ModelFetcher, ONNXRuntimeAPI, Silero } from "./models"
 import { Resampler } from "./resampler"
-
-export type StaticThis<T> = { new (): T }
 
 interface NonRealTimeVADSpeechData {
   audio: Float32Array
@@ -24,20 +21,15 @@ export const defaultNonRealTimeVADOptions: NonRealTimeVADOptions = {
   ...defaultFrameProcessorOptions,
 }
 
-export class NonRealTimeVAD {
-  ort: ONNXRuntimeAPI
-  modelFetcher: ModelFetcher
-  frameProcessor: FrameProcessorInterface
+export class PlatformAgnosticNonRealTimeVAD {
+  frameProcessor: FrameProcessorInterface | undefined
 
-  configure() {
-    // set org, modelFetcher
-    throw new Error()
-  }
-
-  static async new<T extends NonRealTimeVAD>(
+  static async _new<T extends PlatformAgnosticNonRealTimeVAD>(
+    modelFetcher: ModelFetcher,
+    ort: ONNXRuntimeAPI,
     options: Partial<NonRealTimeVADOptions> = {}
   ): Promise<T> {
-    const vad = new this({
+    const vad = new this(modelFetcher, ort, {
       ...defaultNonRealTimeVADOptions,
       ...options,
     })
@@ -45,9 +37,12 @@ export class NonRealTimeVAD {
     return vad as T
   }
 
-  constructor(public options: NonRealTimeVADOptions) {
+  constructor(
+    public modelFetcher: ModelFetcher,
+    public ort: ONNXRuntimeAPI,
+    public options: NonRealTimeVADOptions
+  ) {
     validateOptions(options)
-    this.configure()
   }
 
   init = async () => {
@@ -86,6 +81,7 @@ export class NonRealTimeVAD {
 
         case Message.SpeechEnd:
           end = ((i + 1) * this.options.frameSamples) / 16
+          // @ts-ignore
           yield { audio, start, end }
           break
 
@@ -97,6 +93,7 @@ export class NonRealTimeVAD {
     if (msg == Message.SpeechEnd) {
       yield {
         audio,
+        // @ts-ignore
         start,
         end: (frames.length * this.options.frameSamples) / 16,
       }

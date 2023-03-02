@@ -57,7 +57,7 @@ export class Silero {
     const out = await this._session.run(inputs)
     this._h = out.hn
     this._c = out.cn
-    const [isSpeech] = out.output.data as Float32Array
+    const [isSpeech] = out.output.data
     const notSpeech = 1 - isSpeech
     return { notSpeech, isSpeech }
   }

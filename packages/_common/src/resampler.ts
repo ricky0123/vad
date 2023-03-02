@@ -44,7 +44,7 @@ export class Resampler {
               this.options.targetSampleRate
           )
         ) {
-          sum += this.inputBuffer[inputIndex]
+          sum += this.inputBuffer[inputIndex] as number
           num++
           inputIndex++
         }

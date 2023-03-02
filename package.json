@@ -1,20 +1,16 @@
 {
-  "name": "@ricky0123/vad",
   "version": "0.0.0",
   "license": "ISC",
   "scripts": {
-    "build": "nx run-many --target=build --skip-nx-cache",
-    "test": "nx run-many --target=test --skip-nx-cache",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
     "format": "prettier --write '{packages,examples}/**/*.ts'"
   },
-  "private": false,
-  "dependencies": {
-    "typescript": "^4.9.5"
-  },
+  "private": true,
   "devDependencies": {
+    "typescript": "^4.9.5",
     "esbuild": "^0.17.10",
     "http-server": "^14.1.1",
-    "nx": "15.7.1",
     "prettier": "^2.6.2"
   },
   "workspaces": [

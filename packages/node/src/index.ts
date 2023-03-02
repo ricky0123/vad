@@ -1,23 +1,26 @@
-// @ts-ignore
-import modelUrl from "../../../silero_vad.onnx"
 import * as ort from "onnxruntime-node"
 import {
   utils,
-  NonRealTimeVAD as _NonRealTimeVAD,
+  PlatformAgnosticNonRealTimeVAD,
   FrameProcessor,
   FrameProcessorOptions,
   Message,
   NonRealTimeVADOptions,
-} from "@ricky0123/vad-common"
+} from "./_common"
+import * as fs from "fs/promises"
 
-const modelFetcher = async () => {
-  return await fetch(modelUrl).then((r) => r.arrayBuffer())
+const modelPath = `${__dirname}/silero_vad.onnx`
+
+const modelFetcher = async (): Promise<ArrayBuffer> => {
+  const contents = await fs.readFile(modelPath)
+  return contents.buffer
 }
 
-class NonRealTimeVAD extends _NonRealTimeVAD {
-  configure() {
-    this.ort = ort
-    this.modelFetcher = modelFetcher
+class NonRealTimeVAD extends PlatformAgnosticNonRealTimeVAD {
+  static async new(
+    options: Partial<NonRealTimeVADOptions> = {}
+  ): Promise<NonRealTimeVAD> {
+    return await this._new(modelFetcher, ort, options)
   }
 }
 

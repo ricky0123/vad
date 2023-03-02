@@ -11,7 +11,7 @@ export function arrayBufferToBase64(buffer: ArrayBuffer) {
   var bytes = new Uint8Array(buffer)
   var len = bytes.byteLength
   for (var i = 0; i < len; i++) {
-    binary += String.fromCharCode(bytes[i])
+    binary += String.fromCharCode(bytes[i] as number)
   }
   return btoa(binary)
 }
@@ -72,8 +72,8 @@ function interleave(inputL: Float32Array, inputR: Float32Array) {
   var index = 0
   var inputIndex = 0
   while (index < length) {
-    result[index++] = inputL[inputIndex]
-    result[index++] = inputR[inputIndex]
+    result[index++] = inputL[inputIndex] as number
+    result[index++] = inputR[inputIndex] as number
     inputIndex++
   }
   return result
@@ -81,7 +81,7 @@ function interleave(inputL: Float32Array, inputR: Float32Array) {
 
 function writeFloat32(output: DataView, offset: number, input: Float32Array) {
   for (var i = 0; i < input.length; i++, offset += 4) {
-    output.setFloat32(offset, input[i], true)
+    output.setFloat32(offset, input[i] as number, true)
   }
 }
 
@@ -91,7 +91,7 @@ function floatTo16BitPCM(
   input: Float32Array
 ) {
   for (var i = 0; i < input.length; i++, offset += 2) {
-    var s = Math.max(-1, Math.min(1, input[i]))
+    var s = Math.max(-1, Math.min(1, input[i] as number))
     output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true)
   }
 }

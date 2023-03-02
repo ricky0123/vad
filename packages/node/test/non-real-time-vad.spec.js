@@ -1,4 +1,3 @@
-const sinon = require("sinon")
 const vad = require("@ricky0123/vad-node")
 const wav = require("wav-decoder")
 const { audioSamplePath } = require("./utils")
