@@ -1,29 +1,14 @@
 import React, { useReducer, useState } from "react"
 import ReactDOM from "react-dom"
-import { useVAD, utils } from "@ricky0123/vad-react"
+import { useMicVAD, utils } from "@ricky0123/vad-react"
 
 const domContainer = document.querySelector("#root")
 const root = ReactDOM.createRoot(domContainer)
 root.render(<App />)
 
-function reduceProbability(state, isSpeechProb) {
-  if (isSpeechProb > 0.5) {
-    return true
-  } else {
-    return false
-  }
-}
-
 function App() {
-  const [isSpeaking, dispatchProbability] = useReducer(reduceProbability, false)
-  /**
-   * @type {[string[], React.Dispatch<React.SetStateAction<string[]>>]}
-   */
   const [audioList, setAudioList] = useState([])
-  const { vadRunning, pauseVAD, startVAD } = useVAD({
-    onFrameProcessed: (probs) => {
-      dispatchProbability(probs.isSpeech)
-    },
+  const vad = useMicVAD({
     onSpeechEnd: (audio) => {
       const wavBuffer = utils.encodeWAV(audio)
       const base64 = utils.arrayBufferToBase64(wavBuffer)
@@ -34,8 +19,8 @@ function App() {
   return (
     <div>
       <h1>Demo of @ricky0123/vad-react</h1>
-      {isSpeaking && <UserSpeaking />}
-      {!isSpeaking && <UserNotSpeaking />}
+      {vad.userSpeaking && <UserSpeaking />}
+      {!vad.userSpeaking && <UserNotSpeaking />}
       <ol id="playlist">
         {audioList.map((audioURL) => {
           return (
