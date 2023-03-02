@@ -1,9 +1,0 @@
-{
-  "name": "@ricky0123/vad-common",
-  "version": "0.0.0",
-  "main": "dist/index.js",
-  "devDependencies": {},
-  "scripts": {
-    "build": "tsc"
-  }
-}

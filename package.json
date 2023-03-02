@@ -1,21 +1,24 @@
 {
-  "name": "@ricky0123/vad",
   "version": "0.0.0",
   "license": "ISC",
   "scripts": {
-    "build": "nx run-many --target=build --skip-nx-cache",
-    "test": "nx run-many --target=test --skip-nx-cache",
-    "format": "prettier --write '{packages,examples}/**/*.ts'"
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present",
+    "format": "prettier --write '{packages,examples}/**/*.ts'",
+    "build-test-site": "./test-site/build.sh",
+    "serve-test-site": "http-server ./test-site/dist"
   },
-  "private": false,
-  "dependencies": {
-    "typescript": "^4.9.5"
-  },
+  "private": true,
   "devDependencies": {
+    "@types/react": "^18.0.28",
+    "@types/react-dom": "^18.0.11",
     "esbuild": "^0.17.10",
     "http-server": "^14.1.1",
-    "nx": "15.7.1",
-    "prettier": "^2.6.2"
+    "prettier": "^2.6.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^4.9.5"
   },
   "workspaces": [
     "packages/*"

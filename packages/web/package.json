@@ -12,18 +12,13 @@
     "offline-speech-recognition"
   ],
   "homepage": "https://github.com/ricky0123/vad",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "license": "ISC",
   "main": "dist/index.js",
   "devDependencies": {
-    "@ricky0123/vad-common": "*",
-    "@babel/core": "^7.20.12",
-    "@babel/preset-env": "^7.20.2",
-    "@babel/preset-typescript": "^7.18.6",
     "@playwright/test": "^1.30.0",
     "@types/audioworklet": "^0.0.36",
     "@types/express": "^4.17.17",
-    "babel-loader": "^9.1.2",
     "express": "^4.18.2",
     "webpack": "^5.75.0",
     "webpack-cli": "^5.0.1"
@@ -32,8 +27,9 @@
     "onnxruntime-web": "^1.14.0"
   },
   "scripts": {
-    "build": "webpack && tsc -p tsconfig.types.json",
-    "test-server": "tsc -p tsconfig.scripts.json && node ./scripts/test-server.js",
-    "test": "playwright test"
+    "build": "./scripts/build.sh",
+    "test-server": "tsc -p ./scripts/tsconfig.json && node ./scripts/test-server.js",
+    "test": "playwright test",
+    "clean": "rm -rf dist"
   }
 }

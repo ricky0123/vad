@@ -8,10 +8,8 @@ import {
   FrameProcessor,
   FrameProcessorOptions,
   validateOptions,
-} from "@ricky0123/vad-common"
+} from "./_common"
 import { modelFetcher } from "./model-fetcher"
-
-declare var __webpack_public_path__: string
 
 interface RealTimeVADCallbacks {
   /** Callback to run after each frame. The size (number of samples) of a frame is given by `frameSamples`. */
@@ -46,6 +44,7 @@ export interface RealTimeVADOptions
   extends FrameProcessorOptions,
     RealTimeVADCallbacks {
   additionalAudioConstraints?: AudioConstraints
+  workletURL: string
 }
 
 export const defaultRealTimeVADOptions: RealTimeVADOptions = {
@@ -60,11 +59,15 @@ export const defaultRealTimeVADOptions: RealTimeVADOptions = {
   onSpeechEnd: () => {
     log.debug("Detected speech end")
   },
+  workletURL: "vad.worklet.bundle.min.js",
 }
 
 export class MicVAD {
+  // @ts-ignore
   audioContext: AudioContext
+  // @ts-ignore
   stream: MediaStream
+  // @ts-ignore
   audioNodeVAD: AudioNodeVAD
   listening = false
 
@@ -110,7 +113,9 @@ export class MicVAD {
 }
 
 export class AudioNodeVAD {
+  // @ts-ignore
   frameProcessor: FrameProcessor
+  // @ts-ignore
   entryNode: AudioNode
 
   static async new(
@@ -156,6 +161,7 @@ export class AudioNodeVAD {
         break
 
       case Message.SpeechEnd:
+        // @ts-ignore
         this.options.onSpeechEnd(audio)
         break
 
@@ -165,8 +171,7 @@ export class AudioNodeVAD {
   }
 
   init = async () => {
-    const workletPath = __webpack_public_path__ + `vad.worklet.js`
-    await this.ctx.audioWorklet.addModule(workletPath)
+    await this.ctx.audioWorklet.addModule(this.options.workletURL)
     const vadNode = new AudioWorkletNode(this.ctx, "vad-helper-worklet", {
       processorOptions: {
         frameSamples: this.options.frameSamples,

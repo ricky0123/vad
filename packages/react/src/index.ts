@@ -1,17 +1,19 @@
 import { MicVAD, defaultRealTimeVADOptions } from "@ricky0123/vad-web"
 import type { RealTimeVADOptions } from "@ricky0123/vad-web"
-import { useEffect, useState } from "react"
+import { useEffect, useReducer, useState } from "react"
 
 interface ReactOptions {
   startOnLoad: boolean
+  userSpeakingThreshold: number
 }
 
 export interface ReactRealTimeVADOptions
   extends RealTimeVADOptions,
     ReactOptions {}
 
-const defaultReactOptions = {
+const defaultReactOptions: ReactOptions = {
   startOnLoad: true,
+  userSpeakingThreshold: 0.6,
 }
 
 export const defaultReactRealTimeVADOptions = {
@@ -38,29 +40,23 @@ function useOptions(
   return [reactOptions, vadOptions]
 }
 
-export function useVAD(options: Partial<ReactRealTimeVADOptions>) {
+export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
   const [reactOptions, vadOptions] = useOptions(options)
-  const [userSpeaking, setUserSpeaking] = useState(false)
+  const [userSpeaking, updateUserSpeaking] = useReducer(
+    (state: boolean, isSpeechProbability: number) =>
+      isSpeechProbability > reactOptions.userSpeakingThreshold,
+    false
+  )
   const [loading, setLoading] = useState(true)
   const [errored, setErrored] = useState<false | { message: string }>(false)
   const [listening, setListening] = useState(false)
   const [vad, setVAD] = useState<MicVAD | null>(null)
   useEffect(() => {
     ;(async () => {
-      const userOnSpeechStart = vadOptions.onSpeechStart
-      vadOptions.onSpeechStart = () => {
-        setUserSpeaking(true)
-        userOnSpeechStart()
-      }
-      const userOnSpeechEnd = vadOptions.onSpeechEnd
-      vadOptions.onSpeechEnd = (audio) => {
-        setUserSpeaking(false)
-        userOnSpeechEnd(audio)
-      }
-      const userOnVADMisfire = vadOptions.onVADMisfire
-      vadOptions.onVADMisfire = () => {
-        setUserSpeaking(false)
-        userOnVADMisfire()
+      const userOnFrameProcessed = vadOptions.onFrameProcessed
+      vadOptions.onFrameProcessed = (probs) => {
+        updateUserSpeaking(probs.isSpeech)
+        userOnFrameProcessed(probs)
       }
 
       let myvad: MicVAD | null
@@ -71,6 +67,7 @@ export function useVAD(options: Partial<ReactRealTimeVADOptions>) {
         if (e instanceof Error) {
           setErrored({ message: e.message })
         } else {
+          // @ts-ignore
           setErrored({ message: e })
         }
         return

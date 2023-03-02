@@ -1,10 +1,11 @@
-import { Message, log, Resampler } from "@ricky0123/vad-common"
+import { Message, log, Resampler } from "./_common"
 
 interface WorkletOptions {
   frameSamples: number
 }
 
 class Processor extends AudioWorkletProcessor {
+  // @ts-ignore
   resampler: Resampler
   _initialized = false
   options: WorkletOptions
@@ -29,6 +30,7 @@ class Processor extends AudioWorkletProcessor {
     outputs: Float32Array[][],
     parameters: Record<string, Float32Array>
   ): boolean {
+    // @ts-ignore
     const arr = inputs[0][0]
 
     if (this._initialized && arr instanceof Float32Array) {

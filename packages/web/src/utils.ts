@@ -33,6 +33,7 @@ export async function audioFileToArray(audioFileData: Blob) {
   let out = new Float32Array(_audioBuffer.length)
   for (let i = 0; i < _audioBuffer.length; i++) {
     for (let j = 0; j < _audioBuffer.numberOfChannels; j++) {
+      // @ts-ignore
       out[i] += _audioBuffer.getChannelData(j)[i]
     }
   }

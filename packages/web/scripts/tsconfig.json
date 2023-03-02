@@ -12,6 +12,5 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "noEmit": false
-  },
-  "include": ["scripts"]
+  }
 }
