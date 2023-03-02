@@ -2,4 +2,5 @@
 
 npx tsc
 cp ../../silero_vad.onnx dist
-npx webpack
+npx webpack -c webpack.config.worklet.js
+npx webpack -c webpack.config.index.js

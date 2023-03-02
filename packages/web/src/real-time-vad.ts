@@ -47,6 +47,11 @@ export interface RealTimeVADOptions
   workletURL: string
 }
 
+const _getWorkletURL = () => {
+  const url = new URL("vad.worklet.bundle.min.js", import.meta.url)
+  return url.toString()
+}
+
 export const defaultRealTimeVADOptions: RealTimeVADOptions = {
   ...defaultFrameProcessorOptions,
   onFrameProcessed: (probabilities) => {},
@@ -59,7 +64,7 @@ export const defaultRealTimeVADOptions: RealTimeVADOptions = {
   onSpeechEnd: () => {
     log.debug("Detected speech end")
   },
-  workletURL: "vad.worklet.bundle.min.js",
+  workletURL: _getWorkletURL(),
 }
 
 export class MicVAD {
