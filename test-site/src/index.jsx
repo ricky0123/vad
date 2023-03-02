@@ -1,17 +1,18 @@
 import React from "react"
 import { createRoot } from "react-dom/client"
-import { useVAD } from "@ricky0123/vad-react"
+import { useMicVAD } from "@ricky0123/vad-react"
 
 console.log("demo of @ricky0123/vad-react")
 
 const container = document.getElementById("root")
 
 console.log("found container", container)
+// @ts-ignore
 const root = createRoot(container)
 root.render(<App />)
 
 function App() {
-  const vad = useVAD({})
+  const vad = useMicVAD({})
   return (
     <div>
       <h6>Listening</h6>

@@ -38,7 +38,7 @@ function useOptions(
   return [reactOptions, vadOptions]
 }
 
-export function useVAD(options: Partial<ReactRealTimeVADOptions>) {
+export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
   const [reactOptions, vadOptions] = useOptions(options)
   const [userSpeaking, setUserSpeaking] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -71,6 +71,7 @@ export function useVAD(options: Partial<ReactRealTimeVADOptions>) {
         if (e instanceof Error) {
           setErrored({ message: e.message })
         } else {
+          // @ts-ignore
           setErrored({ message: e })
         }
         return

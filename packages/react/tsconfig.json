@@ -1,19 +1,10 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
-    "moduleResolution": "node",
-    "allowJs": true,
-    "pretty": true,
-    "isolatedModules": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "skipLibCheck": true,
-    "resolveJsonModule": true,
-    "noEmit": true,
-    "outDir": "dist",
-    "declaration": true,
-    "declarationMap": true
+    "noEmit": false,
+    "module": "ES2020" /* Specify what module code is generated. */,
+    "rootDir": "./src" /* Specify the root folder within your source files. */,
+    "outDir": "./dist" /* Specify an output folder for all emitted files. */
   },
+  "extends": "../../tsconfig.json",
   "include": ["src"]
 }
