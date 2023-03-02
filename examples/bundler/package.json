@@ -11,7 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@ricky0123/vad-web": "^0.0.4",
+    "@ricky0123/vad-web": "^0.0.5",
     "d3-scale-chromatic": "^3.0.0"
   },
   "devDependencies": {
