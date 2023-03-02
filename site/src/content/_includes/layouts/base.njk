@@ -15,23 +15,19 @@ title: VAD
     />
   </head>
   <body class="bg-black text-slate-300">
-    <div class="w-3/4 mx-auto px-3">
-      <div class="flex flex-col">
-        <nav>
-          <div class="flex py-8 px-10 mb-2 mx-auto text-rose-600">
-            <div class="hover:text-white mr-7">
-              <a href="/"> home </a>
-            </div>
-            <div class="hover:text-white mr-7">
-              <a href="/docs"> docs </a>
-            </div>
-            <div class="hover:text-white">
-              <a href="http://github.com/ricky0123/vad">github</a>
-            </div>
-          </div>
-        </nav>
-        {{ content | safe }}
-      </div>
+    <div class="md:w-[768px] md:mx-auto">
+      <nav class="flex pt-8 pb-5 text-rose-600 px-5">
+        <div class="hover:text-white mr-4">
+          <a href="/">home</a>
+        </div>
+        <div class="hover:text-white mr-4">
+          <a href="/docs">docs</a>
+        </div>
+        <div class="hover:text-white">
+          <a href="http://github.com/ricky0123/vad">github</a>
+        </div>
+      </nav>
     </div>
+    {{ content | safe }}
   </body>
 </html>

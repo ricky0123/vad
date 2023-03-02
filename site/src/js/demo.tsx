@@ -11,7 +11,7 @@ function Demo() {
   const [demoStarted, setDemoStarted] = useState(false)
 
   return (
-    <div className="mt-[80px] flex justify-center">
+    <div className="pb-2">
       {!demoStarted && (
         <StartDemoButton startDemo={() => setDemoStarted(true)} />
       )}
@@ -22,12 +22,14 @@ function Demo() {
 
 function StartDemoButton({ startDemo }: { startDemo: () => void }) {
   return (
-    <button
-      onClick={startDemo}
-      className="text-xl text-black font-bold px-3 py-2 rounded bg-gradient-to-r from-pink-600 to-rose-600 hover:from-slate-800 hover:to-neutral-800 hover:text-white"
-    >
-      Start demo
-    </button>
+    <div className="flex justify-center">
+      <button
+        onClick={startDemo}
+        className="text-xl text-black font-bold px-3 py-2 rounded bg-gradient-to-r from-pink-600 to-rose-600 hover:from-slate-800 hover:to-neutral-800 hover:text-white"
+      >
+        Start demo
+      </button>
+    </div>
   )
 }
 
@@ -61,22 +63,29 @@ function ActiveDemo() {
 
   return (
     <div className="flex flex-col items-center">
-      <div className="flex justify-evenly">
-        {vad.listening && vad.userSpeaking && <HighEnergyCube />}
-        {vad.listening && !vad.userSpeaking && <LowEnergyCube />}
-        {!vad.listening && <DeactivatedCube />}
-        <button
-          className="ml-[20px] underline underline-offset-2 text-rose-600"
-          onClick={toggleVAD}
-        >
-          {vad.listening && "Pause"}
-          {!vad.listening && "Start"}
-        </button>
+      <div className="w-48 flex items-center">
+        <div className="w-24 flex justify-center items-center">
+          {vad.listening && vad.userSpeaking && <HighEnergyCube />}
+          {vad.listening && !vad.userSpeaking && <LowEnergyCube />}
+          {!vad.listening && <DeactivatedCube />}
+        </div>
+        <div className="w-24 flex justify-start items-center">
+          <div
+            className="underline underline-offset-2 text-rose-600 grow"
+            onClick={toggleVAD}
+          >
+            {vad.listening && "Pause"}
+            {!vad.listening && "Start"}
+          </div>
+        </div>
       </div>
-      <ol id="playlist" className="max-h-[400px] overflow-y-auto no-scrollbar">
+      <ol
+        id="playlist"
+        className="self-center pl-0 max-h-[400px] overflow-y-auto no-scrollbar list-none"
+      >
         {audioList.map((audioURL) => {
           return (
-            <li className="flex justify-center" key={audioItemKey(audioURL)}>
+            <li className="pl-0" key={audioItemKey(audioURL)}>
               <audio src={audioURL} controls />
             </li>
           )
@@ -89,11 +98,19 @@ function ActiveDemo() {
 const audioItemKey = (audioURL: string) => audioURL.substring(-10)
 
 function Loading() {
-  return <div className="animate-pulse text-2xl text-rose-600">Loading</div>
+  return (
+    <div className="flex justify-center">
+      <div className="animate-pulse text-2xl text-rose-600">Loading</div>
+    </div>
+  )
 }
 
 function Errored() {
-  return <div className="text-2xl text-rose-600">Something went wrong</div>
+  return (
+    <div className="flex justify-center">
+      <div className="text-2xl text-rose-600">Something went wrong</div>
+    </div>
+  )
 }
 
 const DeactivatedCube = () => {
