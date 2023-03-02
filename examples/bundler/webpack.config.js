@@ -5,7 +5,7 @@ module.exports = {
     new CopyPlugin({
       patterns: [
         {
-          from: "node_modules/@ricky0123/vad-web/dist/*.worklet.js",
+          from: "node_modules/@ricky0123/vad-web/dist/vad.worklet.bundle.min.js",
           to: "[name][ext]",
         },
         {

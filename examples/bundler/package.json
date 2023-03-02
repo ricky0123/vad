@@ -11,9 +11,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@ricky0123/vad-web": "^0.0.2",
-    "d3-scale-chromatic": "^3.0.0",
-    "onnxruntime-web": "^1.14.0"
+    "@ricky0123/vad-web": "^0.0.4",
+    "d3-scale-chromatic": "^3.0.0"
   },
   "devDependencies": {
     "copy-webpack-plugin": "^11.0.0",
