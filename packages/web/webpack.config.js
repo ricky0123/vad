@@ -1,22 +1,3 @@
-const babelRule = {
-  test: /\.(js|ts)$/,
-  exclude: /node_modules/,
-  use: {
-    loader: "babel-loader",
-    options: {
-      presets: [
-        ["@babel/preset-env", { targets: "defaults" }],
-        ["@babel/preset-typescript"],
-      ],
-    },
-  },
-}
-
-const onnxResourceRule = {
-  test: /\.onnx$/i,
-  type: "asset/resource",
-}
-
 /**
  *
  * @param {any[]} configs
@@ -32,13 +13,7 @@ function addClean(configs) {
 
 const workletConfig = {
   mode: "production",
-  entry: { worklet: "./src/worklet.ts" },
-  resolve: {
-    extensions: [".ts", ".js", ".json", ".wasm"],
-  },
-  module: {
-    rules: [babelRule],
-  },
+  entry: { worklet: "./dist/worklet.js" },
   output: {
     filename: "vad.[name].js",
   },
@@ -46,13 +21,7 @@ const workletConfig = {
 
 const browserConfig = {
   mode: "production",
-  entry: { index: "./src/index.ts" },
-  resolve: {
-    extensions: [".ts", ".js", ".json", ".wasm"],
-  },
-  module: {
-    rules: [onnxResourceRule, babelRule],
-  },
+  entry: { index: "./dist/index.js" },
   externals: {
     "onnxruntime-web": {
       commonjs: "onnxruntime-web",
@@ -62,7 +31,7 @@ const browserConfig = {
     },
   },
   output: {
-    filename: "index.js",
+    filename: "bundle.min.js",
     library: { name: "vad", type: "umd" },
   },
 }

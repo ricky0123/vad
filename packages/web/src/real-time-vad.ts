@@ -8,7 +8,7 @@ import {
   FrameProcessor,
   FrameProcessorOptions,
   validateOptions,
-} from "@ricky0123/vad-common"
+} from "./_common"
 import { modelFetcher } from "./model-fetcher"
 
 declare var __webpack_public_path__: string
@@ -63,8 +63,11 @@ export const defaultRealTimeVADOptions: RealTimeVADOptions = {
 }
 
 export class MicVAD {
+  // @ts-ignore
   audioContext: AudioContext
+  // @ts-ignore
   stream: MediaStream
+  // @ts-ignore
   audioNodeVAD: AudioNodeVAD
   listening = false
 
@@ -110,7 +113,9 @@ export class MicVAD {
 }
 
 export class AudioNodeVAD {
+  // @ts-ignore
   frameProcessor: FrameProcessor
+  // @ts-ignore
   entryNode: AudioNode
 
   static async new(
@@ -156,6 +161,7 @@ export class AudioNodeVAD {
         break
 
       case Message.SpeechEnd:
+        // @ts-ignore
         this.options.onSpeechEnd(audio)
         break
 
