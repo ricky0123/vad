@@ -51,8 +51,8 @@ myvad.start()
 
 You will also need to
 
-1. serve the onnx file that comes distributed with `@ricky0123/vad-web`
-1. serve the `vad.worklet.js` file that comes distributed with `@ricky0123/vad-web`
+1. serve the `silero_vad.onnx` file that comes distributed with `@ricky0123/vad-web`
+1. serve the `vad.worklet.bundle.min.js` file that comes distributed with `@ricky0123/vad-web`
 1. serve the wasm files that come distributed with the package `onnxruntime-web`
 
 One way to accomplish this is to run a shell script that copies these files into your `dist` directory (or whatever you have named your output directory) during your build process - see the [build script](https://github.com/ricky0123/vad/blob/master/site/scripts/build.sh) for this website for an example. Or, if you are using Webpack 5, this can be acheived by adding the following to your webpack.config.js (other bundlers may have similar options/plugins):
@@ -68,7 +68,7 @@ module.exports = {
       patterns: [
         // ...
         {
-          from: "node_modules/@ricky0123/vad-web/dist/*.worklet.js",
+          from: "node_modules/@ricky0123/vad-web/dist/vad.worklet.bundle.min.js",
           to: "[name][ext]",
         },
         {

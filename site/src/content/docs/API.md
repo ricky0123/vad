@@ -17,7 +17,7 @@ The `MicVAD` API is for recording user audio in the browser and running callback
 | ---------------------- | -------------------------------------------- |
 | `@ricky0123/vad-web`   | Yes                                          |
 | `@ricky0123/vad-node`  | No                                           |
-| `@ricky0123/vad-react` | No, use the [useVAD](/docs/API/#usevad) hook |
+| `@ricky0123/vad-react` | No, use the [useMicVAD](/docs/API/#usevad) hook |
 
 ### Example
 
@@ -104,7 +104,7 @@ New instances of `MicVAD` are created by calling the async static method `MicVAD
 | ---------- | -------------------------------------------------------------------------------- | ------------------------------- |
 | `run`      | `async function* (inputAudio: Float32Array, sampleRate: number): AsyncGenerator` | Run the VAD model on your audio |
 
-## useVAD
+## useMicVAD
 
 A React hook wrapper for [`MicVAD`](/docs/API/#micvad). Use this if you want to run the VAD model on mic input in a React application.
 
@@ -119,10 +119,10 @@ A React hook wrapper for [`MicVAD`](/docs/API/#micvad). Use this if you want to 
 ### Example
 
 ```typescript
-import { useVAD } from "@ricky0123/vad-react"
+import { useMicVAD } from "@ricky0123/vad-react"
 
 const MyComponent = () => {
-  const vad = useVAD({
+  const vad = useMicVAD({
     startOnLoad: true,
     onSpeechEnd: (audio) => {
       console.log("User stopped talking")
@@ -134,7 +134,7 @@ const MyComponent = () => {
 
 ### Options
 
-The `useVAD` hook takes an options object with the following fields (all optional).
+The `useMicVAD` hook takes an options object with the following fields (all optional).
 
 | Option                       | Type                                                          | Description                                                                                                                                                                                                       |
 | ---------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
