@@ -7,6 +7,25 @@ tags: docs
 
 # User guide for use in React projects
 
-Install `@ricky0123/vad-react` with `npm i @ricky0123/vad-react`. This will pull in `@ricky0123/vad-web` as a dependency, and you must serve the `vad.worklet.bundle.min.js` file and the `silero_vad.onnx` file distributed with that package. You also have to serve the wasm files from `onnxruntime-web`, which will also be pulled in as a dependency. See the [bundling](/docs/browser/#bundling) instructions for details.
+1. Install `@ricky0123/vad-react`:
+    ```sh
+    npm i @ricky0123/vad-react
+    ```
 
-Only the [useMicVAD](/docs/API/#usemicvad) API is supported.
+1. Follow the [bundling instructions](/docs/browser/#bundling) for `@ricky0123/vad-web`. To recap, you need to serve the worklet and onnx files that come distributed with `@ricky0123/vad-web` and the wasm files from `onnxruntime-web`, which will both be pulled in as dependencies.
+
+1. Use the `useMicVAD` hook to start the voice activity detector:
+    ```typescript
+    import { useMicVAD } from "@ricky0123/vad-react"
+    
+    const MyComponent = () => {
+      const vad = useMicVAD({
+        startOnLoad: true,
+        onSpeechEnd: (audio) => {
+          console.log("User stopped talking")
+        },
+      })
+      return <div>{vad.userSpeaking && "User is speaking"}</div>
+    }
+    ```
+   See the docs for [useMicVAD](/docs/API/#usemicvad) for details.
