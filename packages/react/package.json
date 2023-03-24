@@ -13,10 +13,9 @@
     "react"
   ],
   "homepage": "https://github.com/ricky0123/vad",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "license": "ISC",
   "main": "dist/index.js",
-  "type": "module",
   "devDependencies": {
     "@types/react": "^18.0.28"
   },
@@ -29,7 +28,7 @@
     "react-dom": "^18"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "./scripts/build.sh",
     "clean": "rm -rf dist"
   }
 }
