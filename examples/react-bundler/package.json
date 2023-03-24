@@ -5,13 +5,14 @@
   "main": "index.js",
   "scripts": {
     "build": "webpack",
-    "start": "http-server dist/"
+    "start": "http-server dist/",
+    "clean": "rm -rf dist"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@ricky0123/vad-react": "^0.0.7",
+    "@ricky0123/vad-react": "^0.0.9",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
