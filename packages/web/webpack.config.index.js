@@ -1,10 +1,8 @@
-const prod = { mode: "production", suffix: "min" }
-const dev = { mode: "development", suffix: "dev" }
-
-const bundleConfig = ({ mode, suffix }) => {
+const bundleConfig = ({ format, mode, destination }) => {
   return {
     mode,
     entry: { index: "./dist/index.js" },
+    target: format === "commonjs" ? "node" : "web",
     module: {
       rules: [
         {
@@ -32,10 +30,29 @@ const bundleConfig = ({ mode, suffix }) => {
       },
     },
     output: {
-      filename: `bundle.${suffix}.js`,
-      library: { name: "vad", type: "umd" },
+      filename: destination,
+      library: {
+        name: format !== "commonjs" ? "vad" : undefined,
+        type: format,
+      },
     },
   }
 }
 
-module.exports = [bundleConfig(dev), bundleConfig(prod)]
+module.exports = [
+  bundleConfig({
+    mode: "development",
+    format: "umd",
+    destination: "bundle.dev.js",
+  }),
+  bundleConfig({
+    mode: "production",
+    format: "umd",
+    destination: "bundle.min.js",
+  }),
+  bundleConfig({
+    mode: "production",
+    format: "commonjs",
+    destination: "bundle.node.js",
+  }),
+]
