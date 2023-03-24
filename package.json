@@ -21,6 +21,8 @@
     "typescript": "^4.9.5"
   },
   "workspaces": [
-    "packages/*"
+    "packages/node",
+    "packages/web",
+    "packages/react"
   ]
 }
