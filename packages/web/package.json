@@ -14,7 +14,7 @@
   "homepage": "https://github.com/ricky0123/vad",
   "version": "0.0.7",
   "license": "ISC",
-  "main": "dist/index.js",
+  "main": "dist/bundle.min.js",
   "devDependencies": {
     "@playwright/test": "^1.30.0",
     "@types/audioworklet": "^0.0.36",
