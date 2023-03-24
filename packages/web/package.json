@@ -12,7 +12,7 @@
     "offline-speech-recognition"
   ],
   "homepage": "https://github.com/ricky0123/vad",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "license": "ISC",
   "main": "dist/bundle.node.js",
   "browser": "dist/bundle.min.js",
