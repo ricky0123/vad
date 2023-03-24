@@ -13,9 +13,10 @@
     "react"
   ],
   "homepage": "https://github.com/ricky0123/vad",
-  "version": "0.0.7",
+  "version": "0.0.9",
   "license": "ISC",
   "main": "dist/index.js",
+  "type": "module",
   "devDependencies": {
     "@types/react": "^18.0.28"
   },
