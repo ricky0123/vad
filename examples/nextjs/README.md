@@ -1,0 +1,1 @@
+This is an example of a Nextjs project using @ricky0123/vad-react. It was created using `create-next-app`. The configuration you need to add for your Nextjs project is demonstrated in [./next.config.js](./next.config.js). You can see how the React hook for the VAD is used in [./src/pages/index.tsx](./src/pages/index.tsx).
