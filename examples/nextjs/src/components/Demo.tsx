@@ -1,7 +1,18 @@
-import { useMicVAD } from "@ricky0123/vad-react"
+import { useMicVAD, utils } from "@ricky0123/vad-react"
+import { useState } from "react"
 
 export const Demo = () => {
-  const vad = useMicVAD({})
+  const [audioList, setAudioList] = useState<string[]>([])
+  const vad = useMicVAD({
+    onSpeechEnd: (audio) => {
+      const wavBuffer = utils.encodeWAV(audio)
+      const base64 = utils.arrayBufferToBase64(wavBuffer)
+      const url = `data:audio/wav;base64,${base64}`
+      setAudioList((old) => {
+        return [url, ...old]
+      })
+    },
+  })
   return (
     <div>
       <h6>Listening</h6>
@@ -12,6 +23,8 @@ export const Demo = () => {
       {!vad.errored && "Not"} errored
       <h6>User Speaking</h6>
       {!vad.userSpeaking && "Not"} speaking
+      <h6>Audio count</h6>
+      {audioList.length}
       <h6>Start/Pause</h6>
       <button onClick={vad.pause}>Pause</button>
       <button onClick={vad.start}>Start</button>
