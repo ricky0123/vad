@@ -13,9 +13,9 @@
     "react"
   ],
   "homepage": "https://github.com/ricky0123/vad",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "license": "ISC",
-  "main": "dist/bundle.node.js",
+  "main": "dist/index.js",
   "devDependencies": {
     "@types/react": "^18.0.28"
   },
