@@ -4,6 +4,7 @@ set +x
 
 (
     cd examples/bundler
+    npm remove @ricky0123/vad-web
     npm i @ricky0123/vad-web@latest
     npm run clean
     npm run build
@@ -11,6 +12,7 @@ set +x
 
 (
     cd examples/node
+    npm remove @ricky0123/vad-node
     npm i @ricky0123/vad-node@latest
 )
 

@@ -1,0 +1,27 @@
+#!/usr/bin/env ipython3
+
+! set -x
+
+from pathlib import Path
+
+sources = {
+    "@ricky0123/vad-node": "packages/node",
+    "@ricky0123/vad-web": "packages/web",
+    "@ricky0123/vad-react": "packages/react",
+}
+
+for example_dir in Path("examples").glob("*"):
+    for pkg, src in sources.items():
+        dep_path =example_dir/f"node_modules/{pkg}"
+        if dep_path.exists():
+            package_json_src = f"{dep_path}/package.json"
+            package_json_tgt = f"{src}/package.json"
+            
+            dist_src = f"{src}/dist"
+            dist_tgt = f"{dep_path}/dist"
+
+            ! rm {package_json_src}
+            ! rm -rf {dist_tgt}
+
+            ! cp {package_json_tgt} {package_json_src}
+            ! cp -r {dist_src} {dist_tgt}
