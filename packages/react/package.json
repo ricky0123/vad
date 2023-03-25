@@ -28,7 +28,7 @@
     "react-dom": "^18"
   },
   "scripts": {
-    "build": "./scripts/build.sh",
+    "build": "tsc",
     "clean": "rm -rf dist"
   }
 }
