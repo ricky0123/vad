@@ -14,8 +14,7 @@
   "homepage": "https://github.com/ricky0123/vad",
   "version": "0.0.10",
   "license": "ISC",
-  "main": "dist/bundle.node.js",
-  "browser": "dist/bundle.min.js",
+  "main": "dist/index.js",
   "unpkg": "dist/bundle.min.js",
   "jsdelivr": "dist/bundle.min.js",
   "devDependencies": {

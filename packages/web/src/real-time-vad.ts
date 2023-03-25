@@ -10,6 +10,7 @@ import {
   validateOptions,
 } from "./_common"
 import { modelFetcher } from "./model-fetcher"
+import { assetPath } from "./asset-path"
 
 interface RealTimeVADCallbacks {
   /** Callback to run after each frame. The size (number of samples) of a frame is given by `frameSamples`. */
@@ -48,8 +49,7 @@ export interface RealTimeVADOptions
 }
 
 const _getWorkletURL = () => {
-  const url = new URL("vad.worklet.bundle.min.js", import.meta.url)
-  return url.toString()
+  return assetPath("vad.worklet.bundle.min.js")
 }
 
 export const defaultRealTimeVADOptions: RealTimeVADOptions = {

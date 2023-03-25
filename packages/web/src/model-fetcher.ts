@@ -1,5 +1,6 @@
-// @ts-ignore
-const modelUrl = new URL("silero_vad.onnx", import.meta.url)
+import { assetPath } from "./asset-path"
+
 export const modelFetcher = async () => {
-  return await fetch(modelUrl).then((r) => r.arrayBuffer())
+  const modelURL = assetPath("silero_vad.onnx")
+  return await fetch(modelURL).then((r) => r.arrayBuffer())
 }
