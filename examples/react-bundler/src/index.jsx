@@ -19,6 +19,9 @@ function App() {
   return (
     <div>
       <h1>Demo of @ricky0123/vad-react</h1>
+      <button onClick={vad.toggle}>Toggle VAD</button>
+      {vad.listening && <div>VAD is running</div>}
+      {!vad.listening && <div>VAD is NOT running</div>}
       {vad.userSpeaking && <UserSpeaking />}
       {!vad.userSpeaking && <UserNotSpeaking />}
       <ol id="playlist">
