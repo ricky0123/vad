@@ -25,6 +25,13 @@ set +x
 )
 
 (
+    cd examples/nextjs
+    npm remove @ricky0123/vad-react
+    npm i @ricky0123/vad-react@latest
+    npm run build
+)
+
+(
     cd examples/script-tags
     latest_version=$(wget -O - https://cdn.jsdelivr.net/npm/@ricky0123/vad-web/ \
         | grep -oP "@ricky0123/vad-web@\d+\.\d+\.\d+" \
