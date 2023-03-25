@@ -15,6 +15,7 @@ export const Demo = () => {
       <h6>Start/Pause</h6>
       <button onClick={vad.pause}>Pause</button>
       <button onClick={vad.start}>Start</button>
+      <button onClick={vad.toggle}>Toggle</button>
     </div>
   )
 }
