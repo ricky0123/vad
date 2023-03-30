@@ -41,12 +41,24 @@ type AudioConstraints = Omit<
   "channelCount" | "echoCancellation" | "autoGainControl" | "noiseSuppression"
 >
 
-export interface RealTimeVADOptions
+interface RealTimeVADOptionsWithoutStream
   extends FrameProcessorOptions,
     RealTimeVADCallbacks {
   additionalAudioConstraints?: AudioConstraints
   workletURL: string
+  stream: undefined
 }
+
+interface RealTimeVADOptionsWithStream
+  extends FrameProcessorOptions,
+    RealTimeVADCallbacks {
+  stream: MediaStream
+  workletURL: string
+}
+
+export type RealTimeVADOptions =
+  | RealTimeVADOptionsWithStream
+  | RealTimeVADOptionsWithoutStream
 
 const _getWorkletURL = () => {
   return assetPath("vad.worklet.bundle.min.js")
@@ -65,6 +77,7 @@ export const defaultRealTimeVADOptions: RealTimeVADOptions = {
     log.debug("Detected speech end")
   },
   workletURL: _getWorkletURL(),
+  stream: undefined,
 }
 
 export class MicVAD {
@@ -87,15 +100,17 @@ export class MicVAD {
   }
 
   init = async () => {
-    this.stream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        ...this.options.additionalAudioConstraints,
-        channelCount: 1,
-        echoCancellation: true,
-        autoGainControl: true,
-        noiseSuppression: true,
-      },
-    })
+    if (this.options.stream === undefined)
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          ...this.options.additionalAudioConstraints,
+          channelCount: 1,
+          echoCancellation: true,
+          autoGainControl: true,
+          noiseSuppression: true,
+        },
+      })
+    else this.stream = this.options.stream
 
     this.audioContext = new AudioContext()
     const source = new MediaStreamAudioSourceNode(this.audioContext, {

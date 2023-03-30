@@ -7,9 +7,7 @@ interface ReactOptions {
   userSpeakingThreshold: number
 }
 
-export interface ReactRealTimeVADOptions
-  extends RealTimeVADOptions,
-    ReactOptions {}
+export type ReactRealTimeVADOptions = RealTimeVADOptions & ReactOptions
 
 const defaultReactOptions: ReactOptions = {
   startOnLoad: true,
