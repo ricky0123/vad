@@ -19,7 +19,16 @@ function addAudio(audioUrl) {
 
 async function main() {
   try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        channelCount: 1,
+        echoCancellation: true,
+        autoGainControl: true,
+        noiseSuppression: true,
+      },
+    })
     const myvad = await MicVAD.new({
+      stream,
       positiveSpeechThreshold: 0.8,
       minSpeechFrames: 5,
       preSpeechPadFrames: 10,
