@@ -45,7 +45,7 @@ interface RealTimeVADOptionsWithoutStream
   extends FrameProcessorOptions,
     RealTimeVADCallbacks {
   additionalAudioConstraints?: AudioConstraints
-  workletURL: string
+  workletURL: string | false
   stream: undefined
 }
 
@@ -53,7 +53,7 @@ interface RealTimeVADOptionsWithStream
   extends FrameProcessorOptions,
     RealTimeVADCallbacks {
   stream: MediaStream
-  workletURL: string
+  workletURL: string | false
 }
 
 export type RealTimeVADOptions =
@@ -191,14 +191,6 @@ export class AudioNodeVAD {
   }
 
   init = async () => {
-    await this.ctx.audioWorklet.addModule(this.options.workletURL)
-    const vadNode = new AudioWorkletNode(this.ctx, "vad-helper-worklet", {
-      processorOptions: {
-        frameSamples: this.options.frameSamples,
-      },
-    })
-    this.entryNode = vadNode
-
     const model = await Silero.new(ort, modelFetcher)
 
     this.frameProcessor = new FrameProcessor(model.process, model.reset_state, {
@@ -210,17 +202,40 @@ export class AudioNodeVAD {
       minSpeechFrames: this.options.minSpeechFrames,
     })
 
-    vadNode.port.onmessage = async (ev: MessageEvent) => {
-      switch (ev.data?.message) {
-        case Message.AudioFrame:
-          const buffer: ArrayBuffer = ev.data.data
-          const frame = new Float32Array(buffer)
-          await this.processFrame(frame)
-          break
+    if(this.options.workletURL) {
+      await this.ctx.audioWorklet.addModule(this.options.workletURL)
+      const vadNode = new AudioWorkletNode(this.ctx, "vad-helper-worklet", {
+        processorOptions: {
+          frameSamples: this.options.frameSamples,
+        },
+      })
+      this.entryNode = vadNode
 
-        default:
-          break
+
+      vadNode.port.onmessage = async (ev: MessageEvent) => {
+        switch (ev.data?.message) {
+          case Message.AudioFrame:
+            const buffer: ArrayBuffer = ev.data.data
+            const frame = new Float32Array(buffer)
+            await this.processFrame(frame)
+            break
+
+          default:
+            break
+        }
+      }
+    } else {
+      console.log("Using ScriptProcessorNode")
+      const scriptNode = this.ctx.createScriptProcessor(
+        this.options.frameSamples, 1, 1
+      )
+      this.entryNode = scriptNode
+
+      scriptNode.onaudioprocess = async (ev: AudioProcessingEvent) => {
+        const frame = ev.inputBuffer.getChannelData(0)
+        await this.processFrame(frame)
       }
     }
+
   }
 }
