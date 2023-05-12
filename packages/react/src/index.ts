@@ -1,6 +1,7 @@
 import { MicVAD, defaultRealTimeVADOptions } from "@ricky0123/vad-web"
 import type { RealTimeVADOptions } from "@ricky0123/vad-web"
 import { useEffect, useReducer, useState } from "react"
+import React from "react"
 
 interface ReactOptions {
   startOnLoad: boolean
@@ -26,16 +27,25 @@ const _filter = (keys: string[], obj: any) => {
   return keys.reduce((acc, key) => {
     acc[key] = obj[key]
     return acc
-  }, {})
+  }, {} as { [key: string]: any })
 }
 
-function useOptions(
-  options: Partial<ReactRealTimeVADOptions>
-): [ReactOptions, RealTimeVADOptions] {
+function useOptions(options: Partial<ReactRealTimeVADOptions>): [ReactOptions, RealTimeVADOptions] {
   options = { ...defaultReactRealTimeVADOptions, ...options }
   const reactOptions = _filter(reactOptionKeys, options) as ReactOptions
   const vadOptions = _filter(vadOptionKeys, options) as RealTimeVADOptions
   return [reactOptions, vadOptions]
+}
+
+function useEventCallback<T extends (...args: any[]) => any>(fn: T): T {
+  const ref: any = React.useRef(fn)
+
+  // we copy a ref to the callback scoped to the current state/props on each render
+  useIsomorphicLayoutEffect(() => {
+    ref.current = fn
+  })
+
+  return React.useCallback((...args: any[]) => ref.current.apply(void 0, args), []) as T
 }
 
 export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
@@ -49,14 +59,22 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
   const [errored, setErrored] = useState<false | { message: string }>(false)
   const [listening, setListening] = useState(false)
   const [vad, setVAD] = useState<MicVAD | null>(null)
-  useEffect(() => {
-    ;(async () => {
-      const userOnFrameProcessed = vadOptions.onFrameProcessed
-      vadOptions.onFrameProcessed = (probs) => {
-        updateUserSpeaking(probs.isSpeech)
-        userOnFrameProcessed(probs)
-      }
 
+  const userOnFrameProcessed = useEventCallback(vadOptions.onFrameProcessed)
+  vadOptions.onFrameProcessed = useEventCallback((probs) => {
+    updateUserSpeaking(probs.isSpeech)
+    userOnFrameProcessed
+  })
+  const { onSpeechEnd, onSpeechStart, onVADMisfire } = vadOptions
+  const _onSpeechEnd = useEventCallback(onSpeechEnd)
+  const _onSpeechStart = useEventCallback(onSpeechStart)
+  const _onVADMisfire = useEventCallback(onVADMisfire)
+  vadOptions.onSpeechEnd = _onSpeechEnd
+  vadOptions.onSpeechStart = _onSpeechStart
+  vadOptions.onVADMisfire = _onVADMisfire
+
+  useEffect(() => {
+    const setup = async (): Promise<void> => {
       let myvad: MicVAD | null
       try {
         myvad = await MicVAD.new(vadOptions)
@@ -76,7 +94,10 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
         myvad?.start()
         setListening(true)
       }
-    })()
+    }
+    setup().catch((e) => {
+      console.log("Well that didn't work")
+    })
     return function cleanUp() {
       if (!loading && !errored) {
         vad?.pause()
@@ -114,4 +135,9 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
   }
 }
 
-export { utils } from "@ricky0123/vad-web"
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" &&
+  typeof window.document !== "undefined" &&
+  typeof window.document.createElement !== "undefined"
+    ? React.useLayoutEffect
+    : React.useEffect
