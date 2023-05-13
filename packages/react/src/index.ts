@@ -1,7 +1,8 @@
-import { MicVAD, defaultRealTimeVADOptions } from "@ricky0123/vad-web"
 import type { RealTimeVADOptions } from "@ricky0123/vad-web"
-import { useEffect, useReducer, useState } from "react"
-import React from "react"
+import { MicVAD, defaultRealTimeVADOptions } from "@ricky0123/vad-web"
+import React, { useEffect, useReducer, useState } from "react"
+
+export { utils } from "@ricky0123/vad-web"
 
 interface ReactOptions {
   startOnLoad: boolean
@@ -30,7 +31,9 @@ const _filter = (keys: string[], obj: any) => {
   }, {} as { [key: string]: any })
 }
 
-function useOptions(options: Partial<ReactRealTimeVADOptions>): [ReactOptions, RealTimeVADOptions] {
+function useOptions(
+  options: Partial<ReactRealTimeVADOptions>
+): [ReactOptions, RealTimeVADOptions] {
   options = { ...defaultReactRealTimeVADOptions, ...options }
   const reactOptions = _filter(reactOptionKeys, options) as ReactOptions
   const vadOptions = _filter(vadOptionKeys, options) as RealTimeVADOptions
@@ -45,7 +48,10 @@ function useEventCallback<T extends (...args: any[]) => any>(fn: T): T {
     ref.current = fn
   })
 
-  return React.useCallback((...args: any[]) => ref.current.apply(void 0, args), []) as T
+  return React.useCallback(
+    (...args: any[]) => ref.current.apply(void 0, args),
+    []
+  ) as T
 }
 
 export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
