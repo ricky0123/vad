@@ -68,15 +68,17 @@ export class PlatformAgnosticNonRealTimeVAD {
     inputAudio: Float32Array,
     sampleRate?: number,
   ): AsyncGenerator<NonRealTimeVADSpeechData> {
+
+    const targetSampleRate = this.options.targetSampleRate ?? 16000
     const resamplerOptions = {
       nativeSampleRate: sampleRate ?? this.options.nativeSampleRate,
-      targetSampleRate: this.options.targetSampleRate,
+      targetSampleRate: targetSampleRate,
       targetFrameSize: this.options.frameSamples,
     }
     
     const resampler = new Resampler(resamplerOptions)
     const frames = resampler.process(inputAudio)
-    const framesDivisor = (this.options.targetSampleRate / 1000);
+    const framesDivisor = (targetSampleRate / 1000);
     let start: number, end: number
     for (const i of [...Array(frames.length)].keys()) {
       const f = frames[i]
