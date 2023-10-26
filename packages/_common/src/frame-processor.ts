@@ -110,6 +110,7 @@ export class FrameProcessor implements FrameProcessorInterface {
   audioBuffer: { frame: Float32Array; isSpeech: boolean }[]
   redemptionCounter = 0
   active = false
+  paused = false
 
   constructor(
     public modelProcessFunc: (
@@ -120,6 +121,7 @@ export class FrameProcessor implements FrameProcessorInterface {
   ) {
     this.audioBuffer = []
     this.reset()
+    log.debug("Loading modified Frame Processor with special pause behaviour")
   }
 
   reset = () => {
@@ -130,8 +132,7 @@ export class FrameProcessor implements FrameProcessorInterface {
   }
 
   pause = () => {
-    this.active = false
-    this.reset()
+    this.paused = true
   }
 
   resume = () => {
@@ -162,6 +163,31 @@ export class FrameProcessor implements FrameProcessorInterface {
   process = async (frame: Float32Array) => {
     if (!this.active) {
       return {}
+    }
+
+    if (this.paused) {
+
+      const audioBuffer = this.audioBuffer
+
+      const speechFrameCount = audioBuffer.reduce((acc, item) => {
+        return acc + +item.isSpeech
+      }, 0)
+
+      this.active = false
+      this.paused = false
+      this.reset()
+
+      const isSpeech = 0
+      const notSpeech = 1 - isSpeech
+      const probs = { notSpeech, isSpeech }
+
+      if (speechFrameCount >= this.options.minSpeechFrames) {
+        const audio = concatArrays(audioBuffer.map((item) => item.frame))
+        return { probs, msg: Message.SpeechEnd, audio }
+      } else {
+        return { probs, msg: Message.VADMisfire }
+      }
+
     }
     const probs = await this.modelProcessFunc(frame)
     this.audioBuffer.push({
