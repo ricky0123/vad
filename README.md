@@ -1,3 +1,6 @@
+**This is an patching fork of the original package. See this [comment](https://github.com/ricky0123/vad/issues/30#issuecomment-1781202783) for more details.**
+
+
 # Voice Activity Detection for Javascript
 
 [![npm vad-web](https://img.shields.io/npm/v/@ricky0123/vad-web?color=blue&label=%40ricky0123%2Fvad-web&style=flat-square)](https://www.npmjs.com/package/@ricky0123/vad-web)
