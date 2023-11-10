@@ -48,7 +48,9 @@ jobs:
           echo "WORKING_DIRECTORY=$WORKING_DIRECTORY" >> $GITHUB_ENV
           echo "Working Directory: $WORKING_DIRECTORY"
 
-      - run: npm ci
+      - run: npm i
+
+      - run: npm i
         working-directory: ${{ env.WORKING_DIRECTORY }}
 
       - run: npm run build
