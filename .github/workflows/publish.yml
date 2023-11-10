@@ -1,0 +1,52 @@
+name: Publish to npmjs
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        type: choice
+        description: Which package to publish?
+        options: 
+        - vad-web
+        - vad-react
+        - vad-node
+      dry-run:
+        type: boolean
+        description: Dry run?
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Set Working Directory
+        run: |
+          if [ "${{ github.event.inputs.package }}" == "vad-web" ]; then
+            echo "WORKING_DIRECTORY=./packages/web" >> $GITHUB_ENV
+          elif [ "${{ github.event.inputs.package }}" == "vad-react" ]; then
+            echo "WORKING_DIRECTORY=./packages/react" >> $GITHUB_ENV
+          elif [ "${{ github.event.inputs.package }}" == "vad-node" ]; then
+            echo "WORKING_DIRECTORY=./packages/node" >> $GITHUB_ENV
+          fi
+
+      - run: npm ci
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+      - name: Publish Package
+        run: |
+          if [ "${{ github.event.inputs.dry-run }}" == "true" ]; then
+            npm publish --access=public --dry-run
+          else
+            npm publish --access=public
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        working-directory: ${{ env.WORKING_DIRECTORY }}
