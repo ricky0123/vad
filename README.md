@@ -6,7 +6,7 @@
 
 ### 🎉 New collaborators, Discord channel, and more 🚀
 
-I am thrilled to share that we have new collaborators from [Pleap](https://pleap.jp/) who are going to be sharing in the development work for this project. Please also join us on [Discord](https://discord.gg/4WPeGEaSpF). We would love to have additional collaborators. If you are interested in contributing to this project, please write us on Discord!
+I am thrilled to share that we have new collaborators from [Pleap](https://pleap.jp/) who are going to be sharing in the development work for this project. We are also starting a [Discord server](https://discord.gg/4WPeGEaSpF) for users and contributors alike. We would love to have additional collaborators - if you are interested, please write us on Discord!
 
 ## Overview
 
