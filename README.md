@@ -4,11 +4,11 @@
 [![npm vad-node](https://img.shields.io/npm/v/@ricky0123/vad-node?color=blue&label=%40ricky0123%2Fvad-node&style=flat-square)](https://www.npmjs.com/package/@ricky0123/vad-node)
 [![npm vad-react](https://img.shields.io/npm/v/@ricky0123/vad-react?color=blue&label=%40ricky0123%2Fvad-react&style=flat-square)](https://www.npmjs.com/package/@ricky0123/vad-react)
 
-# 🎉 New collaborators, Discord channel, and more 🚀
+### 🎉 New collaborators, Discord channel, and more 🚀
 
 I am thrilled to share that we have new collaborators from [Pleap](https://pleap.jp/) who are going to be sharing in the development work for this project. Please also join us on [Discord](https://discord.gg/4WPeGEaSpF). We would love to have additional collaborators. If you are interested in contributing to this project, please write us on Discord!
 
-# What is this?
+## Overview
 
 This package aims to provide an accurate, user-friendly voice activity detector (VAD) that runs in the browser. It also has limited support for node. Currently, it runs [Silero VAD](https://github.com/snakers4/silero-vad) [[1]](#1) using [ONNX Runtime Web](https://github.com/microsoft/onnxruntime/tree/main/js/web) / [ONNX Runtime Node.js](https://github.com/microsoft/onnxruntime/tree/main/js/node).
 
