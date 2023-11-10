@@ -50,9 +50,6 @@ jobs:
 
       - run: npm i
 
-      - run: npm i
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-
       - run: npm run build
         working-directory: ${{ env.WORKING_DIRECTORY }}
 
