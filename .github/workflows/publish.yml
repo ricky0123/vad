@@ -15,7 +15,7 @@ on:
         description: Dry run?
 
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -29,16 +29,28 @@ jobs:
 
       - name: Set Working Directory
         run: |
-          if [ "${{ github.event.inputs.package }}" == "vad-web" ]; then
-            echo "WORKING_DIRECTORY=./packages/web" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.package }}" == "vad-react" ]; then
-            echo "WORKING_DIRECTORY=./packages/react" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.package }}" == "vad-node" ]; then
-            echo "WORKING_DIRECTORY=./packages/node" >> $GITHUB_ENV
-          fi
+          PACKAGE_NAME=${{ github.event.inputs.package }}
+          case $PACKAGE_NAME in
+            vad-web)
+              WORKING_DIRECTORY='./packages/web'
+              ;;
+            vad-react)
+              WORKING_DIRECTORY='./packages/react'
+              ;;
+            vad-node)
+              WORKING_DIRECTORY='./packages/node'
+              ;;
+            *)
+              echo "Error: Unknown package name"
+              exit 1
+              ;;
+          esac
+          echo "WORKING_DIRECTORY=$WORKING_DIRECTORY" >> $GITHUB_ENV
+          echo "Working Directory: $WORKING_DIRECTORY"
 
       - run: npm ci
-        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+      - run: npm run build
 
       - name: Publish Package
         run: |

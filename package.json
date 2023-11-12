@@ -11,18 +11,20 @@
   },
   "private": true,
   "devDependencies": {
-    "@types/react": "^18.0.28",
-    "@types/react-dom": "^18.0.11",
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
     "esbuild": "^0.17.10",
     "http-server": "^14.1.1",
     "prettier": "^2.6.2",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "typescript": "^4.9.5"
+    "react-dom": "^18.2.0"
   },
   "workspaces": [
     "packages/node",
     "packages/web",
     "packages/react"
-  ]
+  ],
+  "dependencies": {
+    "typescript": "^5.2.2"
+  }
 }
