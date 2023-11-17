@@ -6,15 +6,32 @@ import {
   FrameProcessorOptions,
   Message,
   NonRealTimeVADOptions,
+  ModelFetcher,
 } from "./_common"
-import { modelFetcher } from "./model-fetcher"
 import { audioFileToArray } from "./utils"
+import { defaultModelFetcher } from "./default-model-fetcher"
+
+
+export interface NonRealTimeVADOptionsWeb extends NonRealTimeVADOptions {
+  modelURL: string,
+  modelFetcher: (path: string) => Promise<ArrayBuffer>,
+} 
+
+export const defaultNonRealTimeVADOptions = {
+  modelURL: "silero_vad.onnx",
+  modelFetcher: defaultModelFetcher
+}
 
 class NonRealTimeVAD extends PlatformAgnosticNonRealTimeVAD {
   static async new(
-    options: Partial<NonRealTimeVADOptions> = {}
+    options: Partial<NonRealTimeVADOptionsWeb> = {}
   ): Promise<NonRealTimeVAD> {
-    return await this._new(modelFetcher, ort, options)
+    const {modelURL, modelFetcher} = {...defaultNonRealTimeVADOptions, ...options};
+    return await this._new(
+      () => modelFetcher(modelURL), 
+      ort, 
+      options
+    )
   }
 }
 
