@@ -1,6 +1,4 @@
-import { assetPath } from "./asset-path";
-
-export const defaultModelFetcher = (path: string) => (
-  fetch(assetPath(path))
+export const defaultModelFetcher = (path: string) => {
+  return fetch(path)
     .then(model=>model.arrayBuffer())
-);
+};

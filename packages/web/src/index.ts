@@ -10,6 +10,7 @@ import {
 } from "./_common"
 import { audioFileToArray } from "./utils"
 import { defaultModelFetcher } from "./default-model-fetcher"
+import { assetPath } from "./asset-path"
 
 
 export interface NonRealTimeVADOptionsWeb extends NonRealTimeVADOptions {
@@ -18,7 +19,7 @@ export interface NonRealTimeVADOptionsWeb extends NonRealTimeVADOptions {
 } 
 
 export const defaultNonRealTimeVADOptions = {
-  modelURL: "silero_vad.onnx",
+  modelURL: assetPath("silero_vad.onnx"),
   modelFetcher: defaultModelFetcher
 }
 
