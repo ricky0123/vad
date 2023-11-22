@@ -9,8 +9,8 @@ import {
   FrameProcessorOptions,
   validateOptions,
 } from "./_common"
-import { modelFetcher } from "./model-fetcher"
 import { assetPath } from "./asset-path"
+import { defaultModelFetcher } from "./default-model-fetcher"
 
 interface RealTimeVADCallbacks {
   /** Callback to run after each frame. The size (number of samples) of a frame is given by `frameSamples`. */
@@ -41,28 +41,31 @@ type AudioConstraints = Omit<
   "channelCount" | "echoCancellation" | "autoGainControl" | "noiseSuppression"
 >
 
+type AssetOptions = {
+  workletURL: string
+  modelURL: string,
+  modelFetcher: (path: string) => Promise<ArrayBuffer>
+}
+
 interface RealTimeVADOptionsWithoutStream
   extends FrameProcessorOptions,
-    RealTimeVADCallbacks {
+    RealTimeVADCallbacks,
+    AssetOptions {
   additionalAudioConstraints?: AudioConstraints
-  workletURL: string
   stream: undefined
 }
 
 interface RealTimeVADOptionsWithStream
   extends FrameProcessorOptions,
-    RealTimeVADCallbacks {
+    RealTimeVADCallbacks,
+    AssetOptions {
   stream: MediaStream
-  workletURL: string
 }
 
 export type RealTimeVADOptions =
   | RealTimeVADOptionsWithStream
   | RealTimeVADOptionsWithoutStream
 
-const _getWorkletURL = () => {
-  return assetPath("vad.worklet.bundle.min.js")
-}
 
 export const defaultRealTimeVADOptions: RealTimeVADOptions = {
   ...defaultFrameProcessorOptions,
@@ -76,7 +79,9 @@ export const defaultRealTimeVADOptions: RealTimeVADOptions = {
   onSpeechEnd: () => {
     log.debug("Detected speech end")
   },
-  workletURL: _getWorkletURL(),
+  workletURL:  assetPath("vad.worklet.bundle.min.js"),
+  modelURL: assetPath("silero_vad.onnx"),
+  modelFetcher: defaultModelFetcher,
   stream: undefined,
 }
 
@@ -199,7 +204,7 @@ export class AudioNodeVAD {
     })
     this.entryNode = vadNode
 
-    const model = await Silero.new(ort, modelFetcher)
+    const model = await Silero.new(ort, () => this.options.modelFetcher(this.options.modelURL))
 
     this.frameProcessor = new FrameProcessor(model.process, model.reset_state, {
       frameSamples: this.options.frameSamples,
