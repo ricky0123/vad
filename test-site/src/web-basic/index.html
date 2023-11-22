@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>VAD test site</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css"
+    />
+    <script type="module" src="index.js"></script>
+  </head>
+  <body>
+    <section class="section">
+      <div class="container">
+        <h1 class="title">Basic vad-web functionality</h1>
+
+        <div class="block is-inline-flex">
+          <button
+            id="toggleVAD"
+            class="button is-primary is-loading"
+            onclick="window.toggleVAD()"
+            disabled
+          >
+            Start VAD
+          </button>
+        </div>
+
+        <div class="block">
+          <ul id="audio-list"></ul>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>
