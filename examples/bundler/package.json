@@ -12,7 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@ricky0123/vad-web": "^0.0.12",
+    "@ricky0123/vad-web": "^0.0.13",
     "d3-scale-chromatic": "^3.0.0"
   },
   "devDependencies": {
