@@ -8,11 +8,19 @@ class Processor extends AudioWorkletProcessor {
   // @ts-ignore
   resampler: Resampler
   _initialized = false
+  _stopProcessing = false
   options: WorkletOptions
 
   constructor(options) {
     super()
     this.options = options.processorOptions as WorkletOptions
+
+    this.port.onmessage = (ev) => {
+      if (ev.data.message === Message.SpeechStop) {
+        this._stopProcessing = true
+      }
+    }
+
     this.init()
   }
   init = async () => {
@@ -42,6 +50,9 @@ class Processor extends AudioWorkletProcessor {
         )
       }
     }
+
+    if (this._stopProcessing) return false
+    
     return true
   }
 }
