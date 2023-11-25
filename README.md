@@ -12,7 +12,7 @@ This project has seen a number of exciting updates recently. A growing number of
 * New documentation at [wiki.vad.ricky0123.com](https://wiki.vad.ricky0123.com/). This documentation can be *edited by anyone with a GitHub account*. Just log in and create a new page or revise a current one.
 * A growing number of generous and talented people have contributed code or opened PRs that I am working my way through. The startup [Pleap](https://pleap.jp/) has also kindly taken on some of the work of reviewing PRs.
 * If you would like to contribute, I have started writing some documentation on how to get started hacking on these packages [here](https://wiki.vad.ricky0123.com/en/docs/developer/hacking). If you have any questions, you can open an issue here or leave a message on Discord.
-* If you appreciate this work and want to finance my coffee addiction, you can now [support me on Github sponsors](https://github.com/sponsors/ricky0123)!
+* If you appreciate this work, you can now [support me on Github sponsors](https://github.com/sponsors/ricky0123)!
 * If you want to share a project, commercial or otherwise, that you made using these packages, let me know and we can mention it in a new section in this readme.
 
 ## Overview
