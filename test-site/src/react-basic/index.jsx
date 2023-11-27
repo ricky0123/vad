@@ -21,10 +21,14 @@ function App() {
   const vad = useMicVAD({
     workletURL: "http://localhost:8080/vad.worklet.bundle.min.js",
     modelURL: "http://localhost:8080/silero_vad.onnx",
+    onVADMisfire: () => {
+      console.log("Vad misfire")
+    },
     onSpeechStart: () => {
       console.log("Speech start")
     },
     onSpeechEnd: (audio) => {
+      console.log("Speech end")
       const wavBuffer = utils.encodeWAV(audio)
       const base64 = utils.arrayBufferToBase64(wavBuffer)
       const url = `data:audio/wav;base64,${base64}`
@@ -34,14 +38,17 @@ function App() {
   return (
     <section className="section">
       <div className="container">
-        <h1 className="title">Basic vad-web functionality</h1>
+        <h1 className="title">Basic vad-react functionality</h1>
 
         <div className="block is-inline-flex">
           <button
             className={
               vad.loading ? "button is-primary is-loading" : "button is-primary"
             }
-            onClick={vad.toggle}
+            onClick={() => {
+              console.log("run toggle vad")
+              vad.toggle()
+            }}
             disabled={vad.loading}
           >
             Toggle VAD

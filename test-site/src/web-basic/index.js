@@ -29,11 +29,12 @@ async function main() {
     getToggleButton().classList.remove("is-loading")
 
     window.toggleVAD = () => {
-      console.log("ran toggle vad")
       if (myvad.listening === false) {
+        console.log("run start vad")
         myvad.start()
         getToggleButton().textContent = "Stop VAD"
       } else {
+        console.log("run pause vad")
         myvad.pause()
         getToggleButton().textContent = "Start VAD"
       }
