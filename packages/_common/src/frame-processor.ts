@@ -166,9 +166,8 @@ export class FrameProcessor implements FrameProcessorInterface {
     }
 
     if (this.paused) {
-
+      const speaking = this.speaking
       const audioBuffer = this.audioBuffer
-
       const speechFrameCount = audioBuffer.reduce((acc, item) => {
         return acc + +item.isSpeech
       }, 0)
@@ -177,9 +176,9 @@ export class FrameProcessor implements FrameProcessorInterface {
       this.paused = false
       this.reset()
 
-      const isSpeech = 0
-      const notSpeech = 1 - isSpeech
-      const probs = { notSpeech, isSpeech }
+      const probs = { notSpeech: 1, isSpeech: 0 }
+
+      if (!speaking) return { probs }
 
       if (speechFrameCount >= this.options.minSpeechFrames) {
         const audio = concatArrays(audioBuffer.map((item) => item.frame))
@@ -187,8 +186,8 @@ export class FrameProcessor implements FrameProcessorInterface {
       } else {
         return { probs, msg: Message.VADMisfire }
       }
-
     }
+
     const probs = await this.modelProcessFunc(frame)
     this.audioBuffer.push({
       frame,
