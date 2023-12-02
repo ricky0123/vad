@@ -106,7 +106,7 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
     })
     return function cleanUp() {
       if (!loading && !errored) {
-        vad?.pause()
+        vad?.destroy()
         setListening(false)
       }
     }

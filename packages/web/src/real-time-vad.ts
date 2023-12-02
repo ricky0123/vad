@@ -86,8 +86,7 @@ export const defaultRealTimeVADOptions: RealTimeVADOptions = {
 }
 
 export class MicVAD {
-  // @ts-ignore
-  audioContext: AudioContext
+  audioContext: AudioContext | null = null
   // @ts-ignore
   stream: MediaStream
   // @ts-ignore
@@ -135,13 +134,25 @@ export class MicVAD {
     this.audioNodeVAD.start()
     this.listening = true
   }
+
+  destroy = () => {
+    if (this.listening) {
+      this.pause()
+    }
+    this.stream.getTracks().forEach((t) => t.stop())
+    this.audioContext?.close()
+    this.audioContext = null
+    this.audioNodeVAD.entryNode.port.postMessage({
+      message: Message.SpeechStop,
+    })
+  }
 }
 
 export class AudioNodeVAD {
   // @ts-ignore
   frameProcessor: FrameProcessor
   // @ts-ignore
-  entryNode: AudioNode
+  entryNode: AudioWorkletNode
 
   static async new(
     ctx: AudioContext,
