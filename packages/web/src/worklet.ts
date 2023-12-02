@@ -38,6 +38,10 @@ class Processor extends AudioWorkletProcessor {
     outputs: Float32Array[][],
     parameters: Record<string, Float32Array>
   ): boolean {
+    if (this._stopProcessing) {
+      return false
+    }
+
     // @ts-ignore
     const arr = inputs[0][0]
 
@@ -51,8 +55,6 @@ class Processor extends AudioWorkletProcessor {
       }
     }
 
-    if (this._stopProcessing) return false
-    
     return true
   }
 }

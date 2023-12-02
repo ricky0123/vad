@@ -43,7 +43,7 @@ type AudioConstraints = Omit<
 
 type AssetOptions = {
   workletURL: string
-  modelURL: string,
+  modelURL: string
   modelFetcher: (path: string) => Promise<ArrayBuffer>
 }
 
@@ -66,7 +66,6 @@ export type RealTimeVADOptions =
   | RealTimeVADOptionsWithStream
   | RealTimeVADOptionsWithoutStream
 
-
 export const defaultRealTimeVADOptions: RealTimeVADOptions = {
   ...defaultFrameProcessorOptions,
   onFrameProcessed: (probabilities) => {},
@@ -79,51 +78,58 @@ export const defaultRealTimeVADOptions: RealTimeVADOptions = {
   onSpeechEnd: () => {
     log.debug("Detected speech end")
   },
-  workletURL:  assetPath("vad.worklet.bundle.min.js"),
+  workletURL: assetPath("vad.worklet.bundle.min.js"),
   modelURL: assetPath("silero_vad.onnx"),
   modelFetcher: defaultModelFetcher,
   stream: undefined,
 }
 
 export class MicVAD {
-  audioContext: AudioContext | null = null
-  // @ts-ignore
-  stream: MediaStream
-  // @ts-ignore
-  audioNodeVAD: AudioNodeVAD
-  listening = false
-
   static async new(options: Partial<RealTimeVADOptions> = {}) {
-    const vad = new MicVAD({ ...defaultRealTimeVADOptions, ...options })
-    await vad.init()
-    return vad
-  }
+    const fullOptions: RealTimeVADOptions = {
+      ...defaultRealTimeVADOptions,
+      ...options,
+    }
+    validateOptions(fullOptions)
 
-  constructor(public options: RealTimeVADOptions) {
-    validateOptions(options)
-  }
-
-  init = async () => {
-    if (this.options.stream === undefined)
-      this.stream = await navigator.mediaDevices.getUserMedia({
+    let stream: MediaStream
+    if (fullOptions.stream === undefined)
+      stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          ...this.options.additionalAudioConstraints,
+          ...fullOptions.additionalAudioConstraints,
           channelCount: 1,
           echoCancellation: true,
           autoGainControl: true,
           noiseSuppression: true,
         },
       })
-    else this.stream = this.options.stream
+    else stream = fullOptions.stream
 
-    this.audioContext = new AudioContext()
-    const source = new MediaStreamAudioSourceNode(this.audioContext, {
-      mediaStream: this.stream,
+    const audioContext = new AudioContext()
+    const sourceNode = new MediaStreamAudioSourceNode(audioContext, {
+      mediaStream: stream,
     })
 
-    this.audioNodeVAD = await AudioNodeVAD.new(this.audioContext, this.options)
-    this.audioNodeVAD.receive(source)
+    const audioNodeVAD = await AudioNodeVAD.new(audioContext, fullOptions)
+    audioNodeVAD.receive(sourceNode)
+
+    return new MicVAD(
+      fullOptions,
+      audioContext,
+      stream,
+      audioNodeVAD,
+      sourceNode
+    )
   }
+
+  private constructor(
+    public options: RealTimeVADOptions,
+    private audioContext: AudioContext,
+    private stream: MediaStream,
+    private audioNodeVAD: AudioNodeVAD,
+    private sourceNode: MediaStreamAudioSourceNode,
+    private listening = false
+  ) {}
 
   pause = () => {
     this.audioNodeVAD.pause()
@@ -139,36 +145,76 @@ export class MicVAD {
     if (this.listening) {
       this.pause()
     }
-    this.stream.getTracks().forEach((t) => t.stop())
-    this.audioContext?.close()
-    this.audioContext = null
-    this.audioNodeVAD.entryNode.port.postMessage({
-      message: Message.SpeechStop,
-    })
+    this.sourceNode.disconnect()
+    this.audioNodeVAD.destroy()
+    this.audioContext.close()
   }
 }
 
 export class AudioNodeVAD {
-  // @ts-ignore
-  frameProcessor: FrameProcessor
-  // @ts-ignore
-  entryNode: AudioWorkletNode
-
   static async new(
     ctx: AudioContext,
     options: Partial<RealTimeVADOptions> = {}
   ) {
-    const vad = new AudioNodeVAD(ctx, {
+    const fullOptions: RealTimeVADOptions = {
       ...defaultRealTimeVADOptions,
       ...options,
+    }
+    validateOptions(fullOptions)
+
+    await ctx.audioWorklet.addModule(fullOptions.workletURL)
+    const vadNode = new AudioWorkletNode(ctx, "vad-helper-worklet", {
+      processorOptions: {
+        frameSamples: fullOptions.frameSamples,
+      },
     })
-    await vad.init()
-    return vad
+
+    const model = await Silero.new(ort, () =>
+      fullOptions.modelFetcher(fullOptions.modelURL)
+    )
+
+    const frameProcessor = new FrameProcessor(
+      model.process,
+      model.reset_state,
+      {
+        frameSamples: fullOptions.frameSamples,
+        positiveSpeechThreshold: fullOptions.positiveSpeechThreshold,
+        negativeSpeechThreshold: fullOptions.negativeSpeechThreshold,
+        redemptionFrames: fullOptions.redemptionFrames,
+        preSpeechPadFrames: fullOptions.preSpeechPadFrames,
+        minSpeechFrames: fullOptions.minSpeechFrames,
+      }
+    )
+
+    const audioNodeVAD = new AudioNodeVAD(
+      ctx,
+      fullOptions,
+      frameProcessor,
+      vadNode
+    )
+
+    vadNode.port.onmessage = async (ev: MessageEvent) => {
+      switch (ev.data?.message) {
+        case Message.AudioFrame:
+          const buffer: ArrayBuffer = ev.data.data
+          const frame = new Float32Array(buffer)
+          await audioNodeVAD.processFrame(frame)
+          break
+
+        default:
+          break
+      }
+    }
+
+    return audioNodeVAD
   }
 
-  constructor(public ctx: AudioContext, public options: RealTimeVADOptions) {
-    validateOptions(options)
-  }
+  constructor(
+    public ctx: AudioContext,
+    public options: RealTimeVADOptions,
+    private frameProcessor: FrameProcessor,
+    private entryNode: AudioWorkletNode
+  ) {}
 
   pause = () => {
     this.frameProcessor.pause()
@@ -197,8 +243,7 @@ export class AudioNodeVAD {
         break
 
       case Message.SpeechEnd:
-        // @ts-ignore
-        this.options.onSpeechEnd(audio)
+        this.options.onSpeechEnd(audio as Float32Array)
         break
 
       default:
@@ -206,37 +251,10 @@ export class AudioNodeVAD {
     }
   }
 
-  init = async () => {
-    await this.ctx.audioWorklet.addModule(this.options.workletURL)
-    const vadNode = new AudioWorkletNode(this.ctx, "vad-helper-worklet", {
-      processorOptions: {
-        frameSamples: this.options.frameSamples,
-      },
+  destroy = () => {
+    this.entryNode.port.postMessage({
+      message: Message.SpeechStop,
     })
-    this.entryNode = vadNode
-
-    const model = await Silero.new(ort, () => this.options.modelFetcher(this.options.modelURL))
-
-    this.frameProcessor = new FrameProcessor(model.process, model.reset_state, {
-      frameSamples: this.options.frameSamples,
-      positiveSpeechThreshold: this.options.positiveSpeechThreshold,
-      negativeSpeechThreshold: this.options.negativeSpeechThreshold,
-      redemptionFrames: this.options.redemptionFrames,
-      preSpeechPadFrames: this.options.preSpeechPadFrames,
-      minSpeechFrames: this.options.minSpeechFrames,
-    })
-
-    vadNode.port.onmessage = async (ev: MessageEvent) => {
-      switch (ev.data?.message) {
-        case Message.AudioFrame:
-          const buffer: ArrayBuffer = ev.data.data
-          const frame = new Float32Array(buffer)
-          await this.processFrame(frame)
-          break
-
-        default:
-          break
-      }
-    }
+    this.entryNode.disconnect()
   }
 }
