@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "onnxruntime-web": "^1.14.0",
-    "@ricky0123/vad-web": "^0.0.13"
+    "@ricky0123/vad-web": "^0.0.14"
   },
   "peerDependencies": {
     "react": "^18",
