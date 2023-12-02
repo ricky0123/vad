@@ -12,27 +12,25 @@ import { audioFileToArray } from "./utils"
 import { defaultModelFetcher } from "./default-model-fetcher"
 import { assetPath } from "./asset-path"
 
-
 export interface NonRealTimeVADOptionsWeb extends NonRealTimeVADOptions {
-  modelURL: string,
-  modelFetcher: (path: string) => Promise<ArrayBuffer>,
-} 
+  modelURL: string
+  modelFetcher: (path: string) => Promise<ArrayBuffer>
+}
 
 export const defaultNonRealTimeVADOptions = {
   modelURL: assetPath("silero_vad.onnx"),
-  modelFetcher: defaultModelFetcher
+  modelFetcher: defaultModelFetcher,
 }
 
 class NonRealTimeVAD extends PlatformAgnosticNonRealTimeVAD {
   static async new(
     options: Partial<NonRealTimeVADOptionsWeb> = {}
   ): Promise<NonRealTimeVAD> {
-    const {modelURL, modelFetcher} = {...defaultNonRealTimeVADOptions, ...options};
-    return await this._new(
-      () => modelFetcher(modelURL), 
-      ort, 
-      options
-    )
+    const { modelURL, modelFetcher } = {
+      ...defaultNonRealTimeVADOptions,
+      ...options,
+    }
+    return await this._new(() => modelFetcher(modelURL), ort, options)
   }
 }
 

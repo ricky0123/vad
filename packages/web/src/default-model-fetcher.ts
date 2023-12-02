@@ -1,4 +1,3 @@
 export const defaultModelFetcher = (path: string) => {
-  return fetch(path)
-    .then(model=>model.arrayBuffer())
-};
+  return fetch(path).then((model) => model.arrayBuffer())
+}
