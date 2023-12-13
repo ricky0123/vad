@@ -42,6 +42,11 @@ export interface FrameProcessorOptions {
    * it will be discarded and `onVADMisfire` will be run instead of `onSpeechEnd`.
    */
   minSpeechFrames: number
+
+  /**
+   * If true, when the user pauses the VAD, it may trigger `onSpeechEnd`.
+   */
+  submitUserSpeechOnPause: boolean
 }
 
 export const defaultFrameProcessorOptions: FrameProcessorOptions = {
@@ -51,6 +56,7 @@ export const defaultFrameProcessorOptions: FrameProcessorOptions = {
   redemptionFrames: 8,
   frameSamples: 1536,
   minSpeechFrames: 3,
+  submitUserSpeechOnPause: false,
 }
 
 export function validateOptions(options: FrameProcessorOptions) {
@@ -166,25 +172,32 @@ export class FrameProcessor implements FrameProcessorInterface {
     }
 
     if (this.paused) {
-      const speaking = this.speaking
-      const audioBuffer = this.audioBuffer
-      const speechFrameCount = audioBuffer.reduce((acc, item) => {
-        return acc + +item.isSpeech
-      }, 0)
+      if (this.options.submitUserSpeechOnPause) {
+        const speaking = this.speaking
+        const audioBuffer = this.audioBuffer
+        const speechFrameCount = audioBuffer.reduce((acc, item) => {
+          return acc + +item.isSpeech
+        }, 0)
 
-      this.active = false
-      this.paused = false
-      this.reset()
+        this.active = false
+        this.paused = false
+        this.reset()
 
-      const probs = { notSpeech: 1, isSpeech: 0 }
+        const probs = { notSpeech: 1, isSpeech: 0 }
 
-      if (!speaking) return { probs }
+        if (!speaking) return { probs }
 
-      if (speechFrameCount >= this.options.minSpeechFrames) {
-        const audio = concatArrays(audioBuffer.map((item) => item.frame))
-        return { probs, msg: Message.SpeechEnd, audio }
+        if (speechFrameCount >= this.options.minSpeechFrames) {
+          const audio = concatArrays(audioBuffer.map((item) => item.frame))
+          return { probs, msg: Message.SpeechEnd, audio }
+        } else {
+          return { probs, msg: Message.VADMisfire }
+        }
       } else {
-        return { probs, msg: Message.VADMisfire }
+        this.active = false
+        this.paused = false
+        this.reset()
+        return {}
       }
     }
 

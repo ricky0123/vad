@@ -183,6 +183,7 @@ export class AudioNodeVAD {
         redemptionFrames: fullOptions.redemptionFrames,
         preSpeechPadFrames: fullOptions.preSpeechPadFrames,
         minSpeechFrames: fullOptions.minSpeechFrames,
+        submitUserSpeechOnPause: fullOptions.submitUserSpeechOnPause,
       }
     )
 
