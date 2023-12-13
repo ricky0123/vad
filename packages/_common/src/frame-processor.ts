@@ -127,7 +127,6 @@ export class FrameProcessor implements FrameProcessorInterface {
   ) {
     this.audioBuffer = []
     this.reset()
-    log.debug("Loading modified Frame Processor with special pause behaviour")
   }
 
   reset = () => {
