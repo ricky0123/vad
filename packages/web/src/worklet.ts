@@ -8,11 +8,19 @@ class Processor extends AudioWorkletProcessor {
   // @ts-ignore
   resampler: Resampler
   _initialized = false
+  _stopProcessing = false
   options: WorkletOptions
 
   constructor(options) {
     super()
     this.options = options.processorOptions as WorkletOptions
+
+    this.port.onmessage = (ev) => {
+      if (ev.data.message === Message.SpeechStop) {
+        this._stopProcessing = true
+      }
+    }
+
     this.init()
   }
   init = async () => {
@@ -30,6 +38,10 @@ class Processor extends AudioWorkletProcessor {
     outputs: Float32Array[][],
     parameters: Record<string, Float32Array>
   ): boolean {
+    if (this._stopProcessing) {
+      return false
+    }
+
     // @ts-ignore
     const arr = inputs[0][0]
 
@@ -42,6 +54,7 @@ class Processor extends AudioWorkletProcessor {
         )
       }
     }
+
     return true
   }
 }

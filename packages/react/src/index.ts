@@ -80,8 +80,8 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
   vadOptions.onVADMisfire = _onVADMisfire
 
   useEffect(() => {
+    let myvad: MicVAD | null
     const setup = async (): Promise<void> => {
-      let myvad: MicVAD | null
       try {
         myvad = await MicVAD.new(vadOptions)
       } catch (e) {
@@ -105,8 +105,8 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
       console.log("Well that didn't work")
     })
     return function cleanUp() {
+      myvad?.destroy()
       if (!loading && !errored) {
-        vad?.pause()
         setListening(false)
       }
     }

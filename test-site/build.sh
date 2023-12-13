@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-rm -rf test-site/dist
-mkdir test-site/dist
+rm -rf test-site/dist/*
+mkdir -p test-site/dist
 
 (
     cd test-site/src
