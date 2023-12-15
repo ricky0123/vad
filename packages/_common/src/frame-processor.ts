@@ -42,6 +42,11 @@ export interface FrameProcessorOptions {
    * it will be discarded and `onVADMisfire` will be run instead of `onSpeechEnd`.
    */
   minSpeechFrames: number
+
+  /**
+   * If true, when the user pauses the VAD, it may trigger `onSpeechEnd`.
+   */
+  submitUserSpeechOnPause: boolean
 }
 
 export const defaultFrameProcessorOptions: FrameProcessorOptions = {
@@ -51,6 +56,7 @@ export const defaultFrameProcessorOptions: FrameProcessorOptions = {
   redemptionFrames: 8,
   frameSamples: 1536,
   minSpeechFrames: 3,
+  submitUserSpeechOnPause: false,
 }
 
 export function validateOptions(options: FrameProcessorOptions) {
@@ -131,7 +137,12 @@ export class FrameProcessor implements FrameProcessorInterface {
 
   pause = () => {
     this.active = false
-    this.reset()
+    if (this.options.submitUserSpeechOnPause) {
+      return this.endSegment()
+    } else {
+      this.reset()
+      return {}
+    }
   }
 
   resume = () => {
@@ -163,6 +174,7 @@ export class FrameProcessor implements FrameProcessorInterface {
     if (!this.active) {
       return {}
     }
+
     const probs = await this.modelProcessFunc(frame)
     this.audioBuffer.push({
       frame,

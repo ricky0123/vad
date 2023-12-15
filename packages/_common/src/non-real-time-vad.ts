@@ -55,6 +55,7 @@ export class PlatformAgnosticNonRealTimeVAD {
       redemptionFrames: this.options.redemptionFrames,
       preSpeechPadFrames: this.options.preSpeechPadFrames,
       minSpeechFrames: this.options.minSpeechFrames,
+      submitUserSpeechOnPause: this.options.submitUserSpeechOnPause,
     })
     this.frameProcessor.resume()
   }

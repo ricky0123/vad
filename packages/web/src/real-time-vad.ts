@@ -183,6 +183,7 @@ export class AudioNodeVAD {
         redemptionFrames: fullOptions.redemptionFrames,
         preSpeechPadFrames: fullOptions.preSpeechPadFrames,
         minSpeechFrames: fullOptions.minSpeechFrames,
+        submitUserSpeechOnPause: fullOptions.submitUserSpeechOnPause,
       }
     )
 
@@ -217,7 +218,8 @@ export class AudioNodeVAD {
   ) {}
 
   pause = () => {
-    this.frameProcessor.pause()
+    const ev = this.frameProcessor.pause()
+    this.handleFrameProcessorEvent(ev)
   }
 
   start = () => {
@@ -229,11 +231,21 @@ export class AudioNodeVAD {
   }
 
   processFrame = async (frame: Float32Array) => {
-    const { probs, msg, audio } = await this.frameProcessor.process(frame)
-    if (probs !== undefined) {
-      this.options.onFrameProcessed(probs)
+    const ev = await this.frameProcessor.process(frame)
+    this.handleFrameProcessorEvent(ev)
+  }
+
+  handleFrameProcessorEvent = (
+    ev: Partial<{
+      probs: SpeechProbabilities
+      msg: Message
+      audio: Float32Array
+    }>
+  ) => {
+    if (ev.probs !== undefined) {
+      this.options.onFrameProcessed(ev.probs)
     }
-    switch (msg) {
+    switch (ev.msg) {
       case Message.SpeechStart:
         this.options.onSpeechStart()
         break
@@ -243,7 +255,7 @@ export class AudioNodeVAD {
         break
 
       case Message.SpeechEnd:
-        this.options.onSpeechEnd(audio as Float32Array)
+        this.options.onSpeechEnd(ev.audio as Float32Array)
         break
 
       default:

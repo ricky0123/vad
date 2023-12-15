@@ -12,8 +12,9 @@ sources = {
 
 for example_dir in Path("examples").glob("*"):
     for pkg, src in sources.items():
-        dep_path =example_dir/f"node_modules/{pkg}"
+        dep_path = example_dir/f"node_modules/{pkg}"
         if dep_path.exists():
+            print("Updating", dep_path)
             package_json_src = f"{dep_path}/package.json"
             package_json_tgt = f"{src}/package.json"
             
