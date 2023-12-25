@@ -7,7 +7,7 @@ import {
   defaultFrameProcessorOptions,
   FrameProcessor,
   FrameProcessorOptions,
-  validateOptions,
+  validateOptions
 } from "./_common"
 import { assetPath } from "./asset-path"
 import { defaultModelFetcher } from "./default-model-fetcher"
@@ -36,10 +36,8 @@ interface RealTimeVADCallbacks {
  * Customizable audio constraints for the VAD.
  * Excludes certain constraints that are set for the user by default.
  */
-type AudioConstraints = Omit<
-  MediaTrackConstraints,
-  "channelCount" | "echoCancellation" | "autoGainControl" | "noiseSuppression"
->
+type AudioConstraints = Omit<MediaTrackConstraints,
+  "channelCount" | "echoCancellation" | "autoGainControl" | "noiseSuppression">
 
 type AssetOptions = {
   workletURL: string
@@ -68,7 +66,8 @@ export type RealTimeVADOptions =
 
 export const defaultRealTimeVADOptions: RealTimeVADOptions = {
   ...defaultFrameProcessorOptions,
-  onFrameProcessed: (probabilities) => {},
+  onFrameProcessed: (probabilities) => {
+  },
   onVADMisfire: () => {
     log.debug("VAD misfire")
   },
@@ -81,14 +80,14 @@ export const defaultRealTimeVADOptions: RealTimeVADOptions = {
   workletURL: assetPath("vad.worklet.bundle.min.js"),
   modelURL: assetPath("silero_vad.onnx"),
   modelFetcher: defaultModelFetcher,
-  stream: undefined,
+  stream: undefined
 }
 
 export class MicVAD {
   static async new(options: Partial<RealTimeVADOptions> = {}) {
     const fullOptions: RealTimeVADOptions = {
       ...defaultRealTimeVADOptions,
-      ...options,
+      ...options
     }
     validateOptions(fullOptions)
 
@@ -100,14 +99,14 @@ export class MicVAD {
           channelCount: 1,
           echoCancellation: true,
           autoGainControl: true,
-          noiseSuppression: true,
-        },
+          noiseSuppression: true
+        }
       })
     else stream = fullOptions.stream
 
     const audioContext = new AudioContext()
     const sourceNode = new MediaStreamAudioSourceNode(audioContext, {
-      mediaStream: stream,
+      mediaStream: stream
     })
 
     const audioNodeVAD = await AudioNodeVAD.new(audioContext, fullOptions)
@@ -129,7 +128,8 @@ export class MicVAD {
     private audioNodeVAD: AudioNodeVAD,
     private sourceNode: MediaStreamAudioSourceNode,
     private listening = false
-  ) {}
+  ) {
+  }
 
   pause = () => {
     this.audioNodeVAD.pause()
@@ -158,15 +158,27 @@ export class AudioNodeVAD {
   ) {
     const fullOptions: RealTimeVADOptions = {
       ...defaultRealTimeVADOptions,
-      ...options,
+      ...options
     }
     validateOptions(fullOptions)
+    try {
+      await ctx.audioWorklet.addModule(fullOptions.workletURL)
+    } catch (e) {
+      const currentPath = window.location.pathname;
+      const trimmedPath = currentPath.replace(/\/[^/]+$/, '');
+      console.error(
+        `Cannot find files in this path ${trimmedPath}. 
+      You can add your model related files 
+      (ort-wasm.wasm, ort-wasm-simd.wasm, ort-wasm-threaded.wasm, silero vad.onnx, vad.worklet.bundle.min.js) 
+      to this path.`
+      );
+    }
 
-    await ctx.audioWorklet.addModule(fullOptions.workletURL)
+
     const vadNode = new AudioWorkletNode(ctx, "vad-helper-worklet", {
       processorOptions: {
-        frameSamples: fullOptions.frameSamples,
-      },
+        frameSamples: fullOptions.frameSamples
+      }
     })
 
     const model = await Silero.new(ort, () =>
@@ -183,7 +195,7 @@ export class AudioNodeVAD {
         redemptionFrames: fullOptions.redemptionFrames,
         preSpeechPadFrames: fullOptions.preSpeechPadFrames,
         minSpeechFrames: fullOptions.minSpeechFrames,
-        submitUserSpeechOnPause: fullOptions.submitUserSpeechOnPause,
+        submitUserSpeechOnPause: fullOptions.submitUserSpeechOnPause
       }
     )
 
@@ -215,7 +227,8 @@ export class AudioNodeVAD {
     public options: RealTimeVADOptions,
     private frameProcessor: FrameProcessor,
     private entryNode: AudioWorkletNode
-  ) {}
+  ) {
+  }
 
   pause = () => {
     const ev = this.frameProcessor.pause()
@@ -265,7 +278,7 @@ export class AudioNodeVAD {
 
   destroy = () => {
     this.entryNode.port.postMessage({
-      message: Message.SpeechStop,
+      message: Message.SpeechStop
     })
     this.entryNode.disconnect()
   }
