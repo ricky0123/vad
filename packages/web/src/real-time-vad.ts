@@ -145,6 +145,9 @@ export class MicVAD {
     if (this.listening) {
       this.pause()
     }
+    if (this.options.stream === undefined) {
+      this.stream.getTracks().forEach((track) => track.stop())
+    }
     this.sourceNode.disconnect()
     this.audioNodeVAD.destroy()
     this.audioContext.close()
