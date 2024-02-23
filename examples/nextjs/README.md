@@ -1,3 +1,1 @@
 This is an example of a Nextjs project using @ricky0123/vad-react. It was created using `create-next-app`. The configuration you need to add for your Nextjs project is demonstrated in [./next.config.js](./next.config.js). You can see how the React hook for the VAD is used in [./src/pages/index.tsx](./src/pages/index.tsx).
-
-One caveat - when using the Nextjs development server, the `useMicVAD` hook doesn't behave properly and seems to create two voice activity detectors. I think this may be because [react strict mode](https://nextjs.org/docs/api-reference/next.config.js/react-strict-mode) is enabled, but I have not yet checked whether things work when this is disabled. However, when running with `npm run build && npm run start`, the hook appears to work as intended.
