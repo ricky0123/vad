@@ -39,7 +39,7 @@ interface RealTimeVADCallbacks {
 type AudioConstraints = Omit<
   MediaTrackConstraints,
   "channelCount" | "echoCancellation" | "autoGainControl" | "noiseSuppression"
->
+  >
 
 type AssetOptions = {
   workletURL: string
@@ -165,7 +165,18 @@ export class AudioNodeVAD {
     }
     validateOptions(fullOptions)
 
-    await ctx.audioWorklet.addModule(fullOptions.workletURL)
+    try {
+      await ctx.audioWorklet.addModule(fullOptions.workletURL)
+    } catch (e) {
+      const currentPath = window.location.pathname;
+      const trimmedPath = currentPath.replace(/\/[^/]+$/, '');
+      console.error(
+        `Cannot find files in this path ${trimmedPath}. 
+      You can add your model related files 
+      (ort-wasm.wasm, ort-wasm-simd.wasm, ort-wasm-threaded.wasm, silero vad.onnx, vad.worklet.bundle.min.js) 
+      to this path.`
+      );
+    }
     const vadNode = new AudioWorkletNode(ctx, "vad-helper-worklet", {
       processorOptions: {
         frameSamples: fullOptions.frameSamples,
