@@ -10,9 +10,9 @@ export class Resampler {
   inputBuffer: Array<number>
 
   constructor(public options: ResamplerOptions) {
-    if (options.nativeSampleRate < 16000) {
+    if (options.nativeSampleRate < 8000) {
       log.error(
-        "nativeSampleRate is too low. Should have 16000 = targetSampleRate <= nativeSampleRate"
+        "nativeSampleRate is too low. Should have 8000 = targetSampleRate <= nativeSampleRate"
       )
     }
     this.inputBuffer = []
