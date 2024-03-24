@@ -1,4 +1,4 @@
-import * as ortInstance from "onnxruntime-web"
+import * as ort from "onnxruntime-web"
 import {
   utils as _utils,
   PlatformAgnosticNonRealTimeVAD,
@@ -30,7 +30,7 @@ class NonRealTimeVAD extends PlatformAgnosticNonRealTimeVAD {
       ...defaultNonRealTimeVADOptions,
       ...options,
     }
-    return await this._new(() => modelFetcher(modelURL), ortInstance, options)
+    return await this._new(() => modelFetcher(modelURL), ort, options)
   }
 }
 
@@ -42,6 +42,5 @@ export {
   MicVAD,
   AudioNodeVAD,
   defaultRealTimeVADOptions,
-  ort
 } from "./real-time-vad"
 export type { RealTimeVADOptions } from "./real-time-vad"
