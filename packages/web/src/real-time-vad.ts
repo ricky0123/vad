@@ -1,4 +1,4 @@
-import * as ort from "onnxruntime-web"
+import * as ortInstance from "onnxruntime-web"
 import {
   log,
   Message,
@@ -7,6 +7,7 @@ import {
   defaultFrameProcessorOptions,
   FrameProcessor,
   FrameProcessorOptions,
+  OrtOptions,
   validateOptions,
 } from "./_common"
 import { assetPath } from "./asset-path"
@@ -50,6 +51,7 @@ type AssetOptions = {
 interface RealTimeVADOptionsWithoutStream
   extends FrameProcessorOptions,
     RealTimeVADCallbacks,
+    OrtOptions,
     AssetOptions {
   additionalAudioConstraints?: AudioConstraints
   stream: undefined
@@ -58,9 +60,12 @@ interface RealTimeVADOptionsWithoutStream
 interface RealTimeVADOptionsWithStream
   extends FrameProcessorOptions,
     RealTimeVADCallbacks,
+    OrtOptions,
     AssetOptions {
   stream: MediaStream
 }
+
+export const ort = ortInstance
 
 export type RealTimeVADOptions =
   | RealTimeVADOptionsWithStream
@@ -82,6 +87,7 @@ export const defaultRealTimeVADOptions: RealTimeVADOptions = {
   modelURL: assetPath("silero_vad.onnx"),
   modelFetcher: defaultModelFetcher,
   stream: undefined,
+  ortConfig: undefined
 }
 
 export class MicVAD {
@@ -171,6 +177,10 @@ export class AudioNodeVAD {
         frameSamples: fullOptions.frameSamples,
       },
     })
+
+    if (fullOptions.ortConfig !== undefined) {
+      fullOptions.ortConfig(ort)
+    }
 
     const model = await Silero.new(ort, () =>
       fullOptions.modelFetcher(fullOptions.modelURL)
