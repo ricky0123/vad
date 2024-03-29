@@ -165,16 +165,35 @@ export class AudioNodeVAD {
     }
     validateOptions(fullOptions)
 
-    await ctx.audioWorklet.addModule(fullOptions.workletURL)
+    try {
+      await ctx.audioWorklet.addModule(fullOptions.workletURL)
+    } catch (e) {
+      console.error(
+        `Encountered an error while loading worklet. Please make sure the worklet vad.bundle.min.js included with @ricky0123/vad-web is available at the specified path:
+        ${fullOptions.workletURL}
+        If need be, you can customize the worklet file location using the \`workletURL\` option.`
+      )
+      throw e
+    }
     const vadNode = new AudioWorkletNode(ctx, "vad-helper-worklet", {
       processorOptions: {
         frameSamples: fullOptions.frameSamples,
       },
     })
 
-    const model = await Silero.new(ort, () =>
-      fullOptions.modelFetcher(fullOptions.modelURL)
-    )
+    let model: Silero
+    try {
+      model = await Silero.new(ort, () =>
+        fullOptions.modelFetcher(fullOptions.modelURL)
+      )
+    } catch (e) {
+      console.error(
+        `Encountered an error while loading model file. Please make sure silero_vad.onnx, included with @ricky0123/vad-web, is available at the specified path:
+      ${fullOptions.modelURL}
+      If need be, you can customize the model file location using the \`modelsURL\` option.`
+      )
+      throw e
+    }
 
     const frameProcessor = new FrameProcessor(
       model.process,
