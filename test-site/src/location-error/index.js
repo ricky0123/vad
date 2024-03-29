@@ -9,6 +9,7 @@ function getToggleButton() {
 async function main() {
   try {
     const myvad = await vad.MicVAD.new({
+      workletURL: "/wrong/vad.bundle.min.js",
       onSpeechStart: () => {
         console.log("Speech start")
       },

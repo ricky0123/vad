@@ -39,7 +39,7 @@ interface RealTimeVADCallbacks {
 type AudioConstraints = Omit<
   MediaTrackConstraints,
   "channelCount" | "echoCancellation" | "autoGainControl" | "noiseSuppression"
-  >
+>
 
 type AssetOptions = {
   workletURL: string
@@ -168,14 +168,12 @@ export class AudioNodeVAD {
     try {
       await ctx.audioWorklet.addModule(fullOptions.workletURL)
     } catch (e) {
-      const currentPath = window.location.pathname;
-      const trimmedPath = currentPath.replace(/\/[^/]+$/, '');
       console.error(
-        `Cannot find files in this path ${trimmedPath}. 
-      You can add your model related files 
-      (ort-wasm.wasm, ort-wasm-simd.wasm, ort-wasm-threaded.wasm, silero vad.onnx, vad.worklet.bundle.min.js) 
-      to this path.`
-      );
+        `Encountered an error while loading worklet. Please make sure the worklet vad.bundle.min.js included with @ricky0123/vad-web is available at the specified path:
+        ${fullOptions.workletURL}
+        If need be, you can customize the worklet file location using the \`workletURL\` option.`
+      )
+      throw e
     }
     const vadNode = new AudioWorkletNode(ctx, "vad-helper-worklet", {
       processorOptions: {
@@ -183,9 +181,19 @@ export class AudioNodeVAD {
       },
     })
 
-    const model = await Silero.new(ort, () =>
-      fullOptions.modelFetcher(fullOptions.modelURL)
-    )
+    let model: Silero
+    try {
+      model = await Silero.new(ort, () =>
+        fullOptions.modelFetcher(fullOptions.modelURL)
+      )
+    } catch (e) {
+      console.error(
+        `Encountered an error while loading model file. Please make sure silero_vad.onnx, included with @ricky0123/vad-web, is available at the specified path:
+      ${fullOptions.modelURL}
+      If need be, you can customize the model file location using the \`modelsURL\` option.`
+      )
+      throw e
+    }
 
     const frameProcessor = new FrameProcessor(
       model.process,
