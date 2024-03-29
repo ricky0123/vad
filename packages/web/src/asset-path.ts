@@ -5,7 +5,7 @@ const currentScript = isWeb
   ? (window.document.currentScript as HTMLScriptElement)
   : null
 
-let basePath = ""
+let basePath = "/"
 if (currentScript) {
   basePath = currentScript.src
     .replace(/#.*$/, "")
