@@ -15,10 +15,15 @@ interface NonRealTimeVADSpeechData {
   end: number
 }
 
-export interface NonRealTimeVADOptions extends FrameProcessorOptions {}
+export interface NonRealTimeVADOptions extends FrameProcessorOptions {
+  nativeSampleRate: number
+  targetSampleRate: number
+}
 
 export const defaultNonRealTimeVADOptions: NonRealTimeVADOptions = {
   ...defaultFrameProcessorOptions,
+  nativeSampleRate: 16000,
+  targetSampleRate: 16000,
 }
 
 export class PlatformAgnosticNonRealTimeVAD {
@@ -46,7 +51,7 @@ export class PlatformAgnosticNonRealTimeVAD {
   }
 
   init = async () => {
-    const model = await Silero.new(this.ort, this.modelFetcher)
+    const model = await Silero.new(this.ort, this.modelFetcher, this.options.nativeSampleRate)
 
     this.frameProcessor = new FrameProcessor(model.process, model.reset_state, {
       frameSamples: this.options.frameSamples,
@@ -62,26 +67,30 @@ export class PlatformAgnosticNonRealTimeVAD {
 
   run = async function* (
     inputAudio: Float32Array,
-    sampleRate: number
+    sampleRate?: number,
   ): AsyncGenerator<NonRealTimeVADSpeechData> {
+
+    const targetSampleRate = this.options.targetSampleRate ?? 16000
     const resamplerOptions = {
-      nativeSampleRate: sampleRate,
-      targetSampleRate: 16000,
+      nativeSampleRate: sampleRate ?? this.options.nativeSampleRate,
+      targetSampleRate: targetSampleRate,
       targetFrameSize: this.options.frameSamples,
     }
+    
     const resampler = new Resampler(resamplerOptions)
     const frames = resampler.process(inputAudio)
+    const framesDivisor = (targetSampleRate / 1000);
     let start: number, end: number
     for (const i of [...Array(frames.length)].keys()) {
       const f = frames[i]
       const { msg, audio } = await this.frameProcessor.process(f)
       switch (msg) {
         case Message.SpeechStart:
-          start = (i * this.options.frameSamples) / 16
+          start = (i * this.options.frameSamples) / framesDivisor
           break
 
         case Message.SpeechEnd:
-          end = ((i + 1) * this.options.frameSamples) / 16
+          end = ((i + 1) * this.options.frameSamples) / framesDivisor
           // @ts-ignore
           yield { audio, start, end }
           break
@@ -96,7 +105,7 @@ export class PlatformAgnosticNonRealTimeVAD {
         audio,
         // @ts-ignore
         start,
-        end: (frames.length * this.options.frameSamples) / 16,
+        end: (frames.length * this.options.frameSamples) / framesDivisor,
       }
     }
   }

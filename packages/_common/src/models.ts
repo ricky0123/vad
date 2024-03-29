@@ -22,20 +22,22 @@ export class Silero {
 
   constructor(
     private ort: ONNXRuntimeAPI,
-    private modelFetcher: ModelFetcher
+    private modelFetcher: ModelFetcher,
+    private nativeSampleRate: number,
   ) {}
 
-  static new = async (ort: ONNXRuntimeAPI, modelFetcher: ModelFetcher) => {
-    const model = new Silero(ort, modelFetcher)
+  static new = async (ort: ONNXRuntimeAPI, modelFetcher: ModelFetcher, nativeSampleRate: number) => {
+    const model = new Silero(ort, modelFetcher, nativeSampleRate)
     await model.init()
     return model
   }
 
   init = async () => {
-    log.debug("initializing vad")
+    log.debug(`initializing vad`)
     const modelArrayBuffer = await this.modelFetcher()
     this._session = await this.ort.InferenceSession.create(modelArrayBuffer)
-    this._sr = new this.ort.Tensor("int64", [16000n])
+    const tensorSize = BigInt(this.nativeSampleRate)
+    this._sr = new this.ort.Tensor("int64", [tensorSize])
     this.reset_state()
     log.debug("vad is initialized")
   }
