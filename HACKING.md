@@ -7,7 +7,7 @@ TODO: Reconcile two documentation sources.
 - Build the docker image
 
 ```sh
-podman build -t vad .
+podman build -f Dockerfile.test -t vad .
 ```
 
 - Run the container and mount the package folder
