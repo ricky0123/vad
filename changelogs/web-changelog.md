@@ -2,6 +2,8 @@
 
 ## 0.0.17
 
+* look, by default, in web root for silero_vad.onnx and vad.bundle.min.js
+* add error message in console with information about expected worklet/model location when missing
 * add support for ONNX Runtime configuration
 * add Dockerfile for testing in non-Ubuntu environments
 

@@ -1,3 +1,9 @@
+You can also find relevant documentation on the [wiki](https://wiki.vad.ricky0123.com/en/docs/developer/hacking).
+
+TODO: Reconcile two documentation sources.
+
+## Instructions for running automated tests on Fedora/non-Ubuntu systems
+
 - Build the docker image
 
 ```sh
