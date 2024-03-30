@@ -3,6 +3,9 @@ import { log } from "./logging"
 
 export type ONNXRuntimeAPI = any
 export type ModelFetcher = () => Promise<ArrayBuffer>
+export type OrtOptions = {
+  ortConfig?: (ort: ONNXRuntimeAPI) => any
+}
 
 export interface SpeechProbabilities {
   notSpeech: number

@@ -6,7 +6,7 @@ import {
   validateOptions,
 } from "./frame-processor"
 import { Message } from "./messages"
-import { ModelFetcher, ONNXRuntimeAPI, Silero } from "./models"
+import { ModelFetcher, OrtOptions, ONNXRuntimeAPI, Silero } from "./models"
 import { Resampler } from "./resampler"
 
 interface NonRealTimeVADSpeechData {
@@ -15,10 +15,11 @@ interface NonRealTimeVADSpeechData {
   end: number
 }
 
-export interface NonRealTimeVADOptions extends FrameProcessorOptions {}
+export interface NonRealTimeVADOptions extends FrameProcessorOptions, OrtOptions {}
 
 export const defaultNonRealTimeVADOptions: NonRealTimeVADOptions = {
   ...defaultFrameProcessorOptions,
+  ortConfig: undefined
 }
 
 export class PlatformAgnosticNonRealTimeVAD {
@@ -29,10 +30,16 @@ export class PlatformAgnosticNonRealTimeVAD {
     ort: ONNXRuntimeAPI,
     options: Partial<NonRealTimeVADOptions> = {}
   ): Promise<T> {
-    const vad = new this(modelFetcher, ort, {
+    const fullOptions = {
       ...defaultNonRealTimeVADOptions,
       ...options,
-    })
+    }
+
+    if (fullOptions.ortConfig !== undefined) {
+      fullOptions.ortConfig(ort)
+    }
+
+    const vad = new this(modelFetcher, ort, fullOptions)
     await vad.init()
     return vad as T
   }
