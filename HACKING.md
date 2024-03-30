@@ -4,6 +4,8 @@ TODO: Reconcile two documentation sources.
 
 ## Instructions for running automated tests on Fedora/non-Ubuntu systems
 
+**NOTE**: Currently the firefox microphone test fails when running the tests this way.
+
 - Build the docker image
 
 ```sh
@@ -26,10 +28,4 @@ npm run build
 
 ```sh
 npm run test
-```
-
-- Run manual tests
-
-```sh
-npm run dev
 ```
