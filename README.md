@@ -9,7 +9,7 @@
 This package aims to provide an accurate, user-friendly voice activity detector (VAD) that runs in the browser. It also has limited support for node. By using this package, you can prompt the user for microphone permissions, start recording audio, send segments of audio with speech to your server for processing, or show a certain animation or indicator when the user is speaking.
 
 * See a live [demo](https://www.vad.ricky0123.com)
-* Join us on[Discord](https://discord.gg/4WPeGEaSpF)
+* Join us on [Discord](https://discord.gg/4WPeGEaSpF)!
 * Browse or contribute to [documentation](https://wiki.vad.ricky0123.com/)
 * If you would like to contribute, I have started writing some documentation on how to get started hacking on these packages [here](https://wiki.vad.ricky0123.com/en/docs/developer/hacking). If you have any questions, you can open an issue here or leave a message on Discord.
 
@@ -19,7 +19,7 @@ Under the hood, these packages run [Silero VAD](https://github.com/snakers4/sile
 
 Please contribute to the project financially - especially if your commercial product relies on this package. [![Become a Sponsor](https://img.shields.io/static/v1?label=Become%20a%20Sponsor&message=%E2%9D%A4&logo=GitHub&style=flat&color=d42f2d)](https://github.com/sponsors/ricky0123)
 
-### Quick Start
+## Quick Start
 
 To use the VAD via a script tag in the browser, include the following script tags:
 
