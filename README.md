@@ -24,7 +24,7 @@ Please contribute to the project financially - especially if your commercial pro
 To use the VAD via a script tag in the browser, include the following script tags:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/ort.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.7/dist/bundle.min.js"></script>
 <script>
   async function main() {
