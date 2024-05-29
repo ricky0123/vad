@@ -124,7 +124,7 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
     }
   }
   const start = () => {
-    if (!loading && !errored) {
+    if (!loading) {
       if (vad !== null) {
         vad?.start();
         setListening(true);
