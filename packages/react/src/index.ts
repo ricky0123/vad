@@ -130,35 +130,35 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
         setListening(true);
       } else {
         setLoading(true);
-        let myvad;
-        let canceled = false;
-        const setup = async () => {
+        let myvad: MicVAD | null
+        let canceled = false
+        const setup = async (): Promise<void> => {
           try {
-            myvad = await vad_web_1.MicVAD.new(vadOptions);
+            myvad = await MicVAD.new(vadOptions)
             if (canceled) {
-              myvad.destroy();
-              return;
+              myvad.destroy()
+              return
             }
-          }
-          catch (e) {
-            setLoading(false);
+          } catch (e) {
+            setLoading(false)
             if (e instanceof Error) {
-              setErrored({ message: e.message });
-            }
-            else {
+              setErrored({ message: e.message })
+            } else {
               // @ts-ignore
-              setErrored({ message: e });
+              setErrored({ message: e })
             }
-            return;
+            return
           }
-          setVAD(myvad);
-          setLoading(false);
-          myvad?.start();
-          setListening(true);
-        };
+          setVAD(myvad)
+          setLoading(false)
+          if (reactOptions.startOnLoad) {
+            myvad?.start()
+            setListening(true)
+          }
+        }
         setup().catch((e) => {
-          console.log("Well that didn't work");
-        });
+          console.log("Well that didn't work")
+        })
       }
 
     }
