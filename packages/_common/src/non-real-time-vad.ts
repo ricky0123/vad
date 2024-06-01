@@ -15,11 +15,13 @@ interface NonRealTimeVADSpeechData {
   end: number
 }
 
-export interface NonRealTimeVADOptions extends FrameProcessorOptions, OrtOptions {}
+export interface NonRealTimeVADOptions
+  extends FrameProcessorOptions,
+    OrtOptions {}
 
 export const defaultNonRealTimeVADOptions: NonRealTimeVADOptions = {
   ...defaultFrameProcessorOptions,
-  ortConfig: undefined
+  ortConfig: undefined,
 }
 
 export class PlatformAgnosticNonRealTimeVAD {

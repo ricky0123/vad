@@ -19,77 +19,97 @@ describe("Resampler", function () {
     { targetSampleRate: 8000, targetFrameSize: 160 },
     { targetSampleRate: 16000, targetFrameSize: 320 },
     { targetSampleRate: 22050, targetFrameSize: 441 },
-    { targetSampleRate: 44100, targetFrameSize: 882 }
-  ];
+    { targetSampleRate: 44100, targetFrameSize: 882 },
+  ]
 
-  describe("process", function() {
+  describe("process", function () {
     const testCases = [
       { targetSampleRate: 8000, targetFrameSize: 160 },
       { targetSampleRate: 16000, targetFrameSize: 320 },
       { targetSampleRate: 22050, targetFrameSize: 441 },
-      { targetSampleRate: 44100, targetFrameSize: 882 }
-    ];
+      { targetSampleRate: 44100, targetFrameSize: 882 },
+    ]
 
     testCases.forEach(({ targetSampleRate, targetFrameSize }) => {
       it(`should correctly resample audio to ${targetSampleRate} Hz with frame size ${targetFrameSize}`, async function () {
-        const [audioData, nativeSampleRate] = loadAudio(audioSamplePath);
+        const [audioData, nativeSampleRate] = loadAudio(audioSamplePath)
 
         const resampler = new vad.Resampler({
           nativeSampleRate: nativeSampleRate,
           targetSampleRate: targetSampleRate,
-          targetFrameSize: targetFrameSize
-        });
+          targetFrameSize: targetFrameSize,
+        })
 
-        const outputFrames = resampler.process(audioData);
+        const outputFrames = resampler.process(audioData)
 
         // Calculate expected number of frames, discarding partial frame at the end
-        const duration = audioData.length / nativeSampleRate;
-        const expectedNumberOfFrames = Math.floor(duration * targetSampleRate / targetFrameSize);
+        const duration = audioData.length / nativeSampleRate
+        const expectedNumberOfFrames = Math.floor(
+          (duration * targetSampleRate) / targetFrameSize
+        )
 
-        assert.equal(outputFrames.length, expectedNumberOfFrames, "Number of output frames does not match expected");
+        assert.equal(
+          outputFrames.length,
+          expectedNumberOfFrames,
+          "Number of output frames does not match expected"
+        )
 
         // Check if the frame size is correct
-        outputFrames.forEach(frame => {
-          assert.equal(frame.length, targetFrameSize, "Output frame size is incorrect");
-        });
-      });
-    });
-  });
+        outputFrames.forEach((frame) => {
+          assert.equal(
+            frame.length,
+            targetFrameSize,
+            "Output frame size is incorrect"
+          )
+        })
+      })
+    })
+  })
 
   describe("stream", function () {
     const testCases = [
       { targetSampleRate: 8000, targetFrameSize: 160 },
       { targetSampleRate: 16000, targetFrameSize: 320 },
       { targetSampleRate: 22050, targetFrameSize: 441 },
-      { targetSampleRate: 44100, targetFrameSize: 882 }
-    ];
+      { targetSampleRate: 44100, targetFrameSize: 882 },
+    ]
 
     testCases.forEach(({ targetSampleRate, targetFrameSize }) => {
       it(`should stream resampled audio frames correctly at ${targetSampleRate} Hz with frame size ${targetFrameSize}`, async function () {
-        const [audioData, nativeSampleRate] = loadAudio(audioSamplePath);
+        const [audioData, nativeSampleRate] = loadAudio(audioSamplePath)
 
         const resampler = new vad.Resampler({
           nativeSampleRate: nativeSampleRate,
           targetSampleRate: targetSampleRate,
-          targetFrameSize: targetFrameSize
-        });
+          targetFrameSize: targetFrameSize,
+        })
 
-        const frameStream = resampler.stream(audioData);
-        let frameCount = 0;
-        let allFramesCorrectSize = true;
+        const frameStream = resampler.stream(audioData)
+        let frameCount = 0
+        let allFramesCorrectSize = true
 
         for await (const frame of frameStream) {
-          frameCount++;
+          frameCount++
           if (frame.length !== targetFrameSize) {
-            allFramesCorrectSize = false;
-            break;
+            allFramesCorrectSize = false
+            break
           }
         }
 
-        const expectedNumberOfFrames = Math.floor(audioData.length / nativeSampleRate * targetSampleRate / targetFrameSize);
-        assert.equal(frameCount, expectedNumberOfFrames, "Number of streamed frames does not match expected");
-        assert.isTrue(allFramesCorrectSize, "Not all frames are of the correct size");
-      });
-    });
-  });
-});
+        const expectedNumberOfFrames = Math.floor(
+          ((audioData.length / nativeSampleRate) * targetSampleRate) /
+            targetFrameSize
+        )
+        assert.equal(
+          frameCount,
+          expectedNumberOfFrames,
+          "Number of streamed frames does not match expected"
+        )
+        assert.isTrue(
+          allFramesCorrectSize,
+          "Not all frames are of the correct size"
+        )
+      })
+    })
+  })
+})
