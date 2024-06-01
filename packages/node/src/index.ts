@@ -6,6 +6,7 @@ import {
   FrameProcessorOptions,
   Message,
   NonRealTimeVADOptions,
+  Resampler,
 } from "./_common"
 import * as fs from "fs/promises"
 
@@ -24,5 +25,5 @@ class NonRealTimeVAD extends PlatformAgnosticNonRealTimeVAD {
   }
 }
 
-export { utils, FrameProcessor, Message, NonRealTimeVAD }
+export { utils, Resampler, FrameProcessor, Message, NonRealTimeVAD }
 export type { FrameProcessorOptions, NonRealTimeVADOptions }

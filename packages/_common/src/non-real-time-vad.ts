@@ -77,33 +77,34 @@ export class PlatformAgnosticNonRealTimeVAD {
       targetFrameSize: this.options.frameSamples,
     }
     const resampler = new Resampler(resamplerOptions)
-    const frames = resampler.process(inputAudio)
-    let start: number, end: number
-    for (const i of [...Array(frames.length)].keys()) {
-      const f = frames[i]
-      const { msg, audio } = await this.frameProcessor.process(f)
+    let start = 0
+    let end = 0
+    let frameIndex = 0
+
+    for await (const frame of resampler.stream(inputAudio)) {
+      const { msg, audio } = await this.frameProcessor.process(frame)
       switch (msg) {
         case Message.SpeechStart:
-          start = (i * this.options.frameSamples) / 16
+          start = (frameIndex * this.options.frameSamples) / 16
           break
 
         case Message.SpeechEnd:
-          end = ((i + 1) * this.options.frameSamples) / 16
-          // @ts-ignore
+          end = ((frameIndex + 1) * this.options.frameSamples) / 16
           yield { audio, start, end }
           break
 
         default:
           break
       }
+      frameIndex++
     }
+
     const { msg, audio } = this.frameProcessor.endSegment()
     if (msg == Message.SpeechEnd) {
       yield {
         audio,
-        // @ts-ignore
         start,
-        end: (frames.length * this.options.frameSamples) / 16,
+        end: (frameIndex * this.options.frameSamples) / 16,
       }
     }
   }
