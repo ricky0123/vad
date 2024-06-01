@@ -87,7 +87,7 @@ export const defaultRealTimeVADOptions: RealTimeVADOptions = {
   modelURL: assetPath("silero_vad.onnx"),
   modelFetcher: defaultModelFetcher,
   stream: undefined,
-  ortConfig: undefined
+  ortConfig: undefined,
 }
 
 export class MicVAD {
