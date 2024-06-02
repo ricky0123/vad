@@ -124,18 +124,59 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
     }
   }
   const start = () => {
-    if (!loading && !errored) {
-      vad?.start()
-      setListening(true)
+    if (!loading) {
+      if (vad !== null) {
+        vad?.start();
+        setListening(true);
+      } else {
+        setLoading(true);
+        let myvad: MicVAD | null
+        let canceled = false
+        const setup = async (): Promise<void> => {
+          try {
+            myvad = await MicVAD.new(vadOptions)
+            if (canceled) {
+              myvad.destroy()
+              return
+            }
+          } catch (e) {
+            setLoading(false)
+            if (e instanceof Error) {
+              setErrored({ message: e.message })
+            } else {
+              // @ts-ignore
+              setErrored({ message: e })
+            }
+            return
+          }
+          setVAD(myvad)
+          setLoading(false)
+          if (reactOptions.startOnLoad) {
+            myvad?.start()
+            setListening(true)
+          }
+        }
+        setup().catch((e) => {
+          console.log("Well that didn't work")
+        })
+      }
+
     }
-  }
+  };
   const toggle = () => {
     if (listening) {
-      pause()
-    } else {
-      start()
+      pause();
     }
-  }
+    else {
+      start();
+    }
+  };
+  const stop = () => {
+    if (vad) {
+      vad.destroy();
+      setVAD(null);
+    }
+  };
   return {
     listening,
     errored,
@@ -143,8 +184,9 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
     userSpeaking,
     pause,
     start,
+    stop,
     toggle,
-  }
+  };
 }
 
 const useIsomorphicLayoutEffect =
