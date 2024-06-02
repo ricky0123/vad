@@ -15,7 +15,7 @@ import { defaultModelFetcher } from "./default-model-fetcher"
 
 interface RealTimeVADCallbacks {
   /** Callback to run after each frame. The size (number of samples) of a frame is given by `frameSamples`. */
-  onFrameProcessed: (probabilities: SpeechProbabilities) => any
+  onFrameProcessed: (probabilities: SpeechProbabilities, frame: Float32Array) => any
 
   /** Callback to run if speech start was detected but `onSpeechEnd` will not be run because the
    * audio segment is smaller than `minSpeechFrames`.
@@ -272,10 +272,11 @@ export class AudioNodeVAD {
       probs: SpeechProbabilities
       msg: Message
       audio: Float32Array
+      frame: Float32Array
     }>
   ) => {
     if (ev.probs !== undefined) {
-      this.options.onFrameProcessed(ev.probs)
+      this.options.onFrameProcessed(ev.probs, ev.frame as Float32Array)
     }
     switch (ev.msg) {
       case Message.SpeechStart:
