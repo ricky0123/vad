@@ -30,5 +30,19 @@ class NonRealTimeVAD extends PlatformAgnosticNonRealTimeVAD {
   }
 }
 
-export { utils, Resampler, FrameProcessor, Message, NonRealTimeVAD, RealTimeVAD }
-export type { FrameProcessorOptions, NonRealTimeVADOptions, RealTimeVADOptions, SpeechSegmentStart, SpeechSegmentData, SpeechSegmentEnd}
+export {
+  utils,
+  Resampler,
+  FrameProcessor,
+  Message,
+  NonRealTimeVAD,
+  RealTimeVAD,
+}
+export type {
+  FrameProcessorOptions,
+  NonRealTimeVADOptions,
+  RealTimeVADOptions,
+  SpeechSegmentStart,
+  SpeechSegmentData,
+  SpeechSegmentEnd,
+}
