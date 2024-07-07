@@ -1,49 +1,40 @@
-# Voice Activity Detection for Javascript
+# Real-Time Voice Activity Detection for Node.JS
 
-[![npm vad-web](https://img.shields.io/npm/v/@ricky0123/vad-web?color=blue&label=%40ricky0123%2Fvad-web&style=flat-square)](https://www.npmjs.com/package/@ricky0123/vad-web)
-[![npm vad-node](https://img.shields.io/npm/v/@ricky0123/vad-node?color=blue&label=%40ricky0123%2Fvad-node&style=flat-square)](https://www.npmjs.com/package/@ricky0123/vad-node)
-[![npm vad-react](https://img.shields.io/npm/v/@ricky0123/vad-react?color=blue&label=%40ricky0123%2Fvad-react&style=flat-square)](https://www.npmjs.com/package/@ricky0123/vad-react)
-
-> Run callbacks on segments of audio with user speech in a few lines of code
-
-This package aims to provide an accurate, user-friendly voice activity detector (VAD) that runs in the browser. It also has limited support for node. By using this package, you can prompt the user for microphone permissions, start recording audio, send segments of audio with speech to your server for processing, or show a certain animation or indicator when the user is speaking.
-
-* See a live [demo](https://www.vad.ricky0123.com)
-* Join us on [Discord](https://discord.gg/4WPeGEaSpF)!
-* Browse or contribute to [documentation](https://wiki.vad.ricky0123.com/)
-* If you would like to contribute, I have started writing some documentation on how to get started hacking on these packages [here](https://wiki.vad.ricky0123.com/en/docs/developer/hacking). If you have any questions, you can open an issue here or leave a message on Discord.
-* **NEW**: Please fill out this [survey](https://uaux2a2ppfv.typeform.com/to/iJG2gCQv) to let me know what you are building with these packages and how you are using them!
-
-Under the hood, these packages run [Silero VAD](https://github.com/snakers4/silero-vad) [[1]](#1) using [ONNX Runtime Web](https://github.com/microsoft/onnxruntime/tree/main/js/web) / [ONNX Runtime Node.js](https://github.com/microsoft/onnxruntime/tree/main/js/node). Thanks a lot to those folks for making this possible.
-
-## Sponsorship
-
-Please contribute to the project financially - especially if your commercial product relies on this package. [![Become a Sponsor](https://img.shields.io/static/v1?label=Become%20a%20Sponsor&message=%E2%9D%A4&logo=GitHub&style=flat&color=d42f2d)](https://github.com/sponsors/ricky0123)
+This is a fork of [@ricky0123/vad](https://github.com/ricky0123/vad) which adds `RealTimeVAD` by building on top of `NonRealTimeVAD` provided.
 
 ## Quick Start
 
 To use the VAD via a script tag in the browser, include the following script tags:
 
-```html
-<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/ort.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.7/dist/bundle.min.js"></script>
-<script>
-  async function main() {
-    const myvad = await vad.MicVAD.new({
-      onSpeechStart: () => {
-        console.log("Speech start detected")
-      },
-      onSpeechEnd: (audio) => {
-        // do something with `audio` (Float32Array of audio samples at sample rate 16000)...
-      }
-    })
-    myvad.start()
-  }
-  main()
-</script>
-```
+```js
+const vad = /** import */;
 
-Documentation for bundling the voice activity detector for the browser or using it in node or React projects can be found on [vad.ricky0123.com](https://www.vad.ricky0123.com).
+const options = {
+  sampleRate: 16000, // Sample rate of input audio
+  minBufferDuration: 1, // minimum audio buffer to store 
+  maxBufferDuration: 5, // maximum audio buffer to store
+  overlapDuration: 0.1,  // how much of the previous buffer exists in the new buffer
+  silenceThreshold: 0.5, // threshold for ignoring pauses in speech
+};
+
+const rtvad = new vad.RealTimeVAD(/** options */);
+
+rtvad.init();
+
+rtvad.on("start", ({ start }) => {
+  // speech segment start
+});
+
+rtvad.on("data", ({ audio, start, end}) => {
+  // speech segment data
+  // start & end here are provided by @ricky0123/vad, this is NOT the same as emitted start & end
+});
+
+rtvad.on("end", ({ end }) => {
+  // speech segment end
+});
+
+```
 
 ## References
 
