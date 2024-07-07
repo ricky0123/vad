@@ -4,8 +4,6 @@ This is a fork of [@ricky0123/vad](https://github.com/ricky0123/vad) which adds 
 
 ## Quick Start
 
-To use the VAD via a script tag in the browser, include the following script tags:
-
 ```js
 const vad = /** import */;
 
