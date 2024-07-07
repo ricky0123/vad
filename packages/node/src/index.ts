@@ -7,6 +7,11 @@ import {
   Message,
   NonRealTimeVADOptions,
   Resampler,
+  RealTimeVAD,
+  RealTimeVADOptions,
+  SpeechSegmentStart,
+  SpeechSegmentData,
+  SpeechSegmentEnd,
 } from "./_common"
 import * as fs from "fs/promises"
 
@@ -25,5 +30,5 @@ class NonRealTimeVAD extends PlatformAgnosticNonRealTimeVAD {
   }
 }
 
-export { utils, Resampler, FrameProcessor, Message, NonRealTimeVAD }
-export type { FrameProcessorOptions, NonRealTimeVADOptions }
+export { utils, Resampler, FrameProcessor, Message, NonRealTimeVAD, RealTimeVAD }
+export type { FrameProcessorOptions, NonRealTimeVADOptions, RealTimeVADOptions, SpeechSegmentStart, SpeechSegmentData, SpeechSegmentEnd}
