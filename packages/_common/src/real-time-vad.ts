@@ -147,7 +147,7 @@ export class RealTimeVAD extends EventEmitter {
     } else if (this.inputType === "buffer") {
       const buffer = Buffer.alloc(audio.length * 2)
       for (let i = 0; i < audio.length; i++) {
-        buffer.writeInt16LE(Math.floor(audio[i] ?? 0 * 32767), i * 2)
+        buffer.writeInt16LE(Math.floor(audio[i] * 32767), i * 2)
       }
       return buffer
     }
