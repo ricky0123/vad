@@ -36,14 +36,13 @@ function App() {
     },
   })
   return (
-    <section className="section">
-      <div className="container">
-        <h1 className="title">Basic vad-react functionality</h1>
+      <div>
+        <h1>Basic vad-react functionality</h1>
 
-        <div className="block is-inline-flex">
+        <div>
           <button
-            className={
-              vad.loading ? "button is-primary is-loading" : "button is-primary"
+            disabled={
+              vad.errored || vad.loading
             }
             onClick={() => {
               console.log("run toggle vad")
@@ -67,6 +66,5 @@ function App() {
           </ul>
         </div>
       </div>
-    </section>
   )
 }

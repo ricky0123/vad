@@ -5,7 +5,7 @@
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "clean": "npm run clean --workspaces --if-present",
-    "format": "prettier --write '{packages,examples}/**/*.ts'",
+    "format": "prettier --write '{packages,examples,test-site}/**/*.{ts,html,jsx}'",
     "build-test-site": "./test-site/build.sh",
     "serve-test-site": "http-server ./test-site/dist",
     "dev": "./scripts/dev.sh"

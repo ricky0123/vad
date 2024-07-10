@@ -4,34 +4,19 @@
     <title>VAD test site</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script defer src="index.js"></script>
   </head>
   <body>
-      <h1>Welcome to the VAD test site</h1>
-      <p>
-        This site is designed for local development and testing of the voice
-        activity detection (VAD) packages:
-        <code>@ricky0123/vad-web</code> and <code>@ricky0123/vad-react</code>.
-      </p>
-      <h1>Pages</h1>
-        <ul>
-          <li><a href="web-basic">Basic vad-web</a></li>
-          <li><a href="react-basic">Basic vad-react</a></li>
-          <li><a href="react-destroy">React destroy</a></li>
-          <li>
-            <a href="submit-user-speech-on-pause"
-              >Submit user speech on pause</a
-            >
-          </li>
-          <li>
-            <a href="react-submit-user-speech-on-pause"
-              >React submit user speech on pause</a
-            >
-          </li>
-          <li><a href="location-error">Location error</a></li>
-          <li><a href="ort-config">Ort config</a></li>
-        </ul>
-        <h1>Play with model in browser</h1>
-        <p>Open the console and run the following</p>
+    <h1>Welcome to the VAD test site</h1>
+    <p>
+      This site is designed for local development and testing of the voice
+      activity detection (VAD) packages:
+      <code>@ricky0123/vad-web</code> and <code>@ricky0123/vad-react</code>.
+    </p>
+    <h1>Demo</h1>
+    <div id="root"></div>
+    <h1>Play with model in browser</h1>
+    <p>Open the console and run the following</p>
     <pre><code>script = this.document.createElement("script")
 script.src = "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.js" 
 document.body.appendChild(script)
