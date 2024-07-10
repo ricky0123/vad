@@ -4,20 +4,22 @@
     <title>VAD test site</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
     <script defer src="index.js"></script>
   </head>
   <body>
-    <h1>Welcome to the VAD test site</h1>
-    <p>
-      This site is designed for local development and testing of the voice
-      activity detection (VAD) packages:
-      <code>@ricky0123/vad-web</code> and <code>@ricky0123/vad-react</code>.
-    </p>
-    <h1>Demo</h1>
-    <div id="root"></div>
-    <h1>Play with model in browser</h1>
-    <p>Open the console and run the following</p>
-    <pre><code>script = this.document.createElement("script")
+    <main class="my-5 mx-auto prose">
+      <h1>Welcome to the VAD test site</h1>
+      <p>
+        This site is designed for local development and testing of the voice
+        activity detection (VAD) packages:
+        <code>@ricky0123/vad-web</code> and <code>@ricky0123/vad-react</code>.
+      </p>
+      <h1>Demo</h1>
+      <div id="root"></div>
+      <h1>Play with model in browser</h1>
+      <p>Open the console and run the following</p>
+      <pre><code>script = this.document.createElement("script")
 script.src = "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.js" 
 document.body.appendChild(script)
 // wait a few seconds
@@ -34,5 +36,6 @@ inputs = {
     input: audio
 }
 out = await session.run(inputs)</code></pre>
+    </main>
   </body>
 </html>

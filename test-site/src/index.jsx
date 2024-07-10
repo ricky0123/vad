@@ -17,6 +17,9 @@ const domContainer = document.querySelector("#root")
 const root = createRoot(domContainer)
 root.render(<App />)
 
+const vadAttributes = ["errored", "loading", "listening", "userSpeaking"]
+const vadMethods = ["pause", "start", "toggle"]
+
 function App() {
   const [audioList, setAudioList] = useState([])
   const vad = useMicVAD({
@@ -38,25 +41,52 @@ function App() {
   })
   return (
     <div>
+      <h3>Controls</h3>
+      {
+        vadMethods.map((methodName) => {
+          return (
       <button
-        disabled={vad.errored || vad.loading}
+        className="bg-violet-100 hover:bg-violet-200 rounded-full px-4 py-2 mx-1"
         onClick={() => {
-          console.log("run toggle vad")
-          vad.toggle()
+          vad[methodName]()
         }}
       >
-        Toggle VAD
+        {methodName}
       </button>
+          )
+        })
+      }
 
-      <ul>
+      <h3>VAD state</h3>
+      <table className="mx-auto w-60">
+        <thead>
+          <tr>
+            <th>Attribute</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          {vadAttributes.map((attribute) => {
+            return (
+              <tr key={attribute}>
+                <th>{attribute}</th>
+                <th>{vad[attribute].toString()}</th>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+
+      <h3>Audio segments with speech</h3>
+      <div>
         {audioList.map((audioURL) => {
           return (
-            <li key={audioURL.substring(-10)}>
+            <div className="mb-1" key={audioURL.substring(-10)}>
               <audio controls src={audioURL} />
-            </li>
+            </div>
           )
         })}
-      </ul>
+      </div>
     </div>
   )
 }
