@@ -46,13 +46,12 @@ function App() {
             console.log("run toggle vad")
             vad.toggle()
           }}
-          disabled={vad.loading}
         >
           Toggle VAD
         </button>
       </div>
 
-      <div className="block">
+      <div>
         <ul>
           {audioList.map((audioURL) => {
             return (
