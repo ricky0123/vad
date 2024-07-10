@@ -42,20 +42,18 @@ function App() {
   return (
     <div>
       <h3>Controls</h3>
-      {
-        vadMethods.map((methodName) => {
-          return (
-      <button
-        className="bg-violet-100 hover:bg-violet-200 rounded-full px-4 py-2 mx-1"
-        onClick={() => {
-          vad[methodName]()
-        }}
-      >
-        {methodName}
-      </button>
-          )
-        })
-      }
+      {vadMethods.map((methodName) => {
+        return (
+          <button
+            className="bg-violet-100 hover:bg-violet-200 rounded-full px-4 py-2 mx-1"
+            onClick={() => {
+              vad[methodName]()
+            }}
+          >
+            {methodName}
+          </button>
+        )
+      })}
 
       <h3>VAD state</h3>
       <table className="mx-auto w-60">
