@@ -1,9 +1,9 @@
 // @ts-nocheck
 
-import React, { useReducer, useState } from "react"
-import * as ort from "onnxruntime-web"
-import { createRoot } from "react-dom/client"
 import { useMicVAD, utils } from "@ricky0123/vad-react"
+import * as ort from "onnxruntime-web"
+import { useState } from "react"
+import { createRoot } from "react-dom/client"
 
 ort.env.wasm.wasmPaths = {
   "ort-wasm-simd-threaded.wasm": "/ort-wasm-simd-threaded.wasm",
@@ -36,35 +36,33 @@ function App() {
     },
   })
   return (
+    <div>
+      <h1>Basic vad-react functionality</h1>
+
       <div>
-        <h1>Basic vad-react functionality</h1>
-
-        <div>
-          <button
-            disabled={
-              vad.errored || vad.loading
-            }
-            onClick={() => {
-              console.log("run toggle vad")
-              vad.toggle()
-            }}
-            disabled={vad.loading}
-          >
-            Toggle VAD
-          </button>
-        </div>
-
-        <div className="block">
-          <ul>
-            {audioList.map((audioURL) => {
-              return (
-                <li key={audioURL.substring(-10)}>
-                  <audio controls src={audioURL} />
-                </li>
-              )
-            })}
-          </ul>
-        </div>
+        <button
+          disabled={vad.errored || vad.loading}
+          onClick={() => {
+            console.log("run toggle vad")
+            vad.toggle()
+          }}
+          disabled={vad.loading}
+        >
+          Toggle VAD
+        </button>
       </div>
+
+      <div className="block">
+        <ul>
+          {audioList.map((audioURL) => {
+            return (
+              <li key={audioURL.substring(-10)}>
+                <audio controls src={audioURL} />
+              </li>
+            )
+          })}
+        </ul>
+      </div>
+    </div>
   )
 }
