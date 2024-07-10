@@ -24,7 +24,6 @@
     "react-dom": "^18.2.0"
   },
   "workspaces": [
-    "packages/node",
     "packages/web",
     "packages/react"
   ],
