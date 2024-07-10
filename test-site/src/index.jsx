@@ -1,8 +1,7 @@
 // @ts-nocheck
-
 import { useMicVAD, utils } from "@ricky0123/vad-react"
 import * as ort from "onnxruntime-web"
-import { useState } from "react"
+import React, { useState } from "react"
 import { createRoot } from "react-dom/client"
 
 ort.env.wasm.wasmPaths = {
@@ -19,8 +18,8 @@ root.render(<App />)
 function App() {
   const [audioList, setAudioList] = useState([])
   const vad = useMicVAD({
-    workletURL: "http://localhost:8080/vad.worklet.bundle.min.js",
-    modelURL: "http://localhost:8080/silero_vad.onnx",
+    workletURL: "vad.worklet.bundle.min.js",
+    modelURL: "silero_vad.onnx",
     onVADMisfire: () => {
       console.log("Vad misfire")
     },
@@ -37,9 +36,6 @@ function App() {
   })
   return (
     <div>
-      <h1>Basic vad-react functionality</h1>
-
-      <div>
         <button
           disabled={vad.errored || vad.loading}
           onClick={() => {
@@ -49,9 +45,7 @@ function App() {
         >
           Toggle VAD
         </button>
-      </div>
 
-      <div>
         <ul>
           {audioList.map((audioURL) => {
             return (
@@ -61,7 +55,6 @@ function App() {
             )
           })}
         </ul>
-      </div>
     </div>
   )
 }
