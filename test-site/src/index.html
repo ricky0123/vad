@@ -1,33 +1,53 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>VAD test site</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Bulma CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
-</head>
-<body>
-    <section class="section">
-        <div class="container">
-            <!-- Title / Heading -->
-            <h1 class="title">Welcome to the VAD test site</h1>
-            <p>
-                This site is designed for local development and testing of the voice activity detection (VAD) packages: 
-                <code>@ricky0123/vad-web</code> and <code>@ricky0123/vad-react</code>.
-            </p>
-            <div class="content">
-                <ul>
-                    <li><a href="web-basic">Basic vad-web</a></li>
-                    <li><a href="react-basic">Basic vad-react</a></li>
-                    <li><a href="react-destroy">React destroy</a></li>
-                    <li><a href="submit-user-speech-on-pause">Submit user speech on pause</a></li>
-                    <li><a href="react-submit-user-speech-on-pause">React submit user speech on pause</a></li>
-                    <li><a href="location-error">Location error</a></li>
-                    <li><a href="ort-config">Ort config</a></li>
-                </ul>
-            </div>
-        </div>
-    </section>
-</body>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+      <h1>Welcome to the VAD test site</h1>
+      <p>
+        This site is designed for local development and testing of the voice
+        activity detection (VAD) packages:
+        <code>@ricky0123/vad-web</code> and <code>@ricky0123/vad-react</code>.
+      </p>
+      <h1>Pages</h1>
+        <ul>
+          <li><a href="web-basic">Basic vad-web</a></li>
+          <li><a href="react-basic">Basic vad-react</a></li>
+          <li><a href="react-destroy">React destroy</a></li>
+          <li>
+            <a href="submit-user-speech-on-pause"
+              >Submit user speech on pause</a
+            >
+          </li>
+          <li>
+            <a href="react-submit-user-speech-on-pause"
+              >React submit user speech on pause</a
+            >
+          </li>
+          <li><a href="location-error">Location error</a></li>
+          <li><a href="ort-config">Ort config</a></li>
+        </ul>
+        <h1>Play with model in browser</h1>
+        <p>Open the console and run the following</p>
+    <pre><code>script = this.document.createElement("script")
+script.src = "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.js" 
+document.body.appendChild(script)
+// wait a few seconds
+modelarraybuffer = await fetch(`${location}silero_vad.onnx`).then((model) => model.arrayBuffer())
+session = await ort.InferenceSession.create(modelarraybuffer)
+state_zeroes = Array(2 * 128).fill(0)
+state = new this.ort.Tensor("float32", state_zeroes, [2, 1, 128])  // https://github.com/snakers4/silero-vad/blob/fdbb0a3a81e0f9d95561d6b388d67dce5d9e3f1b/utils_vad.py#L58
+audio_zeros = Array(512).fill(0) 
+audio = new this.ort.Tensor("float32", audio_zeros, [1, audio_zeros.length])
+sr = new this.ort.Tensor("int64", [16000n])
+inputs = {
+    sr,
+    state,
+    input: audio
+}
+out = await session.run(inputs)</code></pre>
+  </body>
 </html>

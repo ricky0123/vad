@@ -1,14 +1,13 @@
-import * as ort from "onnxruntime-node"
-import {
-  utils,
-  PlatformAgnosticNonRealTimeVAD,
-  FrameProcessor,
-  FrameProcessorOptions,
-  Message,
-  NonRealTimeVADOptions,
-  Resampler,
-} from "./_common"
 import * as fs from "fs/promises"
+import * as ort from "onnxruntime-node"
+import { FrameProcessor, FrameProcessorOptions } from "./frame-processor"
+import { Message } from "./messages"
+import {
+  NonRealTimeVADOptions,
+  PlatformAgnosticNonRealTimeVAD,
+} from "./non-real-time-vad"
+import { Resampler } from "./resampler"
+import * as utils from "./utils"
 
 const modelPath = `${__dirname}/silero_vad.onnx`
 
@@ -25,5 +24,5 @@ class NonRealTimeVAD extends PlatformAgnosticNonRealTimeVAD {
   }
 }
 
-export { utils, Resampler, FrameProcessor, Message, NonRealTimeVAD }
+export { FrameProcessor, Message, NonRealTimeVAD, Resampler, utils }
 export type { FrameProcessorOptions, NonRealTimeVADOptions }

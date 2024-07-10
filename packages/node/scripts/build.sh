@@ -3,4 +3,4 @@
 rm -rf dist
 mkdir dist
 npx tsc
-cp ../../silero_vad.onnx dist
+cp silero_vad.onnx dist

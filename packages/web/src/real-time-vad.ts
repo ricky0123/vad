@@ -1,17 +1,15 @@
 import * as ortInstance from "onnxruntime-web"
-import {
-  log,
-  Message,
-  Silero,
-  SpeechProbabilities,
-  defaultFrameProcessorOptions,
-  FrameProcessor,
-  FrameProcessorOptions,
-  OrtOptions,
-  validateOptions,
-} from "./_common"
 import { assetPath } from "./asset-path"
 import { defaultModelFetcher } from "./default-model-fetcher"
+import {
+  FrameProcessor,
+  FrameProcessorOptions,
+  defaultFrameProcessorOptions,
+  validateOptions,
+} from "./frame-processor"
+import { log } from "./logging"
+import { Message } from "./messages"
+import { OrtOptions, Silero, SpeechProbabilities } from "./models"
 
 interface RealTimeVADCallbacks {
   /** Callback to run after each frame. The size (number of samples) of a frame is given by `frameSamples`. */
