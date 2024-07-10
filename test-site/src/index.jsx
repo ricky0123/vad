@@ -4,6 +4,8 @@ import * as ort from "onnxruntime-web"
 import React, { useState } from "react"
 import { createRoot } from "react-dom/client"
 
+React // prevent prettier imports plugin from removing React
+
 ort.env.wasm.wasmPaths = {
   "ort-wasm-simd-threaded.wasm": "/ort-wasm-simd-threaded.wasm",
   "ort-wasm-simd.wasm": "/ort-wasm-simd.wasm",
@@ -36,25 +38,25 @@ function App() {
   })
   return (
     <div>
-        <button
-          disabled={vad.errored || vad.loading}
-          onClick={() => {
-            console.log("run toggle vad")
-            vad.toggle()
-          }}
-        >
-          Toggle VAD
-        </button>
+      <button
+        disabled={vad.errored || vad.loading}
+        onClick={() => {
+          console.log("run toggle vad")
+          vad.toggle()
+        }}
+      >
+        Toggle VAD
+      </button>
 
-        <ul>
-          {audioList.map((audioURL) => {
-            return (
-              <li key={audioURL.substring(-10)}>
-                <audio controls src={audioURL} />
-              </li>
-            )
-          })}
-        </ul>
+      <ul>
+        {audioList.map((audioURL) => {
+          return (
+            <li key={audioURL.substring(-10)}>
+              <audio controls src={audioURL} />
+            </li>
+          )
+        })}
+      </ul>
     </div>
   )
 }
