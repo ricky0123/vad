@@ -6,20 +6,14 @@
 
 > Run callbacks on segments of audio with user speech in a few lines of code
 
-
-> [!IMPORTANT]  
-> I am winding down support for node in order to focus on client-side voice activity detection. See [here](#important-update-about-node-support---july-2024) for details.
-
-> [!NOTE]  
-> We have upgraded to [Silero VAD v5](https://github.com/snakers4/silero-vad/releases/tag/v5.0)!
-
-This package aims to provide an accurate, user-friendly voice activity detector (VAD) that runs in the browser. By using this package, you can prompt the user for microphone permissions, start recording audio, send segments of audio with speech to your server for processing, or show a certain animation or indicator when the user is speaking.
+This package aims to provide an accurate, user-friendly voice activity detector (VAD) that runs in the browser. By using this package, you can prompt the user for microphone permissions, start recording audio, send segments of audio with speech to your server for processing, or show a certain animation or indicator when the user is speaking. Note that I have decided [discontinue node support](#important-update-about-node-support---july-2024) in order to focus on the browser use case.
 
 * See a live [demo](https://www.vad.ricky0123.com)
 * Join us on [Discord](https://discord.gg/4WPeGEaSpF)!
 * Browse or contribute to [documentation](https://wiki.vad.ricky0123.com/)
 * If you would like to contribute, I have started writing some documentation on how to get started hacking on these packages [here](https://wiki.vad.ricky0123.com/en/docs/developer/hacking). If you have any questions, you can open an issue here or leave a message on Discord.
 * **NEW**: Please fill out this [survey](https://uaux2a2ppfv.typeform.com/to/iJG2gCQv) to let me know what you are building with these packages and how you are using them!
+* **NEW**: We have upgraded to [Silero VAD v5](https://github.com/snakers4/silero-vad/releases/tag/v5.0)!
 
 Under the hood, these packages run [Silero VAD](https://github.com/snakers4/silero-vad) [[1]](#1) using [ONNX Runtime Web](https://github.com/microsoft/onnxruntime/tree/main/js/web) / [ONNX Runtime Node.js](https://github.com/microsoft/onnxruntime/tree/main/js/node). Thanks a lot to those folks for making this possible.
 
