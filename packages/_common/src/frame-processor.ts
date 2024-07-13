@@ -67,7 +67,7 @@ export function validateOptions(options: FrameProcessorOptions) {
     options.positiveSpeechThreshold < 0 ||
     options.positiveSpeechThreshold > 1
   ) {
-    log.error("postiveSpeechThreshold should be a number between 0 and 1")
+    log.error("positiveSpeechThreshold should be a number between 0 and 1")
   }
   if (
     options.negativeSpeechThreshold < 0 ||
