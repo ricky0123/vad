@@ -65,7 +65,7 @@ export function validateOptions(options: FrameProcessorOptions) {
   }
   if (
     options.positiveSpeechThreshold < 0 ||
-    options.negativeSpeechThreshold > 1
+    options.positiveSpeechThreshold > 1
   ) {
     log.error("postiveSpeechThreshold should be a number between 0 and 1")
   }
@@ -81,7 +81,7 @@ export function validateOptions(options: FrameProcessorOptions) {
     log.error("preSpeechPadFrames should be positive")
   }
   if (options.redemptionFrames < 0) {
-    log.error("preSpeechPadFrames should be positive")
+    log.error("redemptionFrames should be positive")
   }
 }
 
