@@ -2,7 +2,9 @@ const vad = require("@ricky0123/vad-node")
 const wav = require("wav-decoder")
 const fs = require("fs")
 
-const audioSamplePath = `${__dirname}/test.wav`
+const audioSamplePath = process.argv[2] || `${__dirname}/test.wav`
+
+console.log(`Processing ${audioSamplePath}`)
 
 function loadAudio(audioPath) {
   let buffer = fs.readFileSync(audioPath)

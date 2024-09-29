@@ -20,40 +20,67 @@ export class Resampler {
 
   process = (audioFrame: Float32Array): Float32Array[] => {
     const outputFrames: Array<Float32Array> = []
+    this.fillInputBuffer(audioFrame)
 
+    while (this.hasEnoughDataForFrame()) {
+      const outputFrame = this.generateOutputFrame()
+      outputFrames.push(outputFrame)
+    }
+
+    return outputFrames
+  }
+
+  stream = async function* (audioFrame: Float32Array) {
+    this.fillInputBuffer(audioFrame)
+
+    while (this.hasEnoughDataForFrame()) {
+      const outputFrame = this.generateOutputFrame()
+      yield outputFrame
+    }
+  }
+
+  private fillInputBuffer(audioFrame: Float32Array) {
     for (const sample of audioFrame) {
       this.inputBuffer.push(sample)
     }
+  }
 
-    while (
+  private hasEnoughDataForFrame(): boolean {
+    return (
       (this.inputBuffer.length * this.options.targetSampleRate) /
-        this.options.nativeSampleRate >
+        this.options.nativeSampleRate >=
       this.options.targetFrameSize
-    ) {
-      const outputFrame = new Float32Array(this.options.targetFrameSize)
-      let outputIndex = 0
-      let inputIndex = 0
-      while (outputIndex < this.options.targetFrameSize) {
-        let sum = 0
-        let num = 0
-        while (
-          inputIndex <
-          Math.min(
-            this.inputBuffer.length,
-            ((outputIndex + 1) * this.options.nativeSampleRate) /
-              this.options.targetSampleRate
-          )
-        ) {
-          sum += this.inputBuffer[inputIndex] as number
+    )
+  }
+
+  private generateOutputFrame(): Float32Array {
+    const outputFrame = new Float32Array(this.options.targetFrameSize)
+    let outputIndex = 0
+    let inputIndex = 0
+
+    while (outputIndex < this.options.targetFrameSize) {
+      let sum = 0
+      let num = 0
+      while (
+        inputIndex <
+        Math.min(
+          this.inputBuffer.length,
+          ((outputIndex + 1) * this.options.nativeSampleRate) /
+            this.options.targetSampleRate
+        )
+      ) {
+        const value = this.inputBuffer[inputIndex]
+        if (value !== undefined) {
+          sum += value
           num++
-          inputIndex++
         }
-        outputFrame[outputIndex] = sum / num
-        outputIndex++
+        inputIndex++
       }
-      this.inputBuffer = this.inputBuffer.slice(inputIndex)
-      outputFrames.push(outputFrame)
+      outputFrame[outputIndex] = sum / num
+      outputIndex++
     }
-    return outputFrames
+
+    this.inputBuffer = this.inputBuffer.slice(inputIndex)
+    return outputFrame
   }
 }

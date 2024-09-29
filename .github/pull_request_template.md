@@ -18,3 +18,4 @@ PR without having completed all items.
 - [ ] Viewed manual test site and verified that pages are working <!-- `npm run dev` -->
 - [ ] Bumped versions in relevant packages
 - [ ] Updated relevant changelogs <!-- see the `/changelogs` directory -->
+- [ ] Ran `npm run format`

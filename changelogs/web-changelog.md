@@ -1,5 +1,9 @@
 # @ricky0123/vad-web Changelog
 
+## 0.0.18
+
+* use modified resampler
+
 ## 0.0.17
 
 * look, by default, in web root for silero_vad.onnx and vad.bundle.min.js
