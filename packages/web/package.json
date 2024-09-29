@@ -1,5 +1,5 @@
 {
-  "name": "@ricky0123/vad-web",
+  "name": "@ray8716397/vad-web",
   "description": "Powerful, user-friendly voice activity detector (VAD) for the browser",
   "keywords": [
     "speech-recognition",
@@ -11,7 +11,7 @@
     "voice-control",
     "offline-speech-recognition"
   ],
-  "homepage": "https://github.com/ricky0123/vad",
+  "homepage": "https://github.com/ray8716397/vad",
   "version": "0.0.18",
   "license": "ISC",
   "main": "dist/index.js",

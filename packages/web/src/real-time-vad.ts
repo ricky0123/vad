@@ -178,6 +178,7 @@ export class AudioNodeVAD {
     try {
       await ctx.audioWorklet.addModule(fullOptions.workletURL)
     } catch (e) {
+      console.error(e);
       console.error(
         `Encountered an error while loading worklet. Please make sure the worklet vad.bundle.min.js included with @ricky0123/vad-web is available at the specified path:
         ${fullOptions.workletURL}
