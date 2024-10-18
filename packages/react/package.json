@@ -13,7 +13,7 @@
     "react"
   ],
   "homepage": "https://github.com/ray8716397/vad",
-  "version": "0.0.249",
+  "version": "0.0.2491",
   "license": "ISC",
   "main": "dist/index.js",
   "devDependencies": {
