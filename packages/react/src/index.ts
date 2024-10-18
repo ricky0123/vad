@@ -1,11 +1,12 @@
-import type { RealTimeVADOptions } from "@ricky0123/vad-web"
-import { MicVAD, defaultRealTimeVADOptions } from "@ricky0123/vad-web"
+import type { RealTimeVADOptions } from "@ray8716397/vad-web"
+import { MicVAD, defaultRealTimeVADOptions } from "@ray8716397/vad-web"
 import React, { useEffect, useReducer, useState } from "react"
 
-export { utils } from "@ricky0123/vad-web"
+export { utils } from "@ray8716397/vad-web"
 
 interface ReactOptions {
   startOnLoad: boolean
+  startOnInit: boolean
   userSpeakingThreshold: number
 }
 
@@ -13,6 +14,7 @@ export type ReactRealTimeVADOptions = RealTimeVADOptions & ReactOptions
 
 const defaultReactOptions: ReactOptions = {
   startOnLoad: true,
+  startOnInit: true,
   userSpeakingThreshold: 0.6,
 }
 
@@ -61,7 +63,7 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
       isSpeechProbability > reactOptions.userSpeakingThreshold,
     false
   )
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [errored, setErrored] = useState<false | { message: string }>(false)
   const [listening, setListening] = useState(false)
   const [vad, setVAD] = useState<MicVAD | null>(null)
@@ -84,6 +86,7 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
     let canceled = false
     const setup = async (): Promise<void> => {
       try {
+        setLoading(true)
         myvad = await MicVAD.new(vadOptions)
         if (canceled) {
           myvad.destroy()
@@ -105,10 +108,14 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
         myvad?.start()
         setListening(true)
       }
+
     }
-    setup().catch((e) => {
-      console.log("Well that didn't work")
-    })
+    if (reactOptions.startOnInit) {
+      setup().catch((e) => {
+        console.log("Well that didn't work")
+      })
+    }
+
     return function cleanUp() {
       myvad?.destroy()
       canceled = true
@@ -123,19 +130,60 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
       setListening(false)
     }
   }
-  const start = () => {
-    if (!loading && !errored) {
-      vad?.start()
-      setListening(true)
+  const start = (startAfterLoad=true) => {
+    if (!loading) {
+      if (vad !== null) {
+        vad?.start();
+        setListening(true);
+      } else {
+        setLoading(true);
+        let myvad: MicVAD | null
+        let canceled = false
+        const setup = async (): Promise<void> => {
+          try {
+            myvad = await MicVAD.new(vadOptions)
+            if (canceled) {
+              myvad.destroy()
+              return
+            }
+          } catch (e) {
+            setLoading(false)
+            if (e instanceof Error) {
+              setErrored({ message: e.message })
+            } else {
+              // @ts-ignore
+              setErrored({ message: e })
+            }
+            return
+          }
+          setVAD(myvad)
+          setLoading(false)
+          if (reactOptions.startOnLoad) {
+            myvad?.start()
+            setListening(true)
+          }
+        }
+        setup().catch((e) => {
+          console.log("Well that didn't work")
+        })
+      }
+
     }
-  }
+  };
   const toggle = () => {
     if (listening) {
-      pause()
-    } else {
-      start()
+      pause();
     }
-  }
+    else {
+      start();
+    }
+  };
+  const stop = () => {
+    if (vad) {
+      vad.destroy();
+      setVAD(null);
+    }
+  };
   return {
     listening,
     errored,
@@ -143,8 +191,9 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
     userSpeaking,
     pause,
     start,
+    stop,
     toggle,
-  }
+  };
 }
 
 const useIsomorphicLayoutEffect =

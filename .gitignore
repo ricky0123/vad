@@ -35,3 +35,4 @@ testem.log
 Thumbs.db
 
 *.tsbuildinfo
+package-lock.json
