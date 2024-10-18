@@ -13,6 +13,15 @@ import {
 import { assetPath } from "./asset-path"
 import { defaultModelFetcher } from "./default-model-fetcher"
 
+// set global logging level
+ortInstance.env.logLevel = 'verbose';
+
+// override path of wasm files - for each file
+// ortInstance.env.wasm.wasmPaths = {
+//   'ort-wasm.wasm': '/vad/ort-wasm.wasm',
+//   'ort-wasm-simd.wasm': '/vad/ort-wasm-simd.wasm',
+// };
+
 interface RealTimeVADCallbacks {
   /** Callback to run after each frame. The size (number of samples) of a frame is given by `frameSamples`. */
   onFrameProcessed: (probabilities: SpeechProbabilities) => any
@@ -198,6 +207,7 @@ export class AudioNodeVAD {
         fullOptions.modelFetcher(fullOptions.modelURL)
       )
     } catch (e) {
+      console.error(e);
       console.error(
         `Encountered an error while loading model file. Please make sure silero_vad.onnx, included with @ricky0123/vad-web, is available at the specified path:
       ${fullOptions.modelURL}
