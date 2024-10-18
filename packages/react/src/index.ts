@@ -63,7 +63,7 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
       isSpeechProbability > reactOptions.userSpeakingThreshold,
     false
   )
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [errored, setErrored] = useState<false | { message: string }>(false)
   const [listening, setListening] = useState(false)
   const [vad, setVAD] = useState<MicVAD | null>(null)
@@ -86,6 +86,7 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
     let canceled = false
     const setup = async (): Promise<void> => {
       try {
+        setLoading(true)
         myvad = await MicVAD.new(vadOptions)
         if (canceled) {
           myvad.destroy()
