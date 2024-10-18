@@ -101,14 +101,15 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
       }
       setVAD(myvad)
       setLoading(false)
-      if (reactOptions.startOnLoad) {
-        myvad?.start()
-        setListening(true)
-      }
+      myvad?.start()
+      setListening(true)
     }
-    setup().catch((e) => {
-      console.log("Well that didn't work")
-    })
+    if (reactOptions.startOnLoad) {
+      setup().catch((e) => {
+        console.log("Well that didn't work")
+      })
+    }
+
     return function cleanUp() {
       myvad?.destroy()
       canceled = true
@@ -154,11 +155,6 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
           if (reactOptions.startOnLoad) {
             myvad?.start()
             setListening(true)
-          } else {
-            if (startAfterLoad) {
-              myvad?.start()
-              setListening(true)
-            }
           }
         }
         setup().catch((e) => {
