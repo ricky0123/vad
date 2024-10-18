@@ -30,5 +30,8 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
