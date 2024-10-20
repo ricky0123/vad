@@ -7,11 +7,15 @@ export function minFramesForTargetMS(
 }
 
 export function arrayBufferToBase64(buffer: ArrayBuffer) {
-  var bytes = new Uint8Array(buffer)
-  var len = bytes.byteLength
-  var binary = new Array(len)
+  const bytes = new Uint8Array(buffer)
+  const len = bytes.byteLength
+  const binary = new Array(len)
   for (var i = 0; i < len; i++) {
-    binary[i] = String.fromCharCode(bytes[i])
+    const byte = bytes[i]
+    if (byte === undefined) {
+      break;
+    }
+    binary[i] = String.fromCharCode(byte)
   }
   return btoa(binary.join(''))
 }
