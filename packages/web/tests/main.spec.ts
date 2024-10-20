@@ -1,5 +1,4 @@
-import { test, expect } from "@playwright/test"
-import { Page } from "@playwright/test"
+import { Page, expect, test } from "@playwright/test"
 import path from "path"
 
 const audioSamplePath = path.resolve(__dirname, "./test.wav")

@@ -13,11 +13,11 @@ export function arrayBufferToBase64(buffer: ArrayBuffer) {
   for (var i = 0; i < len; i++) {
     const byte = bytes[i]
     if (byte === undefined) {
-      break;
+      break
     }
     binary[i] = String.fromCharCode(byte)
   }
-  return btoa(binary.join(''))
+  return btoa(binary.join(""))
 }
 
 /*

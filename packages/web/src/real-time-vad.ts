@@ -1,14 +1,22 @@
 import * as ortInstance from "onnxruntime-web"
 import { assetPath } from "./asset-path"
 import { defaultModelFetcher } from "./default-model-fetcher"
-import { OrtOptions, Silero, SpeechProbabilities } from "./models"
-import { defaultFrameProcessorOptions, FrameProcessor, FrameProcessorOptions, validateOptions } from "./frame-processor"
+import {
+  FrameProcessor,
+  FrameProcessorOptions,
+  defaultFrameProcessorOptions,
+  validateOptions,
+} from "./frame-processor"
 import { log } from "./logging"
 import { Message } from "./messages"
+import { OrtOptions, Silero, SpeechProbabilities } from "./models"
 
 interface RealTimeVADCallbacks {
   /** Callback to run after each frame. The size (number of samples) of a frame is given by `frameSamples`. */
-  onFrameProcessed: (probabilities: SpeechProbabilities, frame: Float32Array) => any
+  onFrameProcessed: (
+    probabilities: SpeechProbabilities,
+    frame: Float32Array
+  ) => any
 
   /** Callback to run if speech start was detected but `onSpeechEnd` will not be run because the
    * audio segment is smaller than `minSpeechFrames`.
@@ -184,7 +192,11 @@ export class AudioNodeVAD {
       )
       throw e
     }
-    const vadNode = new AudioWorkletNode(ctx, "vad-helper-worklet", fullOptions.workletOptions)
+    const vadNode = new AudioWorkletNode(
+      ctx,
+      "vad-helper-worklet",
+      fullOptions.workletOptions
+    )
 
     let model: Silero
     try {

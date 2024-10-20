@@ -1,9 +1,9 @@
 // @ts-nocheck
 
-import React, { useReducer, useState } from "react"
-import * as ort from "onnxruntime-web"
-import { createRoot } from "react-dom/client"
 import { useMicVAD, utils } from "@ricky0123/vad-react"
+import * as ort from "onnxruntime-web"
+import { useState } from "react"
+import { createRoot } from "react-dom/client"
 
 ort.env.wasm.wasmPaths = {
   "ort-wasm-simd-threaded.wasm": "/ort-wasm-simd-threaded.wasm",
