@@ -1,62 +1,57 @@
-// @ts-ignore
 import { log } from "./logging"
+import * as ort from 'onnxruntime-web'
 
-export type ONNXRuntimeAPI = any
 export type ModelFetcher = () => Promise<ArrayBuffer>
-export type OrtOptions = {
-  ortConfig?: (ort: ONNXRuntimeAPI) => any
-}
 
 export interface SpeechProbabilities {
   notSpeech: number
   isSpeech: number
 }
 
-export interface Model {
-  reset_state: () => void
-  process: (arr: Float32Array) => Promise<SpeechProbabilities>
+export const configureOrt = (f: (ortInstance: typeof ort) => any) => {
+  f(ort)
 }
 
-export class Silero {
-  _session
-  _state
-  _sr
+function getNewState() {
+  const zeroes = Array(2 * 128).fill(0)
+  return new ort.Tensor("float32", zeroes, [2, 1, 128])
+}
 
+export class SileroV5 {
   constructor(
-    private ort: ONNXRuntimeAPI,
-    private modelFetcher: ModelFetcher
+    private _session: ort.InferenceSession,
+    private _state: ort.Tensor,
+    private _sr: ort.Tensor
   ) {}
 
-  static new = async (ort: ONNXRuntimeAPI, modelFetcher: ModelFetcher) => {
-    const model = new Silero(ort, modelFetcher)
-    await model.init()
-    return model
-  }
-
-  init = async () => {
-    log.debug("initializing vad")
-    const modelArrayBuffer = await this.modelFetcher()
-    this._session = await this.ort.InferenceSession.create(modelArrayBuffer)
-    this._sr = new this.ort.Tensor("int64", [16000n])
-    this.reset_state()
-    log.debug("vad is initialized")
+  static new = async (modelFetcher: ModelFetcher) => {
+    log.debug("Loading VAD...")
+    const modelArrayBuffer = await modelFetcher()
+    const _session = await ort.InferenceSession.create(modelArrayBuffer)
+    const _sr = new ort.Tensor("int64", [16000n])
+    const _state = getNewState()
+    log.debug("...finished loading VAD")
+    return new SileroV5(_session, _state, _sr)
   }
 
   reset_state = () => {
-    const zeroes = Array(2 * 128).fill(0)
-    this._state = new this.ort.Tensor("float32", zeroes, [2, 1, 128])
+    this._state = getNewState()
   }
 
   process = async (audioFrame: Float32Array): Promise<SpeechProbabilities> => {
-    const t = new this.ort.Tensor("float32", audioFrame, [1, audioFrame.length])
+    const t = new ort.Tensor("float32", audioFrame, [1, audioFrame.length])
     const inputs = {
       input: t,
       state: this._state,
       sr: this._sr,
     }
     const out = await this._session.run(inputs)
-    this._state = out.stateN
-    const [isSpeech] = out.output.data
+    
+    // @ts-ignore
+    this._state = out['stateN']
+    
+    // @ts-ignore
+    const [isSpeech] = out['output']?.data 
     const notSpeech = 1 - isSpeech
     return { notSpeech, isSpeech }
   }

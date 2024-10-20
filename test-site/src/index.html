@@ -4,38 +4,65 @@
     <title>VAD test site</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
-    <script defer src="index.js"></script>
-  </head>
-  <body>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0/dist/ort.js"></script>
+    <script src="bundle.dev.js"></script>
+</head>
+<body>
     <main class="my-5 mx-auto prose">
-      <h1>Welcome to the VAD test site</h1>
-      <p>
-        This site is designed for local development and testing of the voice
-        activity detection (VAD) packages:
-        <code>@ricky0123/vad-web</code> and <code>@ricky0123/vad-react</code>.
-      </p>
-      <h1>Demo</h1>
-      <div id="root"></div>
-      <h1>Play with model in browser</h1>
-      <p>Open the console and run the following</p>
-      <pre><code>script = this.document.createElement("script")
-script.src = "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.js" 
-document.body.appendChild(script)
-// wait a few seconds
-modelarraybuffer = await fetch(`${location}silero_vad.onnx`).then((model) => model.arrayBuffer())
-session = await ort.InferenceSession.create(modelarraybuffer)
-state_zeroes = Array(2 * 128).fill(0)
-state = new this.ort.Tensor("float32", state_zeroes, [2, 1, 128])  // https://github.com/snakers4/silero-vad/blob/fdbb0a3a81e0f9d95561d6b388d67dce5d9e3f1b/utils_vad.py#L58
-audio_zeros = Array(512).fill(0) 
-audio = new this.ort.Tensor("float32", audio_zeros, [1, audio_zeros.length])
-sr = new this.ort.Tensor("int64", [16000n])
-inputs = {
-    sr,
-    state,
-    input: audio
+      <h1>Okay let's back the fuck up</h1>
+      <p>Here is an example worklet</p>
+      <pre class="not-prose"><code class="language-javascript">class RandomNoiseProcessor extends AudioWorkletProcessor {
+  process(inputs, outputs, parameters) {
+    const output = outputs[0];
+    output.forEach((channel) => {
+      for (let i = 0; i < channel.length; i++) {
+        channel[i] = Math.random() * 2 - 1;
+      }
+    });
+    return true;
+  }
 }
-out = await session.run(inputs)</code></pre>
-    </main>
+registerProcessor("my-processor", RandomNoiseProcessor);</code></pre>
+      <textarea name="worklet" class="w-full h-96" id="worklet"></textarea>
+      <script>
+        function getWorklet() {
+            const textarea = document.getElementById('worklet');
+            const text = textarea.value;
+            const dataUrl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(text);
+            return dataUrl;
+        }
+        
+        // Expose the function to the global window object
+        window.getWorklet = getWorklet;
+    </script>
+      <pre class="not-prose"><code class="language-javascript">stream = await navigator.mediaDevices.getUserMedia({
+  audio: {
+    channelCount: 1,
+    echoCancellation: true,
+    autoGainControl: true,
+    noiseSuppression: true,
+  },
+})
+audioContext = new AudioContext()
+streamNode = new MediaStreamAudioSourceNode(audioContext, {
+  mediaStream: stream,
+})
+workletDataUrl = getWorklet()
+audioContext.audioWorklet.addModule(workletDataUrl)
+workletNode = new AudioWorkletNode(this.audioContext, "my-processor")</code></pre>
+        <h1>You got it</h1>
+        <p>
+            Open up the console and run the following:
+        </p>
+        <pre class="not-prose"><code class="language-javascript">v = await vad.MicVAD.new({})
+await v.init()</code></pre>
+        </main>
   </body>
 </html>

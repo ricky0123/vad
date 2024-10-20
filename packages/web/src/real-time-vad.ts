@@ -1,163 +1,227 @@
-import * as ortInstance from "onnxruntime-web"
-import { assetPath } from "./asset-path"
-import { defaultModelFetcher } from "./default-model-fetcher"
-import {
-  FrameProcessor,
-  FrameProcessorOptions,
-  defaultFrameProcessorOptions,
-  validateOptions,
-} from "./frame-processor"
-import { log } from "./logging"
+import { AudioSegment } from "./audio-segment"
+import { FrameProcessor } from "./frame-processor"
 import { Message } from "./messages"
-import { OrtOptions, Silero, SpeechProbabilities } from "./models"
+import { SileroV5, SpeechProbabilities, configureOrt } from "./models"
 
-interface RealTimeVADCallbacks {
-  /** Callback to run after each frame. The size (number of samples) of a frame is given by `frameSamples`. */
-  onFrameProcessed: (probabilities: SpeechProbabilities) => any
-
-  /** Callback to run if speech start was detected but `onSpeechEnd` will not be run because the
-   * audio segment is smaller than `minSpeechFrames`.
-   */
-  onVADMisfire: () => any
-
-  /** Callback to run when speech start is detected */
-  onSpeechStart: () => any
-
-  /**
-   * Callback to run when speech end is detected.
-   * Takes as arg a Float32Array of audio samples between -1 and 1, sample rate 16000.
-   * This will not run if the audio segment is smaller than `minSpeechFrames`.
-   */
-  onSpeechEnd: (audio: Float32Array) => any
+const createHTTPModelFetcher = (path: string) => {
+  return () => fetch(path).then((model) => model.arrayBuffer())
 }
 
-/**
- * Customizable audio constraints for the VAD.
- * Excludes certain constraints that are set for the user by default.
- */
-type AudioConstraints = Omit<
-  MediaTrackConstraints,
-  "channelCount" | "echoCancellation" | "autoGainControl" | "noiseSuppression"
->
-
-type AssetOptions = {
-  workletURL: string
-  modelURL: string
-  modelFetcher: (path: string) => Promise<ArrayBuffer>
+const getStream = async (constraints: Partial<MediaStreamConstraints>) => {
+  return await navigator.mediaDevices.getUserMedia({
+    audio: {
+      channelCount: 1,
+      echoCancellation: true,
+      autoGainControl: true,
+      noiseSuppression: true,
+      ...constraints,
+    },
+  })
 }
 
-interface RealTimeVADOptionsWithoutStream
-  extends FrameProcessorOptions,
-    RealTimeVADCallbacks,
-    OrtOptions,
-    AssetOptions {
-  additionalAudioConstraints?: AudioConstraints
-  stream: undefined
-}
+type MicVADEvent =
+  | {
+      target: MicVAD
+      type: "speechstart"
+    }
+  | {
+      target: MicVAD
+      type: "speechend"
+      audio: AudioSegment
+    }
+  | {
+      target: MicVAD
+      type: "misfire"
+    }
+  | {
+      target: MicVAD
+      type: "frameprocessed"
+      frame: Float32Array
+      isSpeechProbability: number
+    }
+  | {
+      target: MicVAD
+      type: "initialized"
+    }
+  | {
+      target: MicVAD
+      type: "terminated"
+    }
+  | {
+      target: MicVAD
+      type: "onpause"
+    }
+  | {
+      target: MicVAD
+      type: "onstart"
+    }
 
-interface RealTimeVADOptionsWithStream
-  extends FrameProcessorOptions,
-    RealTimeVADCallbacks,
-    OrtOptions,
-    AssetOptions {
-  stream: MediaStream
-}
-
-export const ort = ortInstance
-
-export type RealTimeVADOptions =
-  | RealTimeVADOptionsWithStream
-  | RealTimeVADOptionsWithoutStream
-
-export const defaultRealTimeVADOptions: RealTimeVADOptions = {
-  ...defaultFrameProcessorOptions,
-  onFrameProcessed: (probabilities) => {},
-  onVADMisfire: () => {
-    log.debug("VAD misfire")
-  },
-  onSpeechStart: () => {
-    log.debug("Detected speech start")
-  },
-  onSpeechEnd: () => {
-    log.debug("Detected speech end")
-  },
-  workletURL: assetPath("vad.worklet.bundle.min.js"),
-  modelURL: assetPath("silero_vad.onnx"),
-  modelFetcher: defaultModelFetcher,
-  stream: undefined,
-  ortConfig: undefined,
-}
+export type MicVADOptions = Partial<{
+  vadAssetsPath: string
+  modelFetcher: () => Promise<ArrayBuffer>
+  submitUserSpeechOnPause: boolean
+}>
 
 export class MicVAD {
-  static async new(options: Partial<RealTimeVADOptions> = {}) {
-    const fullOptions: RealTimeVADOptions = {
-      ...defaultRealTimeVADOptions,
-      ...options,
-    }
-    validateOptions(fullOptions)
-
-    let stream: MediaStream
-    if (fullOptions.stream === undefined)
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          ...fullOptions.additionalAudioConstraints,
-          channelCount: 1,
-          echoCancellation: true,
-          autoGainControl: true,
-          noiseSuppression: true,
-        },
-      })
-    else stream = fullOptions.stream
-
-    const audioContext = new AudioContext()
-    const sourceNode = new MediaStreamAudioSourceNode(audioContext, {
-      mediaStream: stream,
-    })
-
-    const audioNodeVAD = await AudioNodeVAD.new(audioContext, fullOptions)
-    audioNodeVAD.receive(sourceNode)
-
-    return new MicVAD(
-      fullOptions,
-      audioContext,
-      stream,
-      audioNodeVAD,
-      sourceNode
-    )
-  }
+  private eventListeners: { [k in MicVADEvent["type"]]: any[] }
+  // @ts-ignore
+  frameProcessor: FrameProcessor
+  // @ts-ignore
+  frameProducerNode: AudioWorkletNode
+  // @ts-ignore
+  sourceNode: MediaStreamAudioSourceNode
 
   private constructor(
-    public options: RealTimeVADOptions,
-    private audioContext: AudioContext,
-    private stream: MediaStream,
-    private audioNodeVAD: AudioNodeVAD,
-    private sourceNode: MediaStreamAudioSourceNode,
-    private listening = false
-  ) {}
+    public options: MicVADOptions,
+    public audioContext: AudioContext,
+    public stream: MediaStream,
+    public paused = true,
+    public userSpeaking = false,
+  ) {
+    this.eventListeners = {
+      speechstart: [],
+      speechend: [],
+      misfire: [],
+      frameprocessed: [],
+      initialized: [],
+      terminated: [],
+      onpause: [],
+      onstart: [],
+    }
+  }
+
+  static async new(
+    options: MicVADOptions,
+    constraints?: Partial<MediaStreamConstraints>,
+  ) {
+    const stream = await getStream(constraints || {})
+    const audioContext = new AudioContext()
+    const vad = new MicVAD(options, audioContext, stream)
+    return vad
+  }
+
+  addEventListener = (type: MicVADEvent["type"], listener) => {
+    this.eventListeners[type].push(listener)
+  }
+
+  removeEventListener = (type: MicVADEvent["type"], listener) => {
+    const index = this.eventListeners[type].indexOf(listener)
+    if (index > -1) {
+      this.eventListeners[type].splice(index, 1)
+    }
+  }
+
+  dispatchEvent = (event: MicVADEvent) => {
+    this.eventListeners[event.type].forEach((listener) => {
+      listener(event)
+    })
+  }
+
+  init = async () => {
+    const vadAssetsPath = (this.options.vadAssetsPath || "").replace(/\/$/, "")
+    configureOrt(ortInstance => {
+      ortInstance.env.wasm.wasmPaths = vadAssetsPath
+    })
+
+    const defaultModelPath = `${vadAssetsPath}/silero_vad.onnx`
+    const modelFetcher = this.options.modelFetcher || createHTTPModelFetcher(defaultModelPath)
+
+    let model: SileroV5
+    try {
+      model = await SileroV5.new(modelFetcher)
+    } catch (e) {
+      console.error(
+        `Encountered error while loading model: ${e}`
+      )
+      throw e
+    }
+
+    const workletURL = `${vadAssetsPath}/vad.worklet.bundle.min.js`
+    try {
+      await this.audioContext.audioWorklet.addModule(workletURL)
+    } catch (e) {
+      console.error(
+        `Encountered error while loading worklet: ${e}`
+      )
+      throw e
+    }
+
+    this.sourceNode = new MediaStreamAudioSourceNode(this.audioContext, {
+      mediaStream: this.stream,
+    })
+
+    if (this.audioContext.sampleRate != 16000) {
+      throw new Error(`Audio context must have sample rate 16000. Detected ${this.audioContext.sampleRate}`);
+    }
+
+    this.frameProducerNode = new AudioWorkletNode(this.audioContext, "vad-helper-worklet", {
+      processorOptions: {
+        frameSamples: 512, // (Supported values: 256 for 8000 sample rate, 512 for 16000)
+      },
+    })
+
+    this.frameProcessor = new FrameProcessor(
+      this,
+      model,
+      .4,
+      .3,
+      700,
+      512,
+      16000,
+      500,
+      360
+    )
+
+    this.frameProducerNode.port.onmessage = async (ev: MessageEvent) => {
+      switch (ev.data?.message) {
+        case Message.AudioFrame:
+          if (!this.paused) {
+            const buffer: ArrayBuffer = ev.data.data
+            const frame = new Float32Array(buffer)
+            await this.frameProcessor.process(frame)
+          }
+          break
+
+        default:
+          break
+      }
+    }
+
+    this.sourceNode.connect(this.frameProducerNode)
+    this.dispatchEvent({ type: "initialized", target: this })
+  }
 
   pause = () => {
-    this.audioNodeVAD.pause()
-    this.listening = false
+    this.paused = true
+    if (this.options.submitUserSpeechOnPause) {
+      this.frameProcessor.endSegment()
+    } else {
+      this.frameProcessor.reset()
+    }
+    this.dispatchEvent({
+      target: this,
+      type: "onpause"
+    })
   }
 
   start = () => {
-    this.audioNodeVAD.start()
-    this.listening = true
+    this.paused = false
+    this.dispatchEvent({
+      target: this,
+      type: "onstart"
+    })
   }
 
   destroy = () => {
-    if (this.listening) {
+    if (!this.paused) {
       this.pause()
     }
-    if (this.options.stream === undefined) {
-      this.stream.getTracks().forEach((track) => track.stop())
-    }
-    this.sourceNode.disconnect()
-    this.audioNodeVAD.destroy()
+    this.stream.getTracks().forEach((track) => track.stop())
     this.audioContext.close()
+    this.sourceNode.disconnect()
   }
 }
-
+/* 
 export class AudioNodeVAD {
   static async new(
     ctx: AudioContext,
@@ -300,3 +364,4 @@ export class AudioNodeVAD {
     this.entryNode.disconnect()
   }
 }
+ */

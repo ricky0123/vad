@@ -19,12 +19,94 @@ root.render(<App />)
 
 const vadAttributes = ["errored", "loading", "listening", "userSpeaking"]
 const vadMethods = ["pause", "start", "toggle"]
+const defaultVadParams = {
+  workletURL: "vad.worklet.bundle.min.js",
+  modelURL: "silero_vad.onnx",
+}
 
-function App() {
+function useRestartableVad(initialOptions) {
   const [audioList, setAudioList] = useState([])
   const vad = useMicVAD({
-    workletURL: "vad.worklet.bundle.min.js",
-    modelURL: "silero_vad.onnx",
+    ...initializtionParameters,
+    onVADMisfire: () => {
+      console.log("Vad misfire")
+    },
+    onSpeechStart: () => {
+      console.log("Speech start")
+    },
+    onSpeechEnd: (audio) => {
+      console.log("Speech end")
+      const wavBuffer = utils.encodeWAV(audio)
+      const base64 = utils.arrayBufferToBase64(wavBuffer)
+      const url = `data:audio/wav;base64,${base64}`
+      setAudioList((old) => [url, ...old])
+    },
+  })
+}
+
+function App() {
+  const [initializtionParameters, setVadParams] = useState(defaultVadParams)
+  const [newVadParams, setNewVadParams] = useState({})
+
+  const handleInputChange = (optionName, newValue) => {
+    setNewVadParams((prevValues) => ({
+      ...prevValues,
+      [optionName]: newValue,
+    }))
+  }
+
+  const handleRestart = () => {
+    setVadParams((prevParams) => ({
+      ...prevParams,
+      ...newVadParams,
+    }))
+  }
+
+  return (
+    <div className="mb-3">
+      <h3>Initialization parameters</h3>
+      <table className="mx-auto">
+        <thead>
+          <tr>
+            <th>Option</th>
+            <th>Current Value</th>
+            <th>New Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.keys(initializtionParameters).map((optionName) => {
+            return (
+              <tr key={optionName}>
+                <th>{optionName}</th>
+                <th>{initializtionParameters[optionName].toString()}</th>
+                <th>
+                  <input
+                    type="text"
+                    onChange={(e) =>
+                      handleInputChange(optionName, e.target.value)
+                    }
+                  />
+                </th>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+      <button
+        className="bg-violet-100 hover:bg-violet-200 rounded-full px-4 py-2"
+        onClick={handleRestart}
+      >
+        Restart
+      </button>
+      <VADDemo initializtionParameters={initializtionParameters} />
+    </div>
+  )
+}
+
+function VADDemo({ initializtionParameters }) {
+  const [audioList, setAudioList] = useState([])
+  const vad = useMicVAD({
+    ...initializtionParameters,
     onVADMisfire: () => {
       console.log("Vad misfire")
     },

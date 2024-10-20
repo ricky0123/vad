@@ -1,6 +1,4 @@
-import { log } from "./logging"
 import { Message } from "./messages"
-import { Resampler } from "./resampler"
 
 interface WorkletOptions {
   frameSamples: number
@@ -8,10 +6,11 @@ interface WorkletOptions {
 
 class Processor extends AudioWorkletProcessor {
   // @ts-ignore
-  resampler: Resampler
+  options: WorkletOptions
+
+  _inputBuffer: Array<number>
   _initialized = false
   _stopProcessing = false
-  options: WorkletOptions
 
   constructor(options) {
     super()
@@ -22,39 +21,38 @@ class Processor extends AudioWorkletProcessor {
         this._stopProcessing = true
       }
     }
-
-    this.init()
-  }
-  init = async () => {
-    log.debug("initializing worklet")
-    this.resampler = new Resampler({
-      nativeSampleRate: sampleRate,
-      targetSampleRate: 16000,
-      targetFrameSize: this.options.frameSamples,
-    })
+    this._inputBuffer = []
     this._initialized = true
-    log.debug("initialized worklet")
   }
+
   process(
     inputs: Float32Array[][],
     outputs: Float32Array[][],
     parameters: Record<string, Float32Array>
   ): boolean {
+    // @ts-ignore
+    const inData = inputs[0][0]
+
     if (this._stopProcessing) {
       return false
     }
 
-    // @ts-ignore
-    const arr = inputs[0][0]
+    if (!inData || !this._initialized || !(inData instanceof Float32Array)) {
+      return true
+    }
 
-    if (this._initialized && arr instanceof Float32Array) {
-      const frames = this.resampler.process(arr)
-      for (const frame of frames) {
-        this.port.postMessage(
-          { message: Message.AudioFrame, data: frame.buffer },
-          [frame.buffer]
-        )
-      }
+    for (const sample of inData) {
+      this._inputBuffer.push(sample)
+    }
+
+    while (this._inputBuffer.length >= this.options.frameSamples) {
+      const outputFrameValues = this._inputBuffer.slice(0, this.options.frameSamples)
+      const outputFrame = new Float32Array(outputFrameValues)
+      this._inputBuffer = this._inputBuffer.slice(this.options.frameSamples);
+      this.port.postMessage(
+        { message: Message.AudioFrame, data: outputFrame.buffer },
+        [outputFrame.buffer]
+      )
     }
 
     return true
