@@ -20,28 +20,27 @@ export class Resampler {
 
   process = (audioFrame: Float32Array): Float32Array[] => {
     const outputFrames: Array<Float32Array> = []
-    this.fillInputBuffer(audioFrame)
 
-    while (this.hasEnoughDataForFrame()) {
-      const outputFrame = this.generateOutputFrame()
-      outputFrames.push(outputFrame)
+    for (const sample of audioFrame) {
+      this.inputBuffer.push(sample)
+
+      while (this.hasEnoughDataForFrame()) {
+        const outputFrame = this.generateOutputFrame()
+        outputFrames.push(outputFrame)
+      }
     }
 
     return outputFrames
   }
 
-  stream = async function* (audioFrame: Float32Array) {
-    this.fillInputBuffer(audioFrame)
-
-    while (this.hasEnoughDataForFrame()) {
-      const outputFrame = this.generateOutputFrame()
-      yield outputFrame
-    }
-  }
-
-  private fillInputBuffer(audioFrame: Float32Array) {
-    for (const sample of audioFrame) {
+  stream = async function* (audioInput: Float32Array) {
+    for (const sample of audioInput) {
       this.inputBuffer.push(sample)
+
+      while (this.hasEnoughDataForFrame()) {
+        const outputFrame = this.generateOutputFrame()
+        yield outputFrame
+      }
     }
   }
 
