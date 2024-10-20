@@ -193,7 +193,7 @@ export class FrameProcessor implements FrameProcessorInterface {
       !this.speaking
     ) {
       this.speaking = true
-      return { probs, msg: Message.SpeechStart }
+      return { probs, msg: Message.SpeechStart, frame }
     }
 
     if (
@@ -213,9 +213,9 @@ export class FrameProcessor implements FrameProcessorInterface {
 
       if (speechFrameCount >= this.options.minSpeechFrames) {
         const audio = concatArrays(audioBuffer.map((item) => item.frame))
-        return { probs, msg: Message.SpeechEnd, audio }
+        return { probs, msg: Message.SpeechEnd, audio, frame }
       } else {
-        return { probs, msg: Message.VADMisfire }
+        return { probs, msg: Message.VADMisfire, frame }
       }
     }
 
@@ -224,6 +224,6 @@ export class FrameProcessor implements FrameProcessorInterface {
         this.audioBuffer.shift()
       }
     }
-    return { probs }
+    return { probs, frame }
   }
 }
