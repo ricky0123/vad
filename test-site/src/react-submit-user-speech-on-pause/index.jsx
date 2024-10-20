@@ -5,6 +5,8 @@ import * as ort from "onnxruntime-web"
 import React, { useState } from "react"
 import { createRoot } from "react-dom/client"
 
+React
+
 ort.env.wasm.wasmPaths = {
   "ort-wasm-simd-threaded.wasm": "/ort-wasm-simd-threaded.wasm",
   "ort-wasm-simd.wasm": "/ort-wasm-simd.wasm",
