@@ -1,5 +1,10 @@
 # @ricky0123/vad-web Changelog
 
+## 0.0.19
+
+* options for AudioWorkletNode can be passed in to MicVAD constructor
+* audio frame is converted to an instance of Float32Array when running in a Firefox extension [#141] https://github.com/ricky0123/vad/issues/141
+
 ## 0.0.18
 
 * use modified resampler

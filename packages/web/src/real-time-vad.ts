@@ -44,6 +44,7 @@ type AudioConstraints = Omit<
 
 type AssetOptions = {
   workletURL: string
+  workletOptions: AudioWorkletNodeOptions
   modelURL: string
   modelFetcher: (path: string) => Promise<ArrayBuffer>
 }
@@ -88,6 +89,11 @@ export const defaultRealTimeVADOptions: RealTimeVADOptions = {
   modelFetcher: defaultModelFetcher,
   stream: undefined,
   ortConfig: undefined,
+  workletOptions: {
+    processorOptions: {
+      frameSamples: defaultFrameProcessorOptions.frameSamples,
+    },
+  },
 }
 
 export class MicVAD {
@@ -185,11 +191,7 @@ export class AudioNodeVAD {
       )
       throw e
     }
-    const vadNode = new AudioWorkletNode(ctx, "vad-helper-worklet", {
-      processorOptions: {
-        frameSamples: fullOptions.frameSamples,
-      },
-    })
+    const vadNode = new AudioWorkletNode(ctx, "vad-helper-worklet", fullOptions.workletOptions)
 
     let model: Silero
     try {
@@ -229,7 +231,11 @@ export class AudioNodeVAD {
     vadNode.port.onmessage = async (ev: MessageEvent) => {
       switch (ev.data?.message) {
         case Message.AudioFrame:
-          const buffer: ArrayBuffer = ev.data.data
+          let buffer: ArrayBuffer = ev.data.data
+          if (!(buffer instanceof ArrayBuffer)) {
+            buffer = new ArrayBuffer(ev.data.data.byteLength)
+            new Uint8Array(buffer).set(new Uint8Array(ev.data.data))
+          }
           const frame = new Float32Array(buffer)
           await audioNodeVAD.processFrame(frame)
           break
