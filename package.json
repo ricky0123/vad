@@ -5,7 +5,7 @@
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "clean": "npm run clean --workspaces --if-present",
-    "format": "prettier --write '{packages,examples}/**/*.ts'",
+    "format": "prettier --write '{packages,examples,test-site}/**/*.{ts,html,jsx}'",
     "build-test-site": "./test-site/build.sh",
     "serve-test-site": "http-server ./test-site/dist",
     "dev": "./scripts/dev.sh"
@@ -19,11 +19,11 @@
     "live-server": "^1.2.2",
     "nodemon": "^3.0.2",
     "prettier": "^2.6.2",
+    "prettier-plugin-organize-imports": "^4.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "workspaces": [
-    "packages/node",
     "packages/web",
     "packages/react"
   ],
