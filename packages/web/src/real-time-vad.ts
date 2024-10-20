@@ -202,7 +202,7 @@ export class AudioNodeVAD {
       console.error(
         `Encountered an error while loading model file. Please make sure silero_vad.onnx, included with @ricky0123/vad-web, is available at the specified path:
       ${fullOptions.modelURL}
-      If need be, you can customize the model file location using the \`modelsURL\` option.`
+      If need be, you can customize the model file location using the \`modelURL\` option.`
       )
       throw e
     }
