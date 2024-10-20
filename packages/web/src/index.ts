@@ -1,16 +1,10 @@
 import * as ort from "onnxruntime-web"
-import {
-  utils as _utils,
-  PlatformAgnosticNonRealTimeVAD,
-  FrameProcessor,
-  FrameProcessorOptions,
-  Message,
-  NonRealTimeVADOptions,
-  ModelFetcher,
-} from "./_common"
-import { audioFileToArray } from "./utils"
+import { arrayBufferToBase64, audioFileToArray, encodeWAV, minFramesForTargetMS } from "./utils"
 import { defaultModelFetcher } from "./default-model-fetcher"
 import { assetPath } from "./asset-path"
+import { NonRealTimeVADOptions, PlatformAgnosticNonRealTimeVAD } from "./non-real-time-vad"
+import { FrameProcessor, FrameProcessorOptions } from "./frame-processor"
+import { Message } from "./messages"
 
 export interface NonRealTimeVADOptionsWeb extends NonRealTimeVADOptions {
   modelURL: string
@@ -34,7 +28,7 @@ class NonRealTimeVAD extends PlatformAgnosticNonRealTimeVAD {
   }
 }
 
-export const utils = { audioFileToArray, ..._utils }
+export const utils = { audioFileToArray, minFramesForTargetMS, arrayBufferToBase64, encodeWAV }
 
 export { FrameProcessor, Message, NonRealTimeVAD }
 export type { FrameProcessorOptions, NonRealTimeVADOptions }
