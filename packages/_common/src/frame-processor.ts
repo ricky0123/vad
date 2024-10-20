@@ -74,7 +74,7 @@ export function validateOptions(options: FrameProcessorOptions) {
     options.negativeSpeechThreshold > options.positiveSpeechThreshold
   ) {
     log.error(
-      "negativeSpeechThreshold should be between 0 and postiveSpeechThreshold"
+      "negativeSpeechThreshold should be between 0 and positiveSpeechThreshold"
     )
   }
   if (options.preSpeechPadFrames < 0) {
