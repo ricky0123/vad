@@ -1,4 +1,6 @@
-import { Message, log, Resampler } from "./_common"
+import { log } from "./logging"
+import { Message } from "./messages"
+import { Resampler } from "./resampler"
 
 interface WorkletOptions {
   frameSamples: number

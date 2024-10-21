@@ -5,7 +5,6 @@ npm run build-test-site
 npx nodemon \
     --exec "npm run build && npm run build-test-site" \
     -e js,ts,jsx,tsx,html,css \
-    --watch packages/_common \
     --watch packages/web/src \
     --watch packages/react/src \
     --watch test-site/src \

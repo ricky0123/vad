@@ -11,12 +11,6 @@ set +x
 )
 
 (
-    cd examples/node
-    npm remove @ricky0123/vad-node
-    npm i @ricky0123/vad-node@latest
-)
-
-(
     cd examples/react-bundler
     npm remove @ricky0123/vad-react
     npm i @ricky0123/vad-react@latest

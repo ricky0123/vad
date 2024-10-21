@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@ricky0123/vad-react": "^0.0.23",
+    "@ricky0123/vad-react": "^0.0.25",
     "@types/node": "18.15.6",
     "@types/react": "18.0.28",
     "@types/react-dom": "18.0.11",

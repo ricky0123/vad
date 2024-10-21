@@ -6,7 +6,7 @@ import {
   validateOptions,
 } from "./frame-processor"
 import { Message } from "./messages"
-import { ModelFetcher, OrtOptions, ONNXRuntimeAPI, Silero } from "./models"
+import { ModelFetcher, ONNXRuntimeAPI, OrtOptions, Silero } from "./models"
 import { Resampler } from "./resampler"
 
 interface NonRealTimeVADSpeechData {

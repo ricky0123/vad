@@ -1,0 +1,3 @@
+*.wasm
+*.mjs
+*.onnx

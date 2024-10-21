@@ -13,7 +13,7 @@
     "react"
   ],
   "homepage": "https://github.com/ricky0123/vad",
-  "version": "0.0.24",
+  "version": "0.0.25",
   "license": "ISC",
   "main": "dist/index.js",
   "devDependencies": {
@@ -29,6 +29,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "publish": "npm publish --access public"
   }
 }
