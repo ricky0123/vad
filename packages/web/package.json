@@ -32,6 +32,7 @@
     "build": "./scripts/build.sh",
     "test-server": "tsc -p ./scripts/tsconfig.json && node ./scripts/test-server.js",
     "test": "playwright test",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "publish": "npm publish --access public"
   }
 }

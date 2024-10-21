@@ -8,7 +8,8 @@
     "format": "prettier --write '{packages,examples,test-site}/**/*.{ts,html,jsx}'",
     "build-test-site": "./test-site/build.sh",
     "serve-test-site": "http-server ./test-site/dist",
-    "dev": "./scripts/dev.sh"
+    "dev": "./scripts/dev.sh",
+    "publish": "npm run publish --workspaces --if-present"
   },
   "private": true,
   "devDependencies": {
