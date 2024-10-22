@@ -5,7 +5,7 @@ mkdir -p test-site/dist/subpath
 
 (
     cd test-site/src
-    find . -name "*.js" -or -name "*.jsx" | \
+    find . -name "*.js" -or -name "*.jsx" -or -name "*.ts" -or -name "*.tsx" | \
         xargs -I {} sh -c 'outfile="../dist/{}"; npx esbuild "{}" --bundle --sourcemap --outfile="${outfile%.*}.js"'
 )
 
