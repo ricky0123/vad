@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useMicVAD, utils } from "@ricky0123/vad-react"
 import type { ReactRealTimeVADOptions } from "@ricky0123/vad-react"
 import * as ort from "onnxruntime-web"
@@ -7,23 +6,39 @@ import { createRoot } from "react-dom/client"
 
 React // prevent prettier imports plugin from removing React
 
-ort.env.wasm.wasmPaths = {
-  "ort-wasm-simd-threaded.wasm": "/ort-wasm-simd-threaded.wasm",
-  "ort-wasm-simd.wasm": "/ort-wasm-simd.wasm",
-  "ort-wasm.wasm": "/ort-wasm.wasm",
-  "ort-wasm-threaded.wasm": "/ort-wasm-threaded.wasm",
-}
+ort.env.wasm.wasmPaths = "/"
 
 const domContainer = document.querySelector("#root")
-const root = createRoot(domContainer)
-root.render(<App />)
+// @ts-ignore
+createRoot(domContainer).render(<App />)
 
 const vadAttributes = ["errored", "loading", "listening", "userSpeaking"]
 const vadMethods = ["pause", "start", "toggle"]
 const defaultVadParams: ReactRealTimeVADOptions = {
   workletURL: "vad.worklet.bundle.min.js",
   modelURL: "silero_vad.onnx",
-  submitUserSpeechOnPause: false
+  submitUserSpeechOnPause: false,
+  positiveSpeechThreshold: .8,
+  negativeSpeechThreshold: .6,
+  redemptionFrames: 4,
+  frameSamples: 22,
+  preSpeechPadFrames: 1,
+  minSpeechFrames: 1,
+  onFrameProcessed: () => {},
+  onVADMisfire: () => {},
+  onSpeechStart: () => {},
+  onSpeechEnd: () => {},
+  workletOptions: {
+    processorOptions: {
+      frameSamples: 1536,
+    },
+  },
+  modelFetcher: (path: string) => {
+    return fetch(path).then((model) => model.arrayBuffer())
+  },
+  stream: undefined,
+  startOnLoad: true,
+  userSpeakingThreshold: .5
 }
 
 function App() {
