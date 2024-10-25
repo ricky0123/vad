@@ -14,7 +14,8 @@ createRoot(domContainer).render(<App />)
 
 const vadAttributes = ["errored", "loading", "listening", "userSpeaking"]
 const vadMethods = ["pause", "start", "toggle"]
-const defaultVadParams: ReactRealTimeVADOptions = {
+
+const configurableVADParamDefaults: Partial<ReactRealTimeVADOptions> = {
   workletURL: "vad.worklet.bundle.min.js",
   modelURL: "silero_vad.onnx",
   submitUserSpeechOnPause: false,
@@ -24,25 +25,12 @@ const defaultVadParams: ReactRealTimeVADOptions = {
   frameSamples: 22,
   preSpeechPadFrames: 1,
   minSpeechFrames: 1,
-  onFrameProcessed: () => {},
-  onVADMisfire: () => {},
-  onSpeechStart: () => {},
-  onSpeechEnd: () => {},
-  workletOptions: {
-    processorOptions: {
-      frameSamples: 1536,
-    },
-  },
-  modelFetcher: (path: string) => {
-    return fetch(path).then((model) => model.arrayBuffer())
-  },
-  stream: undefined,
   startOnLoad: true,
   userSpeakingThreshold: .5
 }
 
 function App() {
-  const [initializtionParameters, setVadParams] = useState(defaultVadParams)
+  const [initializtionParameters, setVadParams] = useState(configurableVADParamDefaults)
   const [newVadParams, setNewVadParams] = useState({})
 
   const handleInputChange = (optionName, newValue) => {
