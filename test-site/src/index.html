@@ -5,10 +5,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            typography: {
+              DEFAULT: {
+                css: {
+                  maxWidth: "150ch", // add required value here
+                },
+              },
+            },
+          },
+        },
+      }
+    </script>
     <script defer src="index.js"></script>
   </head>
   <body>
-    <main class="my-5 mx-auto prose">
+    <main class="mt-5 mx-auto prose">
       <h1>Welcome to the VAD test site</h1>
       <p>
         This site is designed for local development and testing of the voice
@@ -16,7 +31,7 @@
         <code>@ricky0123/vad-web</code> and <code>@ricky0123/vad-react</code>.
       </p>
       <h1>Demo</h1>
-      <div id="root"></div>
+      <div id="demo"></div>
     </main>
   </body>
 </html>

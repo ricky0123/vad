@@ -1,97 +1,142 @@
-import { useMicVAD, utils } from "@ricky0123/vad-react"
 import type { ReactRealTimeVADOptions } from "@ricky0123/vad-react"
+import { useMicVAD, utils } from "@ricky0123/vad-react"
 import * as ort from "onnxruntime-web"
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { createRoot } from "react-dom/client"
 
 React // prevent prettier imports plugin from removing React
 
 ort.env.wasm.wasmPaths = "/"
 
-const domContainer = document.querySelector("#root")
+const domContainer = document.querySelector("#demo")
 // @ts-ignore
 createRoot(domContainer).render(<App />)
 
 const vadAttributes = ["errored", "loading", "listening", "userSpeaking"]
 const vadMethods = ["pause", "start", "toggle"]
 
-const configurableVADParamDefaults: Partial<ReactRealTimeVADOptions> = {
-  workletURL: "vad.worklet.bundle.min.js",
-  modelURL: "silero_vad.onnx",
-  submitUserSpeechOnPause: false,
-  positiveSpeechThreshold: .8,
-  negativeSpeechThreshold: .6,
-  redemptionFrames: 4,
-  frameSamples: 22,
-  preSpeechPadFrames: 1,
-  minSpeechFrames: 1,
-  startOnLoad: true,
-  userSpeakingThreshold: .5
+const configurableVADParams = {
+  workletURL: {
+    default: "/vad.worklet.bundle.min.js",
+    parser: (val: string) => val
+  },
+  modelURL: {
+    default: "/silero_vad.onnx",
+    parser: (val: string) => val
+  },
+  submitUserSpeechOnPause: {
+    default: false,
+    parser: (val: string) => val === 'true'
+  },
+  positiveSpeechThreshold: {
+    default: 0.8,
+    parser: (val: string) => parseFloat(val)
+  },
+  negativeSpeechThreshold: {
+    default: 0.6,
+    parser: (val: string) => parseFloat(val)
+  },
+  redemptionFrames: {
+    default: 4,
+    parser: (val: string) => parseInt(val)
+  },
+  preSpeechPadFrames: {
+    default: 1,
+    parser: (val: string) => parseInt(val)
+  },
+  minSpeechFrames: {
+    default: 1,
+    parser: (val: string) => parseInt(val)
+  },
+  startOnLoad: {
+    default: true,
+    parser: (val: string) => val === 'true'
+  },
+  userSpeakingThreshold: {
+    default: 0.5,
+    parser: (val: string) => parseFloat(val)
+  },
 }
 
+const defaultParams: Partial<ReactRealTimeVADOptions> = Object.fromEntries(
+  Object.entries(configurableVADParams).map(([key, value]) => [key, value.default])
+)
+
 function App() {
-  const [initializtionParameters, setVadParams] = useState(configurableVADParamDefaults)
+  const [initializationParameters, setVadParams] = useState(
+    defaultParams
+  )
   const [newVadParams, setNewVadParams] = useState({})
+  const [demo, setDemo] = useState(true)
 
   const handleInputChange = (optionName, newValue) => {
     setNewVadParams((prevValues) => ({
       ...prevValues,
-      [optionName]: newValue,
+      [optionName]: configurableVADParams[optionName].parser(newValue)
     }))
   }
 
-  const handleRestart = () => {
+  const handleRestart = async () => {
+    setDemo(false)
     setVadParams((prevParams) => ({
       ...prevParams,
       ...newVadParams,
     }))
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setDemo(true)
   }
 
   return (
-    <div className="mb-3">
-      <h3>Initialization parameters</h3>
-      <table className="mx-auto">
-        <thead>
-          <tr>
-            <th>Option</th>
-            <th>Current Value</th>
-            <th>New Value</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Object.keys(initializtionParameters).map((optionName) => {
-            return (
-              <tr key={optionName}>
-                <th>{optionName}</th>
-                <th>{initializtionParameters[optionName].toString()}</th>
-                <th>
-                  <input
-                    type="text"
-                    onChange={(e) =>
-                      handleInputChange(optionName, e.target.value)
-                    }
-                  />
-                </th>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-      <button
-        className="bg-violet-100 hover:bg-violet-200 rounded-full px-4 py-2"
-        onClick={handleRestart}
-      >
-        Restart
-      </button>
-      <VADDemo initializtionParameters={initializtionParameters} />
+    <div className="flex">
+      <div className="mr-5">
+        <h3>Initialization parameters</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Option</th>
+              <th>Current Value</th>
+              <th>New Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.keys(initializationParameters).map((optionName) => {
+              return (
+                <tr key={optionName}>
+                  <th>{optionName}</th>
+                  <th>{initializationParameters[optionName].toString()}</th>
+                  <th>
+                    <input
+                      className="rounded mx-5"
+                      type="text"
+                      onChange={(e) =>
+                        handleInputChange(optionName, e.target.value)
+                      }
+                    />
+                  </th>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3>Run</h3>
+        <button
+          className="bg-violet-100 hover:bg-violet-200 rounded-full px-4 py-2"
+          onClick={handleRestart}
+        >
+          Restart
+        </button>
+        {demo && <VADDemo initializationParameters={initializationParameters} />}
+      </div>
     </div>
   )
 }
 
-function VADDemo({ initializtionParameters }) {
-  const [audioList, setAudioList] = useState([])
+function VADDemo({ initializationParameters }) {
+  const [audioList, setAudioList] = useState<string[]>([])
   const vad = useMicVAD({
-    ...initializtionParameters,
+    ...initializationParameters,
     onVADMisfire: () => {
       console.log("Vad misfire")
     },
@@ -106,6 +151,9 @@ function VADDemo({ initializtionParameters }) {
       setAudioList((old) => [url, ...old])
     },
   })
+  useEffect(() => {
+    console.log("Created VAD with params", initializationParameters)
+  }, [initializationParameters])
   return (
     <div>
       <h3>Controls</h3>
