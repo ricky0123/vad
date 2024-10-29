@@ -1,0 +1,46 @@
+site_name: Voice Activity Detection for Javascript
+theme: 
+  name: material
+  features:
+    - content.code.copy
+    - navigation.expand
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default 
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+  icon:
+    repo: simple/github
+repo_url: https://github.com/ricky0123/vad
+nav:
+  - Home: index.md
+  - User Guide:
+      - Browser: user-guide/browser.md
+      - Node: user-guide/node.md
+      - React: user-guide/react.md
+      - API: user-guide/api.md
+      - Algorithm: user-guide/algorithm.md
+  - Developer Guide:
+      - Hacking: developer-guide/hacking.md
+  - Links:
+      - GitHub: https://github.com/ricky0123/vad
+      - Discord: https://discord.gg/4WPeGEaSpF
+      - Buy me a cup of coffee!: https://github.com/sponsors/ricky0123
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
