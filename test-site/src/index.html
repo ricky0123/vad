@@ -4,45 +4,34 @@
     <title>VAD test site</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- Bulma CSS -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css"
-    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            typography: {
+              DEFAULT: {
+                css: {
+                  maxWidth: "150ch", // add required value here
+                },
+              },
+            },
+          },
+        },
+      }
+    </script>
+    <script defer src="index.js"></script>
   </head>
   <body>
-    <section class="section">
-      <div class="container">
-        <!-- Title / Heading -->
-        <h1 class="title">Welcome to the VAD test site</h1>
-        <p>
-          This site is designed for local development and testing of the voice
-          activity detection (VAD) packages:
-          <code>@ricky0123/vad-web</code> and <code>@ricky0123/vad-react</code>.
-        </p>
-        <div class="content">
-          <ul>
-            <li><a href="web-basic">Basic vad-web</a></li>
-            <li><a href="react-basic">Basic vad-react</a></li>
-            <li><a href="react-destroy">React destroy</a></li>
-            <li>
-              <a href="submit-user-speech-on-pause"
-                >Submit user speech on pause</a
-              >
-            </li>
-            <li>
-              <a href="react-submit-user-speech-on-pause"
-                >React submit user speech on pause</a
-              >
-            </li>
-            <li><a href="location-error">Location error</a></li>
-            <li><a href="ort-config">Ort config</a></li>
-            <li>
-              <a href="custom-worklet-options">Customized worklet options</a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </section>
+    <main class="mt-5 mx-auto prose">
+      <h1>Welcome to the VAD test site</h1>
+      <p>
+        This site is designed for local development and testing of the voice
+        activity detection (VAD) packages:
+        <code>@ricky0123/vad-web</code> and <code>@ricky0123/vad-react</code>.
+      </p>
+      <h1>Demo</h1>
+      <div id="demo"></div>
+    </main>
   </body>
 </html>

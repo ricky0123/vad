@@ -1,16 +1,9 @@
-FROM ubuntu:22.04
-
-RUN apt-get update && apt-get install -y curl gnupg2
-# Add NodeSource repository for latest Node.js
-RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
-RUN apt-get install -y nodejs
+FROM mcr.microsoft.com/playwright:v1.48.1-noble
 
 WORKDIR /app
 
 COPY . .
-RUN npm install
-
-RUN npx playwright install
-RUN npx playwright install-deps
-
-CMD ["npm", "test"]
+RUN npm ci
+RUN npx playwright install --with-deps
+RUN npm run build
+CMD [ "npm", "run", "test" ]
