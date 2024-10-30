@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "vad"
+version = "0.1.0"
+description = ""
+authors = ["Ricky <rickycontact9@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+mkdocs = "^1.6.1"
+mkdocs-material = "^9.5.42"
+pymdown-extensions = "^10.12"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
