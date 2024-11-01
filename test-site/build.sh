@@ -11,7 +11,7 @@ mkdir -p test-site/dist/subpath
 
 (
     cd test-site/src
-    find . -depth -name "*.html" -print | cpio -pvd ../dist
+    find . -name "*.html" -exec cp --parents {} ../dist \;
 )
 
 cp test-site/src/*.html test-site/dist
