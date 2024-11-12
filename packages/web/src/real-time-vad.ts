@@ -9,7 +9,7 @@ import {
 } from "./frame-processor"
 import { log } from "./logging"
 import { Message } from "./messages"
-import { OrtOptions, Silero, SpeechProbabilities } from "./models"
+import { OrtOptions, SileroV5, SpeechProbabilities } from "./models/v5"
 
 interface RealTimeVADCallbacks {
   /** Callback to run after each frame. The size (number of samples) of a frame is given by `frameSamples`. */
@@ -86,7 +86,7 @@ export const defaultRealTimeVADOptions: RealTimeVADOptions = {
     log.debug("Detected speech end")
   },
   workletURL: assetPath("vad.worklet.bundle.min.js"),
-  modelURL: assetPath("silero_vad.onnx"),
+  modelURL: assetPath("silero_vad_v5.onnx"),
   modelFetcher: defaultModelFetcher,
   stream: undefined,
   ortConfig: undefined,
@@ -198,9 +198,9 @@ export class AudioNodeVAD {
       fullOptions.workletOptions
     )
 
-    let model: Silero
+    let model: SileroV5
     try {
-      model = await Silero.new(ort, () =>
+      model = await SileroV5.new(ort, () =>
         fullOptions.modelFetcher(fullOptions.modelURL)
       )
     } catch (e) {

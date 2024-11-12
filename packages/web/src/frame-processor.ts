@@ -5,7 +5,7 @@ were taken (or took inspiration) from https://github.com/snakers4/silero-vad
 
 import { log } from "./logging"
 import { Message } from "./messages"
-import { SpeechProbabilities } from "./models"
+import { SpeechProbabilities } from "./models/legacy"
 
 const RECOMMENDED_FRAME_SAMPLES = [512, 1024, 1536]
 
@@ -54,7 +54,7 @@ export const defaultFrameProcessorOptions: FrameProcessorOptions = {
   negativeSpeechThreshold: 0.5 - 0.15,
   preSpeechPadFrames: 1,
   redemptionFrames: 8,
-  frameSamples: 1536,
+  frameSamples: 512,
   minSpeechFrames: 3,
   submitUserSpeechOnPause: false,
 }

@@ -21,7 +21,7 @@ const configurableVADParams = {
     parser: (val: string) => val
   },
   modelURL: {
-    default: "/silero_vad.onnx",
+    default: "/silero_vad_v5.onnx",
     parser: (val: string) => val
   },
   submitUserSpeechOnPause: {

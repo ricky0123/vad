@@ -1,5 +1,5 @@
 // @ts-ignore
-import { log } from "./logging"
+import { log } from "../logging"
 
 export type ONNXRuntimeAPI = any
 export type ModelFetcher = () => Promise<ArrayBuffer>
