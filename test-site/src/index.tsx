@@ -62,10 +62,29 @@ const defaultParams: Partial<ReactRealTimeVADOptions> = Object.fromEntries(
   Object.entries(configurableVADParams).map(([key, value]) => [key, value.default])
 )
 
+const getOptionsFromHash = () => {
+  const hash = window.location.hash
+  if (!hash) return {}
+  const params = new URLSearchParams(hash.slice(1))
+  const opts = params.get('opts')
+  if (!opts) return {}
+  try {
+    const out = JSON.parse(decodeURIComponent(opts))
+    console.log("Parsed opts from hash:", out)
+    return out
+  } catch (e) {
+    console.error("Failed to parse opts from hash:", e)
+    return {}
+  }
+}
+
+const opts = {
+  ...defaultParams,
+  ...getOptionsFromHash()
+}
+
 function App() {
-  const [initializationParameters, setVadParams] = useState(
-    defaultParams
-  )
+  const [initializationParameters, setVadParams] = useState(opts)
   const [newVadParams, setNewVadParams] = useState({})
   const [demo, setDemo] = useState(true)
 
@@ -78,10 +97,17 @@ function App() {
 
   const handleRestart = async () => {
     setDemo(false)
-    setVadParams((prevParams) => ({
-      ...prevParams,
+
+    const params = {
+      ...initializationParameters,
       ...newVadParams,
-    }))
+    }
+
+    setVadParams(params)
+
+    const opts = JSON.stringify(params)
+    window.location.hash = `#opts=${encodeURIComponent(opts)}`
+
     await new Promise(resolve => setTimeout(resolve, 1000));
     setDemo(true)
   }
