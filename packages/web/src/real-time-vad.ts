@@ -1,5 +1,4 @@
 import * as ortInstance from "onnxruntime-web"
-import { baseAssetPath } from "./asset-path"
 import { defaultModelFetcher } from "./default-model-fetcher"
 import {
   FrameProcessor,
@@ -54,6 +53,7 @@ type AudioConstraints = Omit<
 type AssetOptions = {
   workletOptions: AudioWorkletNodeOptions
   baseAssetPath: string
+  onnxWASMBasePath: string
 }
 
 type ModelOptions = {
@@ -101,7 +101,8 @@ export const defaultRealTimeVADOptions: RealTimeVADOptions = {
   onSpeechEnd: () => {
     log.debug("Detected speech end")
   },
-  baseAssetPath: baseAssetPath,
+  baseAssetPath: "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.19/dist/",
+  onnxWASMBasePath: "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/",
   stream: undefined,
   ortConfig: undefined,
   model: "v5",
@@ -193,12 +194,12 @@ export class AudioNodeVAD {
     }
     validateOptions(fullOptions)
 
-    ort.env.wasm.wasmPaths = baseAssetPath
+    ort.env.wasm.wasmPaths = fullOptions.onnxWASMBasePath
     if (fullOptions.ortConfig !== undefined) {
       fullOptions.ortConfig(ort)
     }
 
-    const workletURL = baseAssetPath + workletFile
+    const workletURL = fullOptions.baseAssetPath + workletFile
 
     try {
       await ctx.audioWorklet.addModule(workletURL)
@@ -214,7 +215,7 @@ export class AudioNodeVAD {
 
     const modelFile =
       fullOptions.model === "v5" ? sileroV5File : sileroLegacyFile
-    const modelURL = baseAssetPath + modelFile
+    const modelURL = fullOptions.baseAssetPath + modelFile
     const modelFactory: ModelFactory =
       fullOptions.model === "v5" ? SileroV5.new : SileroLegacy.new
     let model: Model
