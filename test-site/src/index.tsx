@@ -16,12 +16,12 @@ const vadAttributes = ["errored", "loading", "listening", "userSpeaking"]
 const vadMethods = ["pause", "start", "toggle"]
 
 const configurableVADParams = {
-  workletURL: {
-    default: "/vad.worklet.bundle.min.js",
+  baseAssetPath: {
+    default: "/",
     parser: (val: string) => val
   },
-  modelURL: {
-    default: "/silero_vad_v5.onnx",
+  model: {
+    default: "v5",
     parser: (val: string) => val
   },
   submitUserSpeechOnPause: {

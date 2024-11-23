@@ -196,6 +196,7 @@ export class AudioNodeVAD {
     }
     validateOptions(fullOptions)
 
+    ort.env.wasm.wasmPaths = baseAssetPath
     if (fullOptions.ortConfig !== undefined) {
       fullOptions.ortConfig(ort)
     }
