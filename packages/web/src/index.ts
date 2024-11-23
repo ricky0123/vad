@@ -1,5 +1,5 @@
 import * as ort from "onnxruntime-web"
-import { assetPath } from "./asset-path"
+import { baseAssetPath } from "./asset-path"
 import { defaultModelFetcher } from "./default-model-fetcher"
 import { FrameProcessor, FrameProcessorOptions } from "./frame-processor"
 import { Message } from "./messages"
@@ -20,7 +20,7 @@ export interface NonRealTimeVADOptionsWeb extends NonRealTimeVADOptions {
 }
 
 export const defaultNonRealTimeVADOptions = {
-  modelURL: assetPath("silero_vad.onnx"),
+  modelURL: baseAssetPath + "silero_vad.onnx",
   modelFetcher: defaultModelFetcher,
 }
 
