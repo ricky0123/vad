@@ -36,7 +36,7 @@ const defaultParams: Partial<ReactRealTimeVADOptions> = Object.fromEntries(
   Object.entries(defaultReactRealTimeVADOptions).filter(([key, value]) => {
     return key in parsers
   }).map(([key, value]) => {
-    return [key, { default: value }]
+    return [key, value]
   })
 )
 
