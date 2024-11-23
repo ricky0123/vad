@@ -1,5 +1,5 @@
 import type { ReactRealTimeVADOptions } from "@ricky0123/vad-react"
-import { useMicVAD, utils } from "@ricky0123/vad-react"
+import { defaultReactRealTimeVADOptions, useMicVAD, utils } from "@ricky0123/vad-react"
 import * as ort from "onnxruntime-web"
 import React, { useEffect, useState } from "react"
 import { createRoot } from "react-dom/client"
@@ -15,51 +15,29 @@ createRoot(domContainer).render(<App />)
 const vadAttributes = ["errored", "loading", "listening", "userSpeaking"]
 const vadMethods = ["pause", "start", "toggle"]
 
-const configurableVADParams = {
-  baseAssetPath: {
-    default: "/",
-    parser: (val: string) => val
-  },
-  model: {
-    default: "v5",
-    parser: (val: string) => val
-  },
-  submitUserSpeechOnPause: {
-    default: false,
-    parser: (val: string) => val === 'true'
-  },
-  positiveSpeechThreshold: {
-    default: 0.8,
-    parser: (val: string) => parseFloat(val)
-  },
-  negativeSpeechThreshold: {
-    default: 0.6,
-    parser: (val: string) => parseFloat(val)
-  },
-  redemptionFrames: {
-    default: 4,
-    parser: (val: string) => parseInt(val)
-  },
-  preSpeechPadFrames: {
-    default: 1,
-    parser: (val: string) => parseInt(val)
-  },
-  minSpeechFrames: {
-    default: 1,
-    parser: (val: string) => parseInt(val)
-  },
-  startOnLoad: {
-    default: true,
-    parser: (val: string) => val === 'true'
-  },
-  userSpeakingThreshold: {
-    default: 0.5,
-    parser: (val: string) => parseFloat(val)
-  },
+const parsers: Partial<
+  Record<keyof ReactRealTimeVADOptions, (val: string) => string | boolean | number>
+> = {
+  model: (val: string) => val,
+  baseAssetPath: (val: string) => val,
+  onnxWASMBasePath: (val: string) => val,
+  submitUserSpeechOnPause: (val: string) => val === 'true',
+  positiveSpeechThreshold: (val: string) => parseFloat(val),
+  negativeSpeechThreshold: (val: string) => parseFloat(val),
+  frameSamples: (val: string) => parseInt(val),
+  redemptionFrames: (val: string) => parseInt(val),
+  preSpeechPadFrames: (val: string) => parseInt(val),
+  minSpeechFrames: (val: string) => parseInt(val),
+  startOnLoad: (val: string) => val === 'true',
+  userSpeakingThreshold: (val: string) => parseFloat(val),
 }
 
 const defaultParams: Partial<ReactRealTimeVADOptions> = Object.fromEntries(
-  Object.entries(configurableVADParams).map(([key, value]) => [key, value.default])
+  Object.entries(defaultReactRealTimeVADOptions).filter(([key, value]) => {
+    return key in parsers
+  }).map(([key, value]) => {
+    return [key, { default: value }]
+  })
 )
 
 const getOptionsFromHash = () => {
@@ -91,7 +69,7 @@ function App() {
   const handleInputChange = (optionName, newValue) => {
     setNewVadParams((prevValues) => ({
       ...prevValues,
-      [optionName]: configurableVADParams[optionName].parser(newValue)
+      [optionName]: parsers[optionName](newValue)
     }))
   }
 

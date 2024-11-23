@@ -11,7 +11,6 @@ import { Message } from "./messages"
 import {
   Model,
   ModelFactory,
-  OrtConfigurer,
   OrtOptions,
   SileroLegacy,
   SileroV5,
