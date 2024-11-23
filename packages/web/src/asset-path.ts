@@ -13,6 +13,4 @@ if (currentScript) {
     .replace(/\/[^\/]+$/, "/")
 }
 
-export const assetPath = (file: string) => {
-  return basePath + file
-}
+export const baseAssetPath = basePath

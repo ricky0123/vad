@@ -1,20 +1,6 @@
+import * as ort from "onnxruntime-web"
 import { log } from "../logging"
-import * as ort from 'onnxruntime-web'
-
-export type ModelFetcher = () => Promise<ArrayBuffer>
-
-export interface SpeechProbabilities {
-  notSpeech: number
-  isSpeech: number
-}
-
-export type OrtOptions = {
-  ortConfig?: (ortInstance: typeof ort) => any
-}
-
-export const configureOrt = (f: (ortInstance: typeof ort) => any) => {
-  f(ort)
-}
+import { ModelFactory, ModelFetcher, SpeechProbabilities } from "./common"
 
 function getNewState(ortInstance: typeof ort) {
   const zeroes = Array(2 * 128).fill(0)
@@ -29,7 +15,10 @@ export class SileroV5 {
     private ortInstance: typeof ort
   ) {}
 
-  static new = async (ortInstance: typeof ort, modelFetcher: ModelFetcher) => {
+  static new: ModelFactory = async (
+    ortInstance: typeof ort,
+    modelFetcher: ModelFetcher
+  ) => {
     log.debug("Loading VAD...")
     const modelArrayBuffer = await modelFetcher()
     const _session = await ortInstance.InferenceSession.create(modelArrayBuffer)
@@ -45,7 +34,10 @@ export class SileroV5 {
   }
 
   process = async (audioFrame: Float32Array): Promise<SpeechProbabilities> => {
-    const t = new this.ortInstance.Tensor("float32", audioFrame, [1, audioFrame.length])
+    const t = new this.ortInstance.Tensor("float32", audioFrame, [
+      1,
+      audioFrame.length,
+    ])
     const inputs = {
       input: t,
       state: this._state,
@@ -54,10 +46,10 @@ export class SileroV5 {
     const out = await this._session.run(inputs)
 
     // @ts-ignore
-    this._state = out['stateN']
+    this._state = out["stateN"]
 
     // @ts-ignore
-    const [isSpeech] = out['output']?.data 
+    const [isSpeech] = out["output"]?.data
     const notSpeech = 1 - isSpeech
     return { notSpeech, isSpeech }
   }

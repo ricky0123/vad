@@ -1,5 +1,5 @@
 import * as ortInstance from "onnxruntime-web"
-import { assetPath } from "./asset-path"
+import { baseAssetPath } from "./asset-path"
 import { defaultModelFetcher } from "./default-model-fetcher"
 import {
   FrameProcessor,
@@ -9,7 +9,14 @@ import {
 } from "./frame-processor"
 import { log } from "./logging"
 import { Message } from "./messages"
-import { OrtOptions, SileroV5, SpeechProbabilities } from "./models/v5"
+import {
+  Model,
+  ModelFactory,
+  OrtConfigurer,
+  SileroLegacy,
+  SileroV5,
+  SpeechProbabilities,
+} from "./models"
 
 interface RealTimeVADCallbacks {
   /** Callback to run after each frame. The size (number of samples) of a frame is given by `frameSamples`. */
@@ -44,17 +51,24 @@ type AudioConstraints = Omit<
 >
 
 type AssetOptions = {
-  workletURL: string
   workletOptions: AudioWorkletNodeOptions
-  modelURL: string
-  modelFetcher: (path: string) => Promise<ArrayBuffer>
+  baseAssetPath: string
+}
+
+type OrtOptions = {
+  ortConfig?: OrtConfigurer
+}
+
+type ModelOptions = {
+  model: "v5" | "legacy"
 }
 
 interface RealTimeVADOptionsWithoutStream
   extends FrameProcessorOptions,
     RealTimeVADCallbacks,
     OrtOptions,
-    AssetOptions {
+    AssetOptions,
+    ModelOptions {
   additionalAudioConstraints?: AudioConstraints
   stream: undefined
 }
@@ -63,7 +77,8 @@ interface RealTimeVADOptionsWithStream
   extends FrameProcessorOptions,
     RealTimeVADCallbacks,
     OrtOptions,
-    AssetOptions {
+    AssetOptions,
+    ModelOptions {
   stream: MediaStream
 }
 
@@ -72,6 +87,10 @@ export const ort = ortInstance
 export type RealTimeVADOptions =
   | RealTimeVADOptionsWithStream
   | RealTimeVADOptionsWithoutStream
+
+const workletFile = "vad.worklet.bundle.min.js"
+const sileroV5File = "silero_vad_v5.onnx"
+const sileroLegacyFile = "silero_vad_legacy.onnx"
 
 export const defaultRealTimeVADOptions: RealTimeVADOptions = {
   ...defaultFrameProcessorOptions,
@@ -85,11 +104,10 @@ export const defaultRealTimeVADOptions: RealTimeVADOptions = {
   onSpeechEnd: () => {
     log.debug("Detected speech end")
   },
-  workletURL: assetPath("vad.worklet.bundle.min.js"),
-  modelURL: assetPath("silero_vad_v5.onnx"),
-  modelFetcher: defaultModelFetcher,
+  baseAssetPath: baseAssetPath,
   stream: undefined,
   ortConfig: undefined,
+  model: "v5",
   workletOptions: {
     processorOptions: {
       frameSamples: defaultFrameProcessorOptions.frameSamples,
@@ -182,14 +200,12 @@ export class AudioNodeVAD {
       fullOptions.ortConfig(ort)
     }
 
+    const workletURL = baseAssetPath + workletFile
+
     try {
-      await ctx.audioWorklet.addModule(fullOptions.workletURL)
+      await ctx.audioWorklet.addModule(workletURL)
     } catch (e) {
-      console.error(
-        `Encountered an error while loading worklet. Please make sure the worklet vad.bundle.min.js included with @ricky0123/vad-web is available at the specified path:
-        ${fullOptions.workletURL}
-        If need be, you can customize the worklet file location using the \`workletURL\` option.`
-      )
+      console.error(`Encountered an error while loading worklet ${workletURL}`)
       throw e
     }
     const vadNode = new AudioWorkletNode(
@@ -198,17 +214,16 @@ export class AudioNodeVAD {
       fullOptions.workletOptions
     )
 
-    let model: SileroV5
+    const modelFile =
+      fullOptions.model === "v5" ? sileroV5File : sileroLegacyFile
+    const modelURL = baseAssetPath + modelFile
+    const modelFactory: ModelFactory =
+      fullOptions.model === "v5" ? SileroV5.new : SileroLegacy.new
+    let model: Model
     try {
-      model = await SileroV5.new(ort, () =>
-        fullOptions.modelFetcher(fullOptions.modelURL)
-      )
+      model = await modelFactory(ort, () => defaultModelFetcher(modelURL))
     } catch (e) {
-      console.error(
-        `Encountered an error while loading model file. Please make sure silero_vad.onnx, included with @ricky0123/vad-web, is available at the specified path:
-      ${fullOptions.modelURL}
-      If need be, you can customize the model file location using the \`modelURL\` option.`
-      )
+      console.error(`Encountered an error while loading model file ${modelURL}`)
       throw e
     }
 
