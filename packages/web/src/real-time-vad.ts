@@ -13,6 +13,7 @@ import {
   Model,
   ModelFactory,
   OrtConfigurer,
+  OrtOptions,
   SileroLegacy,
   SileroV5,
   SpeechProbabilities,
@@ -53,10 +54,6 @@ type AudioConstraints = Omit<
 type AssetOptions = {
   workletOptions: AudioWorkletNodeOptions
   baseAssetPath: string
-}
-
-type OrtOptions = {
-  ortConfig?: OrtConfigurer
 }
 
 type ModelOptions = {

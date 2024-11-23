@@ -8,6 +8,7 @@ export interface SpeechProbabilities {
 }
 
 export type OrtConfigurer = (ortInstance: typeof ort) => any
+export type OrtModule = typeof ort
 
 export type ModelFactory = (
   ortInstance: typeof ort,

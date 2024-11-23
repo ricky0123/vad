@@ -8,10 +8,10 @@ import {
 import { Message } from "./messages"
 import {
   ModelFetcher,
-  ONNXRuntimeAPI,
+  OrtModule,
   OrtOptions,
-  Silero,
-} from "./models/legacy"
+  SileroLegacy,
+} from "./models"
 import { Resampler } from "./resampler"
 
 interface NonRealTimeVADSpeechData {
@@ -34,7 +34,7 @@ export class PlatformAgnosticNonRealTimeVAD {
 
   static async _new<T extends PlatformAgnosticNonRealTimeVAD>(
     modelFetcher: ModelFetcher,
-    ort: ONNXRuntimeAPI,
+    ort: OrtModule,
     options: Partial<NonRealTimeVADOptions> = {}
   ): Promise<T> {
     const fullOptions = {
@@ -53,14 +53,14 @@ export class PlatformAgnosticNonRealTimeVAD {
 
   constructor(
     public modelFetcher: ModelFetcher,
-    public ort: ONNXRuntimeAPI,
+    public ort: OrtModule,
     public options: NonRealTimeVADOptions
   ) {
     validateOptions(options)
   }
 
   init = async () => {
-    const model = await Silero.new(this.ort, this.modelFetcher)
+    const model = await SileroLegacy.new(this.ort, this.modelFetcher)
 
     this.frameProcessor = new FrameProcessor(model.process, model.reset_state, {
       frameSamples: this.options.frameSamples,
