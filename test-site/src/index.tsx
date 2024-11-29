@@ -168,6 +168,7 @@ function VADDemo({ initializationParameters }) {
             onClick={() => {
               vad[methodName]()
             }}
+            key={methodName}
           >
             {methodName}
           </button>

@@ -49,13 +49,23 @@ export interface FrameProcessorOptions {
   submitUserSpeechOnPause: boolean
 }
 
-export const defaultFrameProcessorOptions: FrameProcessorOptions = {
+export const defaultLegacyFrameProcessorOptions: FrameProcessorOptions = {
   positiveSpeechThreshold: 0.5,
   negativeSpeechThreshold: 0.5 - 0.15,
   preSpeechPadFrames: 1,
   redemptionFrames: 8,
-  frameSamples: 512,
+  frameSamples: 1536,
   minSpeechFrames: 3,
+  submitUserSpeechOnPause: false,
+}
+
+export const defaultV5FrameProcessorOptions: FrameProcessorOptions = {
+  positiveSpeechThreshold: 0.5,
+  negativeSpeechThreshold: 0.5 - 0.15,
+  preSpeechPadFrames: 3,
+  redemptionFrames: 24,
+  frameSamples: 512,
+  minSpeechFrames: 9,
   submitUserSpeechOnPause: false,
 }
 

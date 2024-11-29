@@ -1,5 +1,5 @@
 import {
-  defaultFrameProcessorOptions,
+  defaultLegacyFrameProcessorOptions,
   FrameProcessor,
   FrameProcessorInterface,
   FrameProcessorOptions,
@@ -20,7 +20,7 @@ export interface NonRealTimeVADOptions
     OrtOptions {}
 
 export const defaultNonRealTimeVADOptions: NonRealTimeVADOptions = {
-  ...defaultFrameProcessorOptions,
+  ...defaultLegacyFrameProcessorOptions,
   ortConfig: undefined,
 }
 

@@ -3,7 +3,8 @@ import { defaultModelFetcher } from "./default-model-fetcher"
 import {
   FrameProcessor,
   FrameProcessorOptions,
-  defaultFrameProcessorOptions,
+  defaultLegacyFrameProcessorOptions,
+  defaultV5FrameProcessorOptions,
   validateOptions,
 } from "./frame-processor"
 import { log } from "./logging"
@@ -88,34 +89,40 @@ const workletFile = "vad.worklet.bundle.min.js"
 const sileroV5File = "silero_vad_v5.onnx"
 const sileroLegacyFile = "silero_vad_legacy.onnx"
 
-export const defaultRealTimeVADOptions: RealTimeVADOptions = {
-  ...defaultFrameProcessorOptions,
-  onFrameProcessed: (probabilities) => {},
-  onVADMisfire: () => {
-    log.debug("VAD misfire")
-  },
-  onSpeechStart: () => {
-    log.debug("Detected speech start")
-  },
-  onSpeechEnd: () => {
-    log.debug("Detected speech end")
-  },
-  baseAssetPath: "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.19/dist/",
-  onnxWASMBasePath: "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/",
-  stream: undefined,
-  ortConfig: undefined,
-  model: "v5",
-  workletOptions: {
-    processorOptions: {
-      frameSamples: defaultFrameProcessorOptions.frameSamples,
+export const getDefaultRealTimeVADOptions: (
+  model: "v5" | "legacy"
+) => RealTimeVADOptions = (model) => {
+  const frameProcessorOptions =
+    model === "v5"
+      ? defaultV5FrameProcessorOptions
+      : defaultLegacyFrameProcessorOptions
+  return {
+    ...frameProcessorOptions,
+    onFrameProcessed: (probabilities) => {},
+    onVADMisfire: () => {
+      log.debug("VAD misfire")
     },
-  },
+    onSpeechStart: () => {
+      log.debug("Detected speech start")
+    },
+    onSpeechEnd: () => {
+      log.debug("Detected speech end")
+    },
+    baseAssetPath:
+      "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.19/dist/",
+    onnxWASMBasePath:
+      "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/",
+    stream: undefined,
+    ortConfig: undefined,
+    model: "v5",
+    workletOptions: {},
+  }
 }
 
 export class MicVAD {
   static async new(options: Partial<RealTimeVADOptions> = {}) {
     const fullOptions: RealTimeVADOptions = {
-      ...defaultRealTimeVADOptions,
+      ...getDefaultRealTimeVADOptions(options.model ?? "legacy"),
       ...options,
     }
     validateOptions(fullOptions)
@@ -188,7 +195,7 @@ export class AudioNodeVAD {
     options: Partial<RealTimeVADOptions> = {}
   ) {
     const fullOptions: RealTimeVADOptions = {
-      ...defaultRealTimeVADOptions,
+      ...getDefaultRealTimeVADOptions(options.model ?? "legacy"),
       ...options,
     }
     validateOptions(fullOptions)
@@ -206,10 +213,15 @@ export class AudioNodeVAD {
       console.error(`Encountered an error while loading worklet ${workletURL}`)
       throw e
     }
+    let workletOptions = fullOptions.workletOptions
+    workletOptions.processorOptions = {
+      ...(fullOptions.workletOptions.processorOptions ?? {}),
+      frameSamples: fullOptions.frameSamples,
+    }
     const vadNode = new AudioWorkletNode(
       ctx,
       "vad-helper-worklet",
-      fullOptions.workletOptions
+      workletOptions
     )
 
     const modelFile =
