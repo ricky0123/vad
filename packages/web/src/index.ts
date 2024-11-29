@@ -20,7 +20,7 @@ export interface NonRealTimeVADOptionsWeb extends NonRealTimeVADOptions {
 }
 
 export const defaultNonRealTimeVADOptions = {
-  modelURL: baseAssetPath + "silero_vad.onnx",
+  modelURL: baseAssetPath + "silero_vad_legacy.onnx",
   modelFetcher: defaultModelFetcher,
 }
 
