@@ -1,15 +1,24 @@
 import * as ortInstance from "onnxruntime-web"
-import { assetPath } from "./asset-path"
 import { defaultModelFetcher } from "./default-model-fetcher"
 import {
   FrameProcessor,
   FrameProcessorOptions,
-  defaultFrameProcessorOptions,
+  defaultLegacyFrameProcessorOptions,
+  defaultV5FrameProcessorOptions,
   validateOptions,
 } from "./frame-processor"
 import { log } from "./logging"
 import { Message } from "./messages"
-import { OrtOptions, Silero, SpeechProbabilities } from "./models"
+import {
+  Model,
+  ModelFactory,
+  OrtOptions,
+  SileroLegacy,
+  SileroV5,
+  SpeechProbabilities,
+} from "./models"
+
+export const DEFAULT_MODEL = "legacy"
 
 interface RealTimeVADCallbacks {
   /** Callback to run after each frame. The size (number of samples) of a frame is given by `frameSamples`. */
@@ -44,17 +53,21 @@ type AudioConstraints = Omit<
 >
 
 type AssetOptions = {
-  workletURL: string
   workletOptions: AudioWorkletNodeOptions
-  modelURL: string
-  modelFetcher: (path: string) => Promise<ArrayBuffer>
+  baseAssetPath: string
+  onnxWASMBasePath: string
+}
+
+type ModelOptions = {
+  model: "v5" | "legacy"
 }
 
 interface RealTimeVADOptionsWithoutStream
   extends FrameProcessorOptions,
     RealTimeVADCallbacks,
     OrtOptions,
-    AssetOptions {
+    AssetOptions,
+    ModelOptions {
   additionalAudioConstraints?: AudioConstraints
   stream: undefined
 }
@@ -63,7 +76,8 @@ interface RealTimeVADOptionsWithStream
   extends FrameProcessorOptions,
     RealTimeVADCallbacks,
     OrtOptions,
-    AssetOptions {
+    AssetOptions,
+    ModelOptions {
   stream: MediaStream
 }
 
@@ -73,34 +87,44 @@ export type RealTimeVADOptions =
   | RealTimeVADOptionsWithStream
   | RealTimeVADOptionsWithoutStream
 
-export const defaultRealTimeVADOptions: RealTimeVADOptions = {
-  ...defaultFrameProcessorOptions,
-  onFrameProcessed: (probabilities) => {},
-  onVADMisfire: () => {
-    log.debug("VAD misfire")
-  },
-  onSpeechStart: () => {
-    log.debug("Detected speech start")
-  },
-  onSpeechEnd: () => {
-    log.debug("Detected speech end")
-  },
-  workletURL: assetPath("vad.worklet.bundle.min.js"),
-  modelURL: assetPath("silero_vad.onnx"),
-  modelFetcher: defaultModelFetcher,
-  stream: undefined,
-  ortConfig: undefined,
-  workletOptions: {
-    processorOptions: {
-      frameSamples: defaultFrameProcessorOptions.frameSamples,
+const workletFile = "vad.worklet.bundle.min.js"
+const sileroV5File = "silero_vad_v5.onnx"
+const sileroLegacyFile = "silero_vad_legacy.onnx"
+
+export const getDefaultRealTimeVADOptions: (
+  model: "v5" | "legacy"
+) => RealTimeVADOptions = (model) => {
+  const frameProcessorOptions =
+    model === "v5"
+      ? defaultV5FrameProcessorOptions
+      : defaultLegacyFrameProcessorOptions
+  return {
+    ...frameProcessorOptions,
+    onFrameProcessed: (probabilities) => {},
+    onVADMisfire: () => {
+      log.debug("VAD misfire")
     },
-  },
+    onSpeechStart: () => {
+      log.debug("Detected speech start")
+    },
+    onSpeechEnd: () => {
+      log.debug("Detected speech end")
+    },
+    baseAssetPath:
+      "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.20/dist/",
+    onnxWASMBasePath:
+      "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/",
+    stream: undefined,
+    ortConfig: undefined,
+    model: DEFAULT_MODEL,
+    workletOptions: {},
+  }
 }
 
 export class MicVAD {
   static async new(options: Partial<RealTimeVADOptions> = {}) {
     const fullOptions: RealTimeVADOptions = {
-      ...defaultRealTimeVADOptions,
+      ...getDefaultRealTimeVADOptions(options.model ?? DEFAULT_MODEL),
       ...options,
     }
     validateOptions(fullOptions)
@@ -173,42 +197,45 @@ export class AudioNodeVAD {
     options: Partial<RealTimeVADOptions> = {}
   ) {
     const fullOptions: RealTimeVADOptions = {
-      ...defaultRealTimeVADOptions,
+      ...getDefaultRealTimeVADOptions(options.model ?? DEFAULT_MODEL),
       ...options,
     }
     validateOptions(fullOptions)
 
+    ort.env.wasm.wasmPaths = fullOptions.onnxWASMBasePath
     if (fullOptions.ortConfig !== undefined) {
       fullOptions.ortConfig(ort)
     }
 
+    const workletURL = fullOptions.baseAssetPath + workletFile
+
     try {
-      await ctx.audioWorklet.addModule(fullOptions.workletURL)
+      await ctx.audioWorklet.addModule(workletURL)
     } catch (e) {
-      console.error(
-        `Encountered an error while loading worklet. Please make sure the worklet vad.bundle.min.js included with @ricky0123/vad-web is available at the specified path:
-        ${fullOptions.workletURL}
-        If need be, you can customize the worklet file location using the \`workletURL\` option.`
-      )
+      console.error(`Encountered an error while loading worklet ${workletURL}`)
       throw e
+    }
+    let workletOptions = fullOptions.workletOptions
+    workletOptions.processorOptions = {
+      ...(fullOptions.workletOptions.processorOptions ?? {}),
+      frameSamples: fullOptions.frameSamples,
     }
     const vadNode = new AudioWorkletNode(
       ctx,
       "vad-helper-worklet",
-      fullOptions.workletOptions
+      workletOptions
     )
 
-    let model: Silero
+    const modelFile =
+      fullOptions.model === "v5" ? sileroV5File : sileroLegacyFile
+    const modelURL = fullOptions.baseAssetPath + modelFile
+    const modelFactory: ModelFactory =
+      fullOptions.model === "v5" ? SileroV5.new : SileroLegacy.new
+    let model: Model
     try {
-      model = await Silero.new(ort, () =>
-        fullOptions.modelFetcher(fullOptions.modelURL)
-      )
+      model = await modelFactory(ort, () => defaultModelFetcher(modelURL))
     } catch (e) {
-      console.error(
-        `Encountered an error while loading model file. Please make sure silero_vad.onnx, included with @ricky0123/vad-web, is available at the specified path:
-      ${fullOptions.modelURL}
-      If need be, you can customize the model file location using the \`modelURL\` option.`
-      )
+      console.error(`Encountered an error while loading model file ${modelURL}`)
       throw e
     }
 

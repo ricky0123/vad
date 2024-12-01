@@ -1,5 +1,5 @@
 import type { ReactRealTimeVADOptions } from "@ricky0123/vad-react"
-import { useMicVAD, utils } from "@ricky0123/vad-react"
+import { getDefaultReactRealTimeVADOptions, useMicVAD, utils } from "@ricky0123/vad-react"
 import * as ort from "onnxruntime-web"
 import React, { useEffect, useState } from "react"
 import { createRoot } from "react-dom/client"
@@ -15,73 +15,79 @@ createRoot(domContainer).render(<App />)
 const vadAttributes = ["errored", "loading", "listening", "userSpeaking"]
 const vadMethods = ["pause", "start", "toggle"]
 
-const configurableVADParams = {
-  workletURL: {
-    default: "/vad.worklet.bundle.min.js",
-    parser: (val: string) => val
-  },
-  modelURL: {
-    default: "/silero_vad.onnx",
-    parser: (val: string) => val
-  },
-  submitUserSpeechOnPause: {
-    default: false,
-    parser: (val: string) => val === 'true'
-  },
-  positiveSpeechThreshold: {
-    default: 0.8,
-    parser: (val: string) => parseFloat(val)
-  },
-  negativeSpeechThreshold: {
-    default: 0.6,
-    parser: (val: string) => parseFloat(val)
-  },
-  redemptionFrames: {
-    default: 4,
-    parser: (val: string) => parseInt(val)
-  },
-  preSpeechPadFrames: {
-    default: 1,
-    parser: (val: string) => parseInt(val)
-  },
-  minSpeechFrames: {
-    default: 1,
-    parser: (val: string) => parseInt(val)
-  },
-  startOnLoad: {
-    default: true,
-    parser: (val: string) => val === 'true'
-  },
-  userSpeakingThreshold: {
-    default: 0.5,
-    parser: (val: string) => parseFloat(val)
-  },
+const parsers: Partial<
+  Record<keyof ReactRealTimeVADOptions, (val: string) => string | boolean | number>
+> = {
+  model: (val: string) => val,
+  baseAssetPath: (val: string) => val,
+  onnxWASMBasePath: (val: string) => val,
+  submitUserSpeechOnPause: (val: string) => val === 'true',
+  positiveSpeechThreshold: (val: string) => parseFloat(val),
+  negativeSpeechThreshold: (val: string) => parseFloat(val),
+  frameSamples: (val: string) => parseInt(val),
+  redemptionFrames: (val: string) => parseInt(val),
+  preSpeechPadFrames: (val: string) => parseInt(val),
+  minSpeechFrames: (val: string) => parseInt(val),
+  startOnLoad: (val: string) => val === 'true',
+  userSpeakingThreshold: (val: string) => parseFloat(val),
 }
 
 const defaultParams: Partial<ReactRealTimeVADOptions> = Object.fromEntries(
-  Object.entries(configurableVADParams).map(([key, value]) => [key, value.default])
+  Object.entries(getDefaultReactRealTimeVADOptions("legacy")).filter(
+    ([key, value]) => {
+      return key in parsers
+    }
+  ).map(([key, value]) => {
+    return [key, value]
+  })
 )
 
+const getOptionsFromHash = () => {
+  const hash = window.location.hash
+  if (!hash) return {}
+  const params = new URLSearchParams(hash.slice(1))
+  const opts = params.get('opts')
+  if (!opts) return {}
+  try {
+    const out = JSON.parse(decodeURIComponent(opts))
+    console.log("Parsed opts from hash:", out)
+    return out
+  } catch (e) {
+    console.error("Failed to parse opts from hash:", e)
+    return {}
+  }
+}
+
+const opts = {
+  ...defaultParams,
+  ...getOptionsFromHash()
+}
+
 function App() {
-  const [initializationParameters, setVadParams] = useState(
-    defaultParams
-  )
+  const [initializationParameters, setVadParams] = useState(opts)
   const [newVadParams, setNewVadParams] = useState({})
   const [demo, setDemo] = useState(true)
 
   const handleInputChange = (optionName, newValue) => {
     setNewVadParams((prevValues) => ({
       ...prevValues,
-      [optionName]: configurableVADParams[optionName].parser(newValue)
+      [optionName]: parsers[optionName](newValue)
     }))
   }
 
   const handleRestart = async () => {
     setDemo(false)
-    setVadParams((prevParams) => ({
-      ...prevParams,
+
+    const params = {
+      ...initializationParameters,
       ...newVadParams,
-    }))
+    }
+
+    setVadParams(params)
+
+    const opts = JSON.stringify(params)
+    window.location.hash = `#opts=${encodeURIComponent(opts)}`
+
     await new Promise(resolve => setTimeout(resolve, 1000));
     setDemo(true)
   }
@@ -164,6 +170,7 @@ function VADDemo({ initializationParameters }) {
             onClick={() => {
               vad[methodName]()
             }}
+            key={methodName}
           >
             {methodName}
           </button>

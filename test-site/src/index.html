@@ -21,9 +21,16 @@
       }
     </script>
     <script defer src="index.js"></script>
+    <script defer src="non-real-time-test.js"></script>
+    <script>
+      window.onTestNonRealTime = async (ev) => {
+        ev.preventDefault()
+        await window.testNonRealTime()
+      }
+    </script>
   </head>
   <body>
-    <main class="mt-5 mx-auto prose">
+    <main class="mt-5 px-5 mx-auto prose">
       <h1>Welcome to the VAD test site</h1>
       <p>
         This site is designed for local development and testing of the voice
@@ -32,6 +39,25 @@
       </p>
       <h1>Demo</h1>
       <div id="demo"></div>
+      <h1>Non real time</h1>
+      <p>
+        Quick sanity check for non-real time: Select file, click "Process", and
+        check browser logs to see how many speech segments were found.
+      </p>
+      <form onsubmit="window.onTestNonRealTime(event)">
+        <input
+          class="bg-violet-100 hover:bg-violet-200 rounded-full px-4 py-2 mr-2"
+          id="file-upload"
+          type="file"
+          name="file"
+        />
+        <input
+          class="bg-violet-100 hover:bg-violet-200 rounded-full px-4 py-2"
+          id="file-submit"
+          type="submit"
+          value="Process"
+        />
+      </form>
     </main>
   </body>
 </html>

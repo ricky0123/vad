@@ -1,5 +1,9 @@
 import type { RealTimeVADOptions } from "@ricky0123/vad-web"
-import { MicVAD, defaultRealTimeVADOptions } from "@ricky0123/vad-web"
+import {
+  DEFAULT_MODEL,
+  MicVAD,
+  getDefaultRealTimeVADOptions,
+} from "@ricky0123/vad-web"
 import React, { useEffect, useReducer, useState } from "react"
 
 export { utils } from "@ricky0123/vad-web"
@@ -16,13 +20,17 @@ const defaultReactOptions: ReactOptions = {
   userSpeakingThreshold: 0.6,
 }
 
-export const defaultReactRealTimeVADOptions = {
-  ...defaultRealTimeVADOptions,
-  ...defaultReactOptions,
+export const getDefaultReactRealTimeVADOptions = (
+  model: "legacy" | "v5"
+): ReactRealTimeVADOptions => {
+  return {
+    ...getDefaultRealTimeVADOptions(model),
+    ...defaultReactOptions,
+  }
 }
 
 const reactOptionKeys = Object.keys(defaultReactOptions)
-const vadOptionKeys = Object.keys(defaultRealTimeVADOptions)
+const vadOptionKeys = Object.keys(getDefaultRealTimeVADOptions("v5"))
 
 const _filter = (keys: string[], obj: any) => {
   return keys.reduce((acc, key) => {
@@ -34,7 +42,8 @@ const _filter = (keys: string[], obj: any) => {
 function useOptions(
   options: Partial<ReactRealTimeVADOptions>
 ): [ReactOptions, RealTimeVADOptions] {
-  options = { ...defaultReactRealTimeVADOptions, ...options }
+  const model = options.model ?? DEFAULT_MODEL
+  options = { ...getDefaultReactRealTimeVADOptions(model), ...options }
   const reactOptions = _filter(reactOptionKeys, options) as ReactOptions
   const vadOptions = _filter(vadOptionKeys, options) as RealTimeVADOptions
   return [reactOptions, vadOptions]
@@ -62,7 +71,7 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
     false
   )
   const [loading, setLoading] = useState(true)
-  const [errored, setErrored] = useState<false | { message: string }>(false)
+  const [errored, setErrored] = useState<false | string>(false)
   const [listening, setListening] = useState(false)
   const [vad, setVAD] = useState<MicVAD | null>(null)
 
@@ -92,10 +101,9 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
       } catch (e) {
         setLoading(false)
         if (e instanceof Error) {
-          setErrored({ message: e.message })
+          setErrored(e.message)
         } else {
-          // @ts-ignore
-          setErrored({ message: e })
+          setErrored(String(e))
         }
         return
       }
