@@ -18,6 +18,8 @@ import {
   SpeechProbabilities,
 } from "./models"
 
+export const DEFAULT_MODEL = "legacy"
+
 interface RealTimeVADCallbacks {
   /** Callback to run after each frame. The size (number of samples) of a frame is given by `frameSamples`. */
   onFrameProcessed: (
@@ -114,7 +116,7 @@ export const getDefaultRealTimeVADOptions: (
       "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/",
     stream: undefined,
     ortConfig: undefined,
-    model: "v5",
+    model: DEFAULT_MODEL,
     workletOptions: {},
   }
 }
@@ -122,7 +124,7 @@ export const getDefaultRealTimeVADOptions: (
 export class MicVAD {
   static async new(options: Partial<RealTimeVADOptions> = {}) {
     const fullOptions: RealTimeVADOptions = {
-      ...getDefaultRealTimeVADOptions(options.model ?? "legacy"),
+      ...getDefaultRealTimeVADOptions(options.model ?? DEFAULT_MODEL),
       ...options,
     }
     validateOptions(fullOptions)
@@ -195,7 +197,7 @@ export class AudioNodeVAD {
     options: Partial<RealTimeVADOptions> = {}
   ) {
     const fullOptions: RealTimeVADOptions = {
-      ...getDefaultRealTimeVADOptions(options.model ?? "legacy"),
+      ...getDefaultRealTimeVADOptions(options.model ?? DEFAULT_MODEL),
       ...options,
     }
     validateOptions(fullOptions)

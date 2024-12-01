@@ -1,5 +1,9 @@
 import type { RealTimeVADOptions } from "@ricky0123/vad-web"
-import { MicVAD, getDefaultRealTimeVADOptions } from "@ricky0123/vad-web"
+import {
+  DEFAULT_MODEL,
+  MicVAD,
+  getDefaultRealTimeVADOptions,
+} from "@ricky0123/vad-web"
 import React, { useEffect, useReducer, useState } from "react"
 
 export { utils } from "@ricky0123/vad-web"
@@ -16,9 +20,13 @@ const defaultReactOptions: ReactOptions = {
   userSpeakingThreshold: 0.6,
 }
 
-export const defaultReactRealTimeVADOptions = {
-  ...getDefaultRealTimeVADOptions("v5"),
-  ...defaultReactOptions,
+export const getDefaultReactRealTimeVADOptions = (
+  model: "legacy" | "v5"
+): ReactRealTimeVADOptions => {
+  return {
+    ...getDefaultRealTimeVADOptions(model),
+    ...defaultReactOptions,
+  }
 }
 
 const reactOptionKeys = Object.keys(defaultReactOptions)
@@ -34,7 +42,8 @@ const _filter = (keys: string[], obj: any) => {
 function useOptions(
   options: Partial<ReactRealTimeVADOptions>
 ): [ReactOptions, RealTimeVADOptions] {
-  options = { ...defaultReactRealTimeVADOptions, ...options }
+  const model = options.model ?? DEFAULT_MODEL
+  options = { ...getDefaultReactRealTimeVADOptions(model), ...options }
   const reactOptions = _filter(reactOptionKeys, options) as ReactOptions
   const vadOptions = _filter(vadOptionKeys, options) as RealTimeVADOptions
   return [reactOptions, vadOptions]

@@ -45,6 +45,7 @@ export const utils = {
 
 export {
   AudioNodeVAD,
+  DEFAULT_MODEL,
   MicVAD,
   getDefaultRealTimeVADOptions,
 } from "./real-time-vad"

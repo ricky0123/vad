@@ -1,5 +1,5 @@
 import type { ReactRealTimeVADOptions } from "@ricky0123/vad-react"
-import { defaultReactRealTimeVADOptions, useMicVAD, utils } from "@ricky0123/vad-react"
+import { getDefaultReactRealTimeVADOptions, useMicVAD, utils } from "@ricky0123/vad-react"
 import * as ort from "onnxruntime-web"
 import React, { useEffect, useState } from "react"
 import { createRoot } from "react-dom/client"
@@ -33,9 +33,11 @@ const parsers: Partial<
 }
 
 const defaultParams: Partial<ReactRealTimeVADOptions> = Object.fromEntries(
-  Object.entries(defaultReactRealTimeVADOptions).filter(([key, value]) => {
-    return key in parsers
-  }).map(([key, value]) => {
+  Object.entries(getDefaultReactRealTimeVADOptions("legacy")).filter(
+    ([key, value]) => {
+      return key in parsers
+    }
+  ).map(([key, value]) => {
     return [key, value]
   })
 )
