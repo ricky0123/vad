@@ -111,7 +111,7 @@ export const getDefaultRealTimeVADOptions: (
       log.debug("Detected speech end")
     },
     baseAssetPath:
-      "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.19/dist/",
+      "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.20/dist/",
     onnxWASMBasePath:
       "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/",
     stream: undefined,
