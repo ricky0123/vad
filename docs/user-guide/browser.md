@@ -20,16 +20,24 @@ The VAD can be used via script tags as follows:
 </script>
 ```
 
-## Bundling
-To use the VAD in a frontend project managed by a bundler like Webpack, install @ricky0123/vad-web with a command like
+## NPM
+
+If you are managing your dependencies with NPM, install @ricky0123/vad-web with a command like
 ```bash linenums="1"
 npm i @ricky0123/vad-web
 ```
 
-and use an import like:
+## Bundling
+
+Bundling your project should not require any special configuration, because the onnx and other files will be loaded from the CDN by default.
+
+However, if you want to serve the onnx, wasm, and worklet files yourself, you can do the following. First, use the `baseAssetPath` and `onnxWASMBasePath` options to control where the files are to be loaded from:
+
 ```js linenums="1"
 import { MicVAD } from "@ricky0123/vad-web"
 const myvad = await MicVAD.new({
+  baseAssetPath: "/", // or whatever you want
+  onnxWASMBasePath: "/", // or whatever you want
   onSpeechEnd: (audio) => {
     // do something with `audio` (Float32Array of audio samples at sample rate 16000)...
   },
@@ -37,11 +45,11 @@ const myvad = await MicVAD.new({
 myvad.start()
 ```
 
-You will also need to
+Then, make sure these files are available under the paths you specified:
 
-1. serve the `silero_vad.onnx` file that comes distributed with `@ricky0123/vad-web`
-2. serve the `vad.worklet.bundle.min.js` file that comes distributed with `@ricky0123/vad-web`
-3. serve the wasm files that come distributed with the package `onnxruntime-web`
+1. serve the `silero_vad_legacy.onnx` and `silero_vad_v5.onnx` files that come distributed with `@ricky0123/vad-web` (under `baseAssetPath`)
+2. serve the `vad.worklet.bundle.min.js` file that comes distributed with `@ricky0123/vad-web` (under `baseAssetPath`)
+3. serve the wasm files that come distributed with the package `onnxruntime-web` (under `onnxWASMBasePath`)
 
 One way to accomplish this is to run a shell script that copies these files into your `dist` directory (or whatever you have named your output directory) during your build process - see the [build script](https://github.com/ricky0123/vad-site/blob/master/scripts/build.sh) for this website for an example. Or, if you are using Webpack 5, this can be acheived by adding the following to your webpack.config.js (other bundlers may have similar options/plugins):
 ```js linenums="1"
@@ -82,7 +90,11 @@ export default defineConfig({
           dest: './'
         },
         {
-          src: 'node_modules/@ricky0123/vad-web/dist/silero_vad.onnx',
+          src: 'node_modules/@ricky0123/vad-web/dist/silero_vad_v5.onnx',
+          dest: './'
+        },
+        {
+          src: 'node_modules/@ricky0123/vad-web/dist/silero_vad_legacy.onnx',
           dest: './'
         },
         {
