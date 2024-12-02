@@ -33,7 +33,7 @@ I am going to wind down support for `ricky0123/vad-node`, the voice activity det
 To use the VAD via a script tag in the browser, include the following script tags:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/ort.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/ort.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.19/dist/bundle.min.js"></script>
 <script>
   async function main() {

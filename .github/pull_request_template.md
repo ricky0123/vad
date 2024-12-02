@@ -13,9 +13,6 @@ all items will likely be relevant. You are welcome to create your PR as a draft
 PR without having completed all items.
 -->
 
-- [ ] Added a test to verify that changes work as expected (if one doesn't exist already) <!-- can be an automated test or an update to the manual test site -->
-- [ ] Ran automated tests successfully <!-- `npm run build && npm run test` -->
-- [ ] Viewed manual test site and verified that pages are working <!-- `npm run dev` -->
-- [ ] Bumped versions in relevant packages
+- [ ] Verified that changes work on the test site, adding changes to the test site if necessary to try out your changes <!-- `npm run dev` to run the test site locally. Alternatively, you can open a PR and vercel will deploy a preview version of the test site that you can view -->
 - [ ] Updated relevant changelogs <!-- see the `/changelogs` directory -->
 - [ ] Ran `npm run format`

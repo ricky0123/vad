@@ -26,10 +26,10 @@ nav:
   - Home: index.md
   - User Guide:
       - Browser: user-guide/browser.md
-      - Node: user-guide/node.md
       - React: user-guide/react.md
       - API: user-guide/api.md
       - Algorithm: user-guide/algorithm.md
+      - Silero V5: user-guide/silero-v5.md
   - Developer Guide:
       - Hacking: developer-guide/hacking.md
   - Links:

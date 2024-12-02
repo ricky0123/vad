@@ -11,6 +11,9 @@ root.render(<App />)
 function App() {
   const [audioList, setAudioList] = useState([])
   const vad = useMicVAD({
+    model: "v5",
+    baseAssetPath: "/",
+    onnxWASMBasePath: "/",
     onSpeechEnd: (audio) => {
       const wavBuffer = utils.encodeWAV(audio)
       const base64 = utils.arrayBufferToBase64(wavBuffer)

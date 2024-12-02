@@ -4,11 +4,9 @@ import { useState } from "react"
 export const Demo = () => {
   const [audioList, setAudioList] = useState<string[]>([])
   const vad = useMicVAD({
-    ortConfig(ort) {
-      ort.env.wasm.wasmPaths = "/";
-    },
-    workletURL: "/vad.worklet.bundle.min.js",
-    modelURL: "/silero_vad.onnx",
+    model: "v5",
+    baseAssetPath: "/",
+    onnxWASMBasePath: "/",
     onSpeechEnd: (audio) => {
       const wavBuffer = utils.encodeWAV(audio)
       const base64 = utils.arrayBufferToBase64(wavBuffer)
