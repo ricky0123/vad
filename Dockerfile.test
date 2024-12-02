@@ -1,9 +1,0 @@
-FROM mcr.microsoft.com/playwright:v1.48.1-noble
-
-WORKDIR /app
-
-COPY . .
-RUN npm ci
-RUN npx playwright install --with-deps
-RUN npm run build
-CMD [ "npm", "run", "test" ]
