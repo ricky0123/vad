@@ -1,5 +1,10 @@
 # @ricky0123/vad-web Changelog
 
+## 0.0.21
+
+* initial support for silero v5
+* baseAssetPath + onnxWASMBasePath method of specifying onnx/worklet/wasm files
+
 ## 0.0.19
 
 * options for AudioWorkletNode can be passed in to MicVAD constructor

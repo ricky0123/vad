@@ -1,22 +1,21 @@
 # Hacking
 
+If you would like to help out in developing this project and aren't sure where to start, reach out to Ricky on Discord.
+
+Here are some tips to get started.
+
 ## Setting up a dev environment
 
 After cloning the repository, the following commands will install dependencies for the project and run the automated tests. They should all be run from the top level of the repository.
 
 1. `npm install` to install dependencies.
 2. `npm run build` to build all of the packages.
-3. `npm run test` to run the automated tests.
 
 ## Manual testing
 
-The automated tests are useful, but manual testing is even more important. There is now a site included in the source code that you can add to in order to test your changes. I would like to make this an open "playground" for people to put whatever helps them test their changes. You can run the test site by running `npm run dev`. If you make any changes to `vad-web`, `vad-react`, or the source code for the test site, you can wait a few seconds and the test site should refresh in your browser with the changes you made.
+There is a test site to run the VAD with different parameters for manual testing purposes. It is in fact deployed at [test.vad.ricky0123.com](https://test.vad.ricky0123.com). You can run it locally by running `npm run dev`. When you open a PR, Vercel should deploy a preview version of the test site so that reviewers can test your changes.
 
-## Project Management
-
-I set up a [Github project for VAD](https://github.com/users/ricky0123/projects/1) to track work related to the project.
-
-## Playing with VAD model in browser console
+## Quick notes about playing with the VAD model interactively in the browser console
 
 Go to [test.vad.ricky0123.com](https://test.vad.ricky0123.com) and open the browser console. Then run the following line by line:
 
