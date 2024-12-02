@@ -9,7 +9,6 @@ The `MicVAD` API is for recording user audio in the browser and running callback
 | Package                | Supported                                      |
 | ---------------------- | ---------------------------------------------- |
 | `@ricky0123/vad-web`   | Yes                                            |
-| `@ricky0123/vad-node`  | No                                             |
 | `@ricky0123/vad-react` | No, use the [useMicVAD](api.md#usemicvad) hook |
 
 ### Example
@@ -39,6 +38,9 @@ New instances of `MicVAD` are created by calling the async static method `MicVAD
 | `frameSamples`                | `number`                                                      | [see algorithm configuration](algorithm.md#configuration)                                                                                                                                                          |
 | `preSpeechPadFrames`          | `number`                                                      | [see algorithm configuration](algorithm.md#configuration)                                                                                                                                                         |
 | `minSpeechFrames`             | `number`                                                      | [see algorithm configuration](algorithm.md#configuration)                                                                                                                                                          |
+| `model` | `"v5" or "legacy"` (default `"legacy"`) | whether to use the new Silero model or not |
+| `baseAssetPath` | `string`) | URL or path relative to webroot where `vad.worklet.bundle.min.js`, `silero_vad_legacy.onnx`, and `silero_vad_v5.onnx` will be loaded from |
+| `onnxWASMBasePath` | `string`) | URL or path relative to webroot where wasm files for onnxruntime-web will be loaded from |
 
 ### Attributes
 | Attributes  | Type         | Description                                        |
@@ -55,7 +57,6 @@ The `NonRealTimeVAD` API is for identifying segments of user speech if you alrea
 | Package                | Supported |
 | ---------------------- | --------- |
 | `@ricky0123/vad-web`   | Yes       |
-| `@ricky0123/vad-node`  | Yes       |
 | `@ricky0123/vad-react` | No        |
 
 ### Example
@@ -98,7 +99,6 @@ A React hook wrapper for [MicVAD](api.md#micvad). Use this if you want to run th
 | Package                | Supported                       |
 | ---------------------- | ------------------------------- |
 | `@ricky0123/vad-web`   | No, use [MicVAD](api.md#micvad) |
-| `@ricky0123/vad-node`  | No                              |
 | `@ricky0123/vad-react` | Yes                             |
 
 ### Example
