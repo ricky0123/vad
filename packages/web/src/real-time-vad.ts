@@ -17,6 +17,7 @@ import {
   SileroV5,
   SpeechProbabilities,
 } from "./models"
+import { Resampler } from "./resampler"
 
 export const DEFAULT_MODEL = "legacy"
 
@@ -192,6 +193,13 @@ export class MicVAD {
 }
 
 export class AudioNodeVAD {
+  private audioNode!: AudioWorkletNode | ScriptProcessorNode
+  private buffer?: Float32Array
+  private bufferIndex: number = 0
+  private frameProcessor: FrameProcessor
+  private gainNode?: GainNode
+  private resampler?: Resampler
+
   static async new(
     ctx: AudioContext,
     options: Partial<RealTimeVADOptions> = {}
@@ -199,32 +207,13 @@ export class AudioNodeVAD {
     const fullOptions: RealTimeVADOptions = {
       ...getDefaultRealTimeVADOptions(options.model ?? DEFAULT_MODEL),
       ...options,
-    }
+    } as RealTimeVADOptions
     validateOptions(fullOptions)
 
     ort.env.wasm.wasmPaths = fullOptions.onnxWASMBasePath
     if (fullOptions.ortConfig !== undefined) {
       fullOptions.ortConfig(ort)
     }
-
-    const workletURL = fullOptions.baseAssetPath + workletFile
-
-    try {
-      await ctx.audioWorklet.addModule(workletURL)
-    } catch (e) {
-      console.error(`Encountered an error while loading worklet ${workletURL}`)
-      throw e
-    }
-    let workletOptions = fullOptions.workletOptions
-    workletOptions.processorOptions = {
-      ...(fullOptions.workletOptions.processorOptions ?? {}),
-      frameSamples: fullOptions.frameSamples,
-    }
-    const vadNode = new AudioWorkletNode(
-      ctx,
-      "vad-helper-worklet",
-      workletOptions
-    )
 
     const modelFile =
       fullOptions.model === "v5" ? sileroV5File : sileroLegacyFile
@@ -253,39 +242,110 @@ export class AudioNodeVAD {
       }
     )
 
-    const audioNodeVAD = new AudioNodeVAD(
-      ctx,
-      fullOptions,
-      frameProcessor,
-      vadNode
-    )
-
-    vadNode.port.onmessage = async (ev: MessageEvent) => {
-      switch (ev.data?.message) {
-        case Message.AudioFrame:
-          let buffer: ArrayBuffer = ev.data.data
-          if (!(buffer instanceof ArrayBuffer)) {
-            buffer = new ArrayBuffer(ev.data.data.byteLength)
-            new Uint8Array(buffer).set(new Uint8Array(ev.data.data))
-          }
-          const frame = new Float32Array(buffer)
-          await audioNodeVAD.processFrame(frame)
-          break
-
-        default:
-          break
-      }
-    }
-
+    const audioNodeVAD = new AudioNodeVAD(ctx, fullOptions, frameProcessor)
+    await audioNodeVAD.setupAudioNode()
     return audioNodeVAD
   }
 
   constructor(
     public ctx: AudioContext,
     public options: RealTimeVADOptions,
-    private frameProcessor: FrameProcessor,
-    private entryNode: AudioWorkletNode
-  ) {}
+    frameProcessor: FrameProcessor
+  ) {
+    this.frameProcessor = frameProcessor
+  }
+
+  private async setupAudioNode() {
+    const hasAudioWorklet =
+      "audioWorklet" in this.ctx && typeof AudioWorkletNode === "function"
+    if (hasAudioWorklet) {
+      try {
+        const workletURL = this.options.baseAssetPath + workletFile
+        await this.ctx.audioWorklet.addModule(workletURL)
+
+        const workletOptions = this.options.workletOptions ?? {}
+        workletOptions.processorOptions = {
+          ...(workletOptions.processorOptions ?? {}),
+          frameSamples: this.options.frameSamples,
+        }
+
+        this.audioNode = new AudioWorkletNode(
+          this.ctx,
+          "vad-helper-worklet",
+          workletOptions
+        )
+
+        ;(this.audioNode as AudioWorkletNode).port.onmessage = async (
+          ev: MessageEvent
+        ) => {
+          switch (ev.data?.message) {
+            case Message.AudioFrame:
+              let buffer: ArrayBuffer = ev.data.data
+              if (!(buffer instanceof ArrayBuffer)) {
+                buffer = new ArrayBuffer(ev.data.data.byteLength)
+                new Uint8Array(buffer).set(new Uint8Array(ev.data.data))
+              }
+              const frame = new Float32Array(buffer)
+              await this.processFrame(frame)
+              break
+          }
+        }
+
+        return
+      } catch (e) {
+        console.log(
+          "AudioWorklet setup failed, falling back to ScriptProcessor",
+          e
+        )
+      }
+    }
+
+    // Initialize resampler for ScriptProcessor
+    this.resampler = new Resampler({
+      nativeSampleRate: this.ctx.sampleRate,
+      targetSampleRate: 16000, // VAD models expect 16kHz
+      targetFrameSize: this.options.frameSamples ?? 480,
+    })
+
+    // Fallback to ScriptProcessor
+    const bufferSize = 4096 // Increased for more stable processing
+    this.audioNode = this.ctx.createScriptProcessor(bufferSize, 1, 1)
+
+    // Create a gain node with zero gain to handle the audio chain
+    this.gainNode = this.ctx.createGain()
+    this.gainNode.gain.value = 0
+
+    let processingAudio = false
+
+    ;(this.audioNode as ScriptProcessorNode).onaudioprocess = async (
+      e: AudioProcessingEvent
+    ) => {
+      if (processingAudio) return
+      processingAudio = true
+
+      try {
+        const input = e.inputBuffer.getChannelData(0)
+        const output = e.outputBuffer.getChannelData(0)
+        output.fill(0)
+
+        // Process through resampler
+        if (this.resampler) {
+          const frames = this.resampler.process(input)
+          for (const frame of frames) {
+            await this.processFrame(frame)
+          }
+        }
+      } catch (error) {
+        console.error("Error processing audio:", error)
+      } finally {
+        processingAudio = false
+      }
+    }
+
+    // Connect the audio chain
+    this.audioNode.connect(this.gainNode)
+    this.gainNode.connect(this.ctx.destination)
+  }
 
   pause = () => {
     const ev = this.frameProcessor.pause()
@@ -297,7 +357,7 @@ export class AudioNodeVAD {
   }
 
   receive = (node: AudioNode) => {
-    node.connect(this.entryNode)
+    node.connect(this.audioNode)
   }
 
   processFrame = async (frame: Float32Array) => {
@@ -328,16 +388,16 @@ export class AudioNodeVAD {
       case Message.SpeechEnd:
         this.options.onSpeechEnd(ev.audio as Float32Array)
         break
-
-      default:
-        break
     }
   }
 
   destroy = () => {
-    this.entryNode.port.postMessage({
-      message: Message.SpeechStop,
-    })
-    this.entryNode.disconnect()
+    if (this.audioNode instanceof AudioWorkletNode) {
+      this.audioNode.port.postMessage({
+        message: Message.SpeechStop,
+      })
+    }
+    this.audioNode.disconnect()
+    this.gainNode?.disconnect()
   }
 }
