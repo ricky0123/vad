@@ -13,19 +13,19 @@
     "react"
   ],
   "homepage": "https://github.com/ricky0123/vad",
-  "version": "0.0.27",
+  "version": "0.0.28",
   "license": "ISC",
   "main": "dist/index.js",
   "devDependencies": {
-    "@types/react": "^18.0.28"
+    "@types/react": "18.0.28"
   },
   "dependencies": {
-    "onnxruntime-web": "^1.14.0",
-    "@ricky0123/vad-web": "^0.0.21"
+    "onnxruntime-web": "1.14.0",
+    "@ricky0123/vad-web": "0.0.22"
   },
   "peerDependencies": {
-    "react": "^18",
-    "react-dom": "^18"
+    "react": "18",
+    "react-dom": "18"
   },
   "scripts": {
     "build": "tsc",
