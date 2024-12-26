@@ -149,6 +149,9 @@ function VADDemo({ initializationParameters }) {
     onSpeechStart: () => {
       console.log("Speech start")
     },
+    onSpeechRealStart: () => {
+      console.log("Speech real start")
+    },
     onSpeechEnd: (audio) => {
       console.log("Speech end")
       const wavBuffer = utils.encodeWAV(audio)
