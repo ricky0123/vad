@@ -190,6 +190,11 @@ export class MicVAD {
     this.audioNodeVAD.destroy()
     this.audioContext.close()
   }
+
+  setOptions = (options) => {
+    this.audioNodeVAD.setFrameProcessorOptions(options);
+  }
+    
 }
 
 export class AudioNodeVAD {
@@ -400,4 +405,12 @@ export class AudioNodeVAD {
     this.audioNode.disconnect()
     this.gainNode?.disconnect()
   }
+
+  setFrameProcessorOptions = (options) => {
+    this.frameProcessor.options = {
+         ...this.frameProcessor.options,
+         ...options,
+      };
+  }
+    
 }
