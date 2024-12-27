@@ -1,5 +1,7 @@
 # @ricky0123/vad-web Changelog
 
+* add support to change VAD parameters dynamically [#137] https://github.com/ricky0123/vad/issues/173
+
 ## 0.0.22
 
 * add support for some mobile Safari browsers that do not support AudioWorkletNode [37?] https://github.com/ricky0123/vad/issues/37
