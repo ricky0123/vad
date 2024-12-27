@@ -192,9 +192,8 @@ export class MicVAD {
   }
 
   setOptions = (options) => {
-    this.audioNodeVAD.setFrameProcessorOptions(options);
+    this.audioNodeVAD.setFrameProcessorOptions(options)
   }
-    
 }
 
 export class AudioNodeVAD {
@@ -279,7 +278,6 @@ export class AudioNodeVAD {
           "vad-helper-worklet",
           workletOptions
         )
-
         ;(this.audioNode as AudioWorkletNode).port.onmessage = async (
           ev: MessageEvent
         ) => {
@@ -408,9 +406,8 @@ export class AudioNodeVAD {
 
   setFrameProcessorOptions = (options) => {
     this.frameProcessor.options = {
-         ...this.frameProcessor.options,
-         ...options,
-      };
+      ...this.frameProcessor.options,
+      ...options,
+    }
   }
-    
 }
