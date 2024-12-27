@@ -101,7 +101,7 @@ export const getDefaultRealTimeVADOptions: (
       : defaultLegacyFrameProcessorOptions
   return {
     ...frameProcessorOptions,
-    onFrameProcessed: (probabilities, frane) => {},
+    onFrameProcessed: (probabilities, frame) => {},
     onVADMisfire: () => {
       log.debug("VAD misfire")
     },
