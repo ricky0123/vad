@@ -146,6 +146,8 @@ function VADDemo({ initializationParameters }) {
     onVADMisfire: () => {
       console.log("Vad misfire")
     },
+    onFrameProcessed: (probabilities, frame) => {
+    },
     onSpeechStart: () => {
       console.log("Speech start")
     },

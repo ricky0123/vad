@@ -101,7 +101,7 @@ export const getDefaultRealTimeVADOptions: (
       : defaultLegacyFrameProcessorOptions
   return {
     ...frameProcessorOptions,
-    onFrameProcessed: (probabilities) => {},
+    onFrameProcessed: (probabilities, frane) => {},
     onVADMisfire: () => {
       log.debug("VAD misfire")
     },
@@ -274,7 +274,6 @@ export class AudioNodeVAD {
           "vad-helper-worklet",
           workletOptions
         )
-
         ;(this.audioNode as AudioWorkletNode).port.onmessage = async (
           ev: MessageEvent
         ) => {

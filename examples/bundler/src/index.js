@@ -36,7 +36,7 @@ async function main() {
       negativeSpeechThreshold: 0.4,
       minSpeechFrames: 15,
       preSpeechPadFrames: 30,
-      onFrameProcessed: (probs) => {
+      onFrameProcessed: (probs, frame) => {
         const indicatorColor = interpolateInferno(probs.isSpeech / 2)
         document.body.style.setProperty("--indicator-color", indicatorColor)
       },
