@@ -27,7 +27,6 @@ let showMs = true
     button.textContent = showMs ? "Switch to Seconds" : "Switch to Milliseconds"
   }
 }
-
 ;(window as any).testNonRealTime = async () => {
   const myvad = await NonRealTimeVAD.new()
   const fileEl = document.getElementById("file-upload") as HTMLInputElement

@@ -42,6 +42,9 @@ interface RealTimeVADCallbacks {
    * This will not run if the audio segment is smaller than `minSpeechFrames`.
    */
   onSpeechEnd: (audio: Float32Array) => any
+
+  /** Callback to run when speech is detected as valid. (i.e. not a misfire) */
+  onSpeechRealStart: () => any
 }
 
 /**
@@ -110,6 +113,9 @@ export const getDefaultRealTimeVADOptions: (
     },
     onSpeechEnd: () => {
       log.debug("Detected speech end")
+    },
+    onSpeechRealStart: () => {
+      log.debug("Detected real speech start")
     },
     baseAssetPath:
       "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/",
@@ -382,6 +388,10 @@ export class AudioNodeVAD {
     switch (ev.msg) {
       case Message.SpeechStart:
         this.options.onSpeechStart()
+        break
+
+      case Message.SpeechRealStart:
+        this.options.onSpeechRealStart()
         break
 
       case Message.VADMisfire:
