@@ -2,6 +2,7 @@
 
 ## 0.0.23
 
+* add support to change VAD parameters dynamically [#137] https://github.com/ricky0123/vad/issues/173
 * add onRealSpeechStart callback - "not a misfire" event (https://github.com/ricky0123/vad/issues/67)
 
 ## 0.0.22
