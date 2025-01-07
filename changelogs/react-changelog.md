@@ -1,5 +1,9 @@
 # @ricky0123/vad-react Changelog
 
+## 0.0.29
+
+* Upgrade to vad-web 0.0.23
+
 ## 0.0.27
 
 * Upgrade to vad-web 0.0.21
