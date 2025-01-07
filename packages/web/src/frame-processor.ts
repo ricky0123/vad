@@ -125,6 +125,7 @@ export class FrameProcessor implements FrameProcessorInterface {
   speaking: boolean = false
   audioBuffer: { frame: Float32Array; isSpeech: boolean }[]
   redemptionCounter = 0
+  speechFrameCount = 0
   active = false
 
   constructor(
@@ -143,6 +144,7 @@ export class FrameProcessor implements FrameProcessorInterface {
     this.audioBuffer = []
     this.modelResetFunc()
     this.redemptionCounter = 0
+    this.speechFrameCount = 0
   }
 
   pause = () => {
@@ -186,10 +188,16 @@ export class FrameProcessor implements FrameProcessorInterface {
     }
 
     const probs = await this.modelProcessFunc(frame)
+    const isSpeech = probs.isSpeech >= this.options.positiveSpeechThreshold
+
     this.audioBuffer.push({
       frame,
-      isSpeech: probs.isSpeech >= this.options.positiveSpeechThreshold,
+      isSpeech,
     })
+
+    if (isSpeech) {
+      this.speechFrameCount++
+    }
 
     if (
       probs.isSpeech >= this.options.positiveSpeechThreshold &&
@@ -204,6 +212,13 @@ export class FrameProcessor implements FrameProcessorInterface {
     ) {
       this.speaking = true
       return { probs, msg: Message.SpeechStart, frame }
+    }
+
+    if (
+      this.speaking &&
+      this.speechFrameCount === this.options.minSpeechFrames
+    ) {
+      return { probs, msg: Message.SpeechRealStart, frame }
     }
 
     if (
@@ -233,6 +248,7 @@ export class FrameProcessor implements FrameProcessorInterface {
       while (this.audioBuffer.length > this.options.preSpeechPadFrames) {
         this.audioBuffer.shift()
       }
+      this.speechFrameCount = 0
     }
     return { probs, frame }
   }
