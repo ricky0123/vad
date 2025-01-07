@@ -227,6 +227,7 @@ export class FrameProcessor implements FrameProcessorInterface {
       ++this.redemptionCounter >= this.options.redemptionFrames
     ) {
       this.redemptionCounter = 0
+      this.speechFrameCount = 0
       this.speaking = false
 
       const audioBuffer = this.audioBuffer
