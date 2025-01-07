@@ -2,6 +2,7 @@ import * as ortInstance from "onnxruntime-web"
 import { defaultModelFetcher } from "./default-model-fetcher"
 import {
   FrameProcessor,
+  FrameProcessorEvent,
   FrameProcessorOptions,
   defaultLegacyFrameProcessorOptions,
   defaultV5FrameProcessorOptions,
@@ -357,8 +358,7 @@ export class AudioNodeVAD {
   }
 
   pause = () => {
-    const ev = this.frameProcessor.pause()
-    this.handleFrameProcessorEvent(ev)
+    this.frameProcessor.pause(this.handleFrameProcessorEvent)
   }
 
   start = () => {
@@ -374,17 +374,13 @@ export class AudioNodeVAD {
   }
 
   handleFrameProcessorEvent = (
-    ev: Partial<{
-      probs: SpeechProbabilities
-      msg: Message
-      audio: Float32Array
-      frame: Float32Array
-    }>
+    ev: FrameProcessorEvent
   ) => {
-    if (ev.probs !== undefined) {
-      this.options.onFrameProcessed(ev.probs, ev.frame as Float32Array)
-    }
     switch (ev.msg) {
+      case Message.FrameProcessed:
+        this.options.onFrameProcessed(ev.probs, ev.frame as Float32Array)
+        break
+
       case Message.SpeechStart:
         this.options.onSpeechStart()
         break
