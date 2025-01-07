@@ -370,8 +370,7 @@ export class AudioNodeVAD {
   }
 
   processFrame = async (frame: Float32Array) => {
-    const ev = await this.frameProcessor.process(frame)
-    this.handleFrameProcessorEvent(ev)
+    await this.frameProcessor.process(frame, this.handleFrameProcessorEvent)
   }
 
   handleFrameProcessorEvent = (
