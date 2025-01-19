@@ -13,9 +13,9 @@ The VAD algorithm works as follows:
 
 All of the main APIs accept certain common configuration parameters that modify the VAD algorithm.
 
-* `positiveSpeechThreshold: number` - determines the threshold over which a probability is considered to indicate the presence of speech.
-* `negativeSpeechThreshold: number` - determines the threshold under which a probability is considered to indicate the absence of speech.
-* `redemptionFrames: number` - number of speech-negative frames to wait before ending a speech segment.
-* `frameSamples: number` - the size of a frame in samples. For the older (default) Silero model, this should probably be 1536. For the new, Silero version 5 model, it should be 512.
-* `preSpeechPadFrames: number` - number of audio frames to prepend to a speech segment.
-* `minSpeechFrames: number` - minimum number of speech-positive frames for a speech segment.
+* `positiveSpeechThreshold: number` - determines the threshold over which a probability is considered to indicate the presence of speech. default: `0.5`
+* `negativeSpeechThreshold: number` - determines the threshold under which a probability is considered to indicate the absence of speech. default: `0.35`
+* `redemptionFrames: number` - number of speech-negative frames to wait before ending a speech segment. default: `8`
+* `frameSamples: number` - the size of a frame in samples. For the older (default) Silero model, this should probably be 1536. For the new, Silero version 5 model, it should be 512. default: `1536`
+* `preSpeechPadFrames: number` - number of audio frames to prepend to a speech segment. default: `1`
+* `minSpeechFrames: number` - minimum number of speech-positive frames for a speech segment. default: `3`

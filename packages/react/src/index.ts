@@ -4,7 +4,7 @@ import {
   MicVAD,
   getDefaultRealTimeVADOptions,
 } from "@ricky0123/vad-web"
-import React, { useEffect, useReducer, useState } from "react"
+import React, { useEffect, useState } from "react"
 
 export { utils } from "@ricky0123/vad-web"
 
@@ -65,11 +65,7 @@ function useEventCallback<T extends (...args: any[]) => any>(fn: T): T {
 
 export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
   const [reactOptions, vadOptions] = useOptions(options)
-  const [userSpeaking, updateUserSpeaking] = useReducer(
-    (state: boolean, isSpeechProbability: number) =>
-      isSpeechProbability > reactOptions.userSpeakingThreshold,
-    false
-  )
+  const [userSpeaking, updateUserSpeaking] = useState(false)
   const [loading, setLoading] = useState(true)
   const [errored, setErrored] = useState<false | string>(false)
   const [listening, setListening] = useState(false)
@@ -77,7 +73,8 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
 
   const userOnFrameProcessed = useEventCallback(vadOptions.onFrameProcessed)
   vadOptions.onFrameProcessed = useEventCallback((probs, frame) => {
-    updateUserSpeaking(probs.isSpeech)
+    const isSpeaking = probs.isSpeech > reactOptions.userSpeakingThreshold
+    updateUserSpeaking(isSpeaking)
     userOnFrameProcessed(probs, frame)
   })
   const { onSpeechEnd, onSpeechStart, onSpeechRealStart, onVADMisfire } =

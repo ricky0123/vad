@@ -1,0 +1,6 @@
+.md-typeset table td:nth-child(1) code,
+.md-typeset table th:nth-child(1) code,
+.md-typeset table td:nth-child(2) code,
+.md-typeset table th:nth-child(2) code {
+  word-break: normal;
+}
