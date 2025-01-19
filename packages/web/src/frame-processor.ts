@@ -123,6 +123,7 @@ export class FrameProcessor implements FrameProcessorInterface {
   redemptionCounter = 0
   speechFrameCount = 0
   active = false
+  speechRealStartFired = false
 
   constructor(
     public modelProcessFunc: (
@@ -194,17 +195,11 @@ export class FrameProcessor implements FrameProcessorInterface {
 
     if (isSpeech) {
       this.speechFrameCount++
-    }
-
-    if (
-      probs.isSpeech >= this.options.positiveSpeechThreshold &&
-      this.redemptionCounter
-    ) {
       this.redemptionCounter = 0
     }
 
     if (
-      probs.isSpeech >= this.options.positiveSpeechThreshold &&
+      isSpeech &&
       !this.speaking
     ) {
       this.speaking = true
@@ -213,8 +208,10 @@ export class FrameProcessor implements FrameProcessorInterface {
 
     if (
       this.speaking &&
-      this.speechFrameCount === this.options.minSpeechFrames
+      this.speechFrameCount === this.options.minSpeechFrames &&
+      !this.speechRealStartFired
     ) {
+      this.speechRealStartFired = true
       handleEvent({ msg: Message.SpeechRealStart })
     }
 
@@ -226,7 +223,7 @@ export class FrameProcessor implements FrameProcessorInterface {
       this.redemptionCounter = 0
       this.speechFrameCount = 0
       this.speaking = false
-
+      this.speechRealStartFired = false
       const audioBuffer = this.audioBuffer
       this.audioBuffer = []
 
