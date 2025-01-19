@@ -97,8 +97,14 @@ export function validateOptions(options: FrameProcessorOptions) {
 
 export interface FrameProcessorInterface {
   resume: () => void
-  process: (arr: Float32Array, handleEvent: (event: FrameProcessorEvent) => any) => Promise<any>
-  endSegment: (handleEvent: (event: FrameProcessorEvent) => any) => { msg?: Message; audio?: Float32Array }
+  process: (
+    arr: Float32Array,
+    handleEvent: (event: FrameProcessorEvent) => any
+  ) => Promise<any>
+  endSegment: (handleEvent: (event: FrameProcessorEvent) => any) => {
+    msg?: Message
+    audio?: Float32Array
+  }
 }
 
 const concatArrays = (arrays: Float32Array[]): Float32Array => {
@@ -178,7 +184,10 @@ export class FrameProcessor implements FrameProcessorInterface {
     return {}
   }
 
-  process = async (frame: Float32Array, handleEvent: (event: FrameProcessorEvent) => any) => {
+  process = async (
+    frame: Float32Array,
+    handleEvent: (event: FrameProcessorEvent) => any
+  ) => {
     if (!this.active) {
       return
     }
@@ -198,10 +207,7 @@ export class FrameProcessor implements FrameProcessorInterface {
       this.redemptionCounter = 0
     }
 
-    if (
-      isSpeech &&
-      !this.speaking
-    ) {
+    if (isSpeech && !this.speaking) {
       this.speaking = true
       handleEvent({ msg: Message.SpeechStart })
     }
@@ -248,17 +254,22 @@ export class FrameProcessor implements FrameProcessorInterface {
   }
 }
 
-export type FrameProcessorEvent = {
-  msg: Message.VADMisfire
-} | {
-  msg: Message.SpeechStart
-} | {
-  msg: Message.SpeechRealStart
-} | {
-  msg: Message.SpeechEnd
-  audio: Float32Array
-} | {
-  msg: Message.FrameProcessed
-  probs: SpeechProbabilities
-  frame: Float32Array
-}
+export type FrameProcessorEvent =
+  | {
+      msg: Message.VADMisfire
+    }
+  | {
+      msg: Message.SpeechStart
+    }
+  | {
+      msg: Message.SpeechRealStart
+    }
+  | {
+      msg: Message.SpeechEnd
+      audio: Float32Array
+    }
+  | {
+      msg: Message.FrameProcessed
+      probs: SpeechProbabilities
+      frame: Float32Array
+    }

@@ -373,9 +373,7 @@ export class AudioNodeVAD {
     await this.frameProcessor.process(frame, this.handleFrameProcessorEvent)
   }
 
-  handleFrameProcessorEvent = (
-    ev: FrameProcessorEvent
-  ) => {
+  handleFrameProcessorEvent = (ev: FrameProcessorEvent) => {
     switch (ev.msg) {
       case Message.FrameProcessed:
         this.options.onFrameProcessed(ev.probs, ev.frame as Float32Array)
