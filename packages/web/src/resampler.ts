@@ -33,7 +33,7 @@ export class Resampler {
     return outputFrames
   }
 
-  stream = async function* (audioInput: Float32Array) {
+  async *stream(audioInput: Float32Array) {
     for (const sample of audioInput) {
       this.inputBuffer.push(sample)
 

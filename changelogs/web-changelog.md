@@ -2,6 +2,9 @@
 
 ## 0.0.23
 
+* fix types in non-realtime vad
+* Use cdn package version "latest" by default for asset path
+* Reduce re-renders [#184](https://github.com/ricky0123/vad/pull/184)
 * add support to change VAD parameters dynamically [#137] https://github.com/ricky0123/vad/issues/173
 * add onRealSpeechStart callback - "not a misfire" event (https://github.com/ricky0123/vad/issues/67)
 
