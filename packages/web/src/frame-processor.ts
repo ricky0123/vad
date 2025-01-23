@@ -144,6 +144,7 @@ export class FrameProcessor implements FrameProcessorInterface {
 
   reset = () => {
     this.speaking = false
+    this.speechRealStartFired = false
     this.audioBuffer = []
     this.modelResetFunc()
     this.redemptionCounter = 0
@@ -169,11 +170,10 @@ export class FrameProcessor implements FrameProcessorInterface {
     const speaking = this.speaking
     this.reset()
 
-    const speechFrameCount = audioBuffer.reduce((acc, item) => {
-      return acc + +item.isSpeech
-    }, 0)
-
     if (speaking) {
+      const speechFrameCount = audioBuffer.reduce((acc, item) => {
+        return item.isSpeech ? (acc + 1) : acc
+      }, 0)
       if (speechFrameCount >= this.options.minSpeechFrames) {
         const audio = concatArrays(audioBuffer.map((item) => item.frame))
         handleEvent({ msg: Message.SpeechEnd, audio })
@@ -234,7 +234,7 @@ export class FrameProcessor implements FrameProcessorInterface {
       this.audioBuffer = []
 
       const speechFrameCount = audioBuffer.reduce((acc, item) => {
-        return acc + +item.isSpeech
+        return item.isSpeech ? (acc + 1) : acc
       }, 0)
 
       if (speechFrameCount >= this.options.minSpeechFrames) {
