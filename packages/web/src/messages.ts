@@ -6,4 +6,5 @@ export enum Message {
   SpeechStop = "SPEECH_STOP",
   SpeechRealStart = "SPEECH_REAL_START",
   FrameProcessed = "FRAME_PROCESSED",
+  EmitChunk = "EMIT_CHUNK",
 }

@@ -1,7 +1,8 @@
 # @ricky0123/vad-web Changelog
 
 ## 0.0.23
-
+* small modification to the algorithm, the audio returned on onSpeechEnd is padded with endSpeechPadFrames. endSpeechPadFrames <= redemptionFrames
+* added support for accesing audio data in chunks before speech ends. see onChunkEmit callback and numEmitFrames option[#122]
 * fix types in non-realtime vad
 * Use cdn package version "latest" by default for asset path
 * Reduce re-renders [#184](https://github.com/ricky0123/vad/pull/184)

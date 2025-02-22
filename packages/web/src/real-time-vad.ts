@@ -46,6 +46,9 @@ interface RealTimeVADCallbacks {
 
   /** Callback to run when speech is detected as valid. (i.e. not a misfire) */
   onSpeechRealStart: () => any
+
+  /** */
+  onEmitChunk: (audio: Float32Array) => any
 }
 
 /**
@@ -117,6 +120,9 @@ export const getDefaultRealTimeVADOptions: (
     },
     onSpeechRealStart: () => {
       log.debug("Detected real speech start")
+    },
+    onEmitChunk: () => {
+      log.debug("Emitted audio chunk")
     },
     baseAssetPath:
       "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@latest/dist/",
@@ -248,8 +254,10 @@ export class AudioNodeVAD {
         negativeSpeechThreshold: fullOptions.negativeSpeechThreshold,
         redemptionFrames: fullOptions.redemptionFrames,
         preSpeechPadFrames: fullOptions.preSpeechPadFrames,
+        endSpeechPadFrames: fullOptions.endSpeechPadFrames,
         minSpeechFrames: fullOptions.minSpeechFrames,
         submitUserSpeechOnPause: fullOptions.submitUserSpeechOnPause,
+        numFramesToEmit: fullOptions.numFramesToEmit,
       }
     )
 
@@ -394,6 +402,9 @@ export class AudioNodeVAD {
       case Message.SpeechEnd:
         this.options.onSpeechEnd(ev.audio as Float32Array)
         break
+
+      case Message.EmitChunk:
+        this.options.onEmitChunk(ev.audio as Float32Array)
     }
   }
 
