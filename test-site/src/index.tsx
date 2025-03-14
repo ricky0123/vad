@@ -165,6 +165,9 @@ function VADDemo({ initializationParameters }) {
   useEffect(() => {
     console.log("Created VAD with params", initializationParameters)
   }, [initializationParameters])
+
+  console.log("test re-render")
+
   return (
     <div>
       <h3>Controls</h3>

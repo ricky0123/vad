@@ -2,6 +2,7 @@ import * as ortInstance from "onnxruntime-web"
 import { defaultModelFetcher } from "./default-model-fetcher"
 import {
   FrameProcessor,
+  FrameProcessorEvent,
   FrameProcessorOptions,
   defaultLegacyFrameProcessorOptions,
   defaultV5FrameProcessorOptions,
@@ -118,7 +119,7 @@ export const getDefaultRealTimeVADOptions: (
       log.debug("Detected real speech start")
     },
     baseAssetPath:
-      "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/",
+      "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@latest/dist/",
     onnxWASMBasePath:
       "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/",
     stream: undefined,
@@ -357,8 +358,7 @@ export class AudioNodeVAD {
   }
 
   pause = () => {
-    const ev = this.frameProcessor.pause()
-    this.handleFrameProcessorEvent(ev)
+    this.frameProcessor.pause(this.handleFrameProcessorEvent)
   }
 
   start = () => {
@@ -370,22 +370,15 @@ export class AudioNodeVAD {
   }
 
   processFrame = async (frame: Float32Array) => {
-    const ev = await this.frameProcessor.process(frame)
-    this.handleFrameProcessorEvent(ev)
+    await this.frameProcessor.process(frame, this.handleFrameProcessorEvent)
   }
 
-  handleFrameProcessorEvent = (
-    ev: Partial<{
-      probs: SpeechProbabilities
-      msg: Message
-      audio: Float32Array
-      frame: Float32Array
-    }>
-  ) => {
-    if (ev.probs !== undefined) {
-      this.options.onFrameProcessed(ev.probs, ev.frame as Float32Array)
-    }
+  handleFrameProcessorEvent = (ev: FrameProcessorEvent) => {
     switch (ev.msg) {
+      case Message.FrameProcessed:
+        this.options.onFrameProcessed(ev.probs, ev.frame as Float32Array)
+        break
+
       case Message.SpeechStart:
         this.options.onSpeechStart()
         break

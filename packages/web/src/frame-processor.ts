@@ -97,12 +97,14 @@ export function validateOptions(options: FrameProcessorOptions) {
 
 export interface FrameProcessorInterface {
   resume: () => void
-  process: (arr: Float32Array) => Promise<{
-    probs?: SpeechProbabilities
+  process: (
+    arr: Float32Array,
+    handleEvent: (event: FrameProcessorEvent) => any
+  ) => Promise<any>
+  endSegment: (handleEvent: (event: FrameProcessorEvent) => any) => {
     msg?: Message
     audio?: Float32Array
-  }>
-  endSegment: () => { msg?: Message; audio?: Float32Array }
+  }
 }
 
 const concatArrays = (arrays: Float32Array[]): Float32Array => {
@@ -127,6 +129,7 @@ export class FrameProcessor implements FrameProcessorInterface {
   redemptionCounter = 0
   speechFrameCount = 0
   active = false
+  speechRealStartFired = false
 
   constructor(
     public modelProcessFunc: (
@@ -147,13 +150,12 @@ export class FrameProcessor implements FrameProcessorInterface {
     this.speechFrameCount = 0
   }
 
-  pause = () => {
+  pause = (handleEvent: (event: FrameProcessorEvent) => any) => {
     this.active = false
     if (this.options.submitUserSpeechOnPause) {
-      return this.endSegment()
+      this.endSegment(handleEvent)
     } else {
       this.reset()
-      return {}
     }
   }
 
@@ -161,7 +163,7 @@ export class FrameProcessor implements FrameProcessorInterface {
     this.active = true
   }
 
-  endSegment = () => {
+  endSegment = (handleEvent: (event: FrameProcessorEvent) => any) => {
     const audioBuffer = this.audioBuffer
     this.audioBuffer = []
     const speaking = this.speaking
@@ -174,21 +176,26 @@ export class FrameProcessor implements FrameProcessorInterface {
     if (speaking) {
       if (speechFrameCount >= this.options.minSpeechFrames) {
         const audio = concatArrays(audioBuffer.map((item) => item.frame))
-        return { msg: Message.SpeechEnd, audio }
+        handleEvent({ msg: Message.SpeechEnd, audio })
       } else {
-        return { msg: Message.VADMisfire }
+        handleEvent({ msg: Message.VADMisfire })
       }
     }
     return {}
   }
 
-  process = async (frame: Float32Array) => {
+  process = async (
+    frame: Float32Array,
+    handleEvent: (event: FrameProcessorEvent) => any
+  ) => {
     if (!this.active) {
-      return {}
+      return
     }
 
     const probs = await this.modelProcessFunc(frame)
     const isSpeech = probs.isSpeech >= this.options.positiveSpeechThreshold
+
+    handleEvent({ probs, msg: Message.FrameProcessed, frame })
 
     this.audioBuffer.push({
       frame,
@@ -197,28 +204,21 @@ export class FrameProcessor implements FrameProcessorInterface {
 
     if (isSpeech) {
       this.speechFrameCount++
-    }
-
-    if (
-      probs.isSpeech >= this.options.positiveSpeechThreshold &&
-      this.redemptionCounter
-    ) {
       this.redemptionCounter = 0
     }
 
-    if (
-      probs.isSpeech >= this.options.positiveSpeechThreshold &&
-      !this.speaking
-    ) {
+    if (isSpeech && !this.speaking) {
       this.speaking = true
-      return { probs, msg: Message.SpeechStart, frame }
+      handleEvent({ msg: Message.SpeechStart })
     }
 
     if (
       this.speaking &&
-      this.speechFrameCount === this.options.minSpeechFrames
+      this.speechFrameCount === this.options.minSpeechFrames &&
+      !this.speechRealStartFired
     ) {
-      return { probs, msg: Message.SpeechRealStart, frame }
+      this.speechRealStartFired = true
+      handleEvent({ msg: Message.SpeechRealStart })
     }
 
     if (
@@ -227,8 +227,9 @@ export class FrameProcessor implements FrameProcessorInterface {
       ++this.redemptionCounter >= this.options.redemptionFrames
     ) {
       this.redemptionCounter = 0
+      this.speechFrameCount = 0
       this.speaking = false
-
+      this.speechRealStartFired = false
       const audioBuffer = this.audioBuffer
       this.audioBuffer = []
 
@@ -238,9 +239,9 @@ export class FrameProcessor implements FrameProcessorInterface {
 
       if (speechFrameCount >= this.options.minSpeechFrames) {
         const audio = concatArrays(audioBuffer.map((item) => item.frame))
-        return { probs, msg: Message.SpeechEnd, audio, frame }
+        handleEvent({ msg: Message.SpeechEnd, audio })
       } else {
-        return { probs, msg: Message.VADMisfire, frame }
+        handleEvent({ msg: Message.VADMisfire })
       }
     }
 
@@ -250,6 +251,25 @@ export class FrameProcessor implements FrameProcessorInterface {
       }
       this.speechFrameCount = 0
     }
-    return { probs, frame }
   }
 }
+
+export type FrameProcessorEvent =
+  | {
+      msg: Message.VADMisfire
+    }
+  | {
+      msg: Message.SpeechStart
+    }
+  | {
+      msg: Message.SpeechRealStart
+    }
+  | {
+      msg: Message.SpeechEnd
+      audio: Float32Array
+    }
+  | {
+      msg: Message.FrameProcessed
+      probs: SpeechProbabilities
+      frame: Float32Array
+    }
