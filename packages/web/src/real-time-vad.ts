@@ -177,11 +177,37 @@ export class MicVAD {
   ) {}
 
   pause = () => {
+    this.stream.getTracks().forEach((track) => {
+      track.stop()
+    })
     this.audioNodeVAD.pause()
     this.listening = false
   }
 
+  resume = async () => {
+    const additionalAudioConstraints =
+      "additionalAudioConstraints" in this.options
+        ? this.options.additionalAudioConstraints
+        : {}
+    this.stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        ...additionalAudioConstraints,
+        channelCount: 1,
+        echoCancellation: true,
+        autoGainControl: true,
+        noiseSuppression: true,
+      },
+    })
+    this.sourceNode = new MediaStreamAudioSourceNode(this.audioContext, {
+      mediaStream: this.stream,
+    })
+    this.audioNodeVAD.receive(this.sourceNode)
+  }
+
   start = () => {
+    if (!this.stream.active) {
+      this.resume()
+    }
     this.audioNodeVAD.start()
     this.listening = true
   }
