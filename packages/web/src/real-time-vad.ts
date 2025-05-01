@@ -124,7 +124,7 @@ export const getDefaultRealTimeVADOptions: (
       "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/",
     stream: undefined,
     ortConfig: undefined,
-    model: DEFAULT_MODEL,
+    model: model,
     workletOptions: {},
   }
 }
