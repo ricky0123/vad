@@ -27,7 +27,9 @@ const parsers: Partial<
   frameSamples: (val: string) => parseInt(val),
   redemptionFrames: (val: string) => parseInt(val),
   preSpeechPadFrames: (val: string) => parseInt(val),
+  endSpeechPadFrames: (val: string) => parseInt(val),
   minSpeechFrames: (val: string) => parseInt(val),
+  numFramesToEmit: (val: string) => parseInt(val),
   startOnLoad: (val: string) => val === 'true',
   userSpeakingThreshold: (val: string) => parseFloat(val),
 }
@@ -141,6 +143,8 @@ function App() {
 
 function VADDemo({ initializationParameters }) {
   const [audioList, setAudioList] = useState<string[]>([])
+  const [chunksList, setChunksList] = useState<string[]>([])
+
   const vad = useMicVAD({
     ...initializationParameters,
     onVADMisfire: () => {
@@ -150,6 +154,7 @@ function VADDemo({ initializationParameters }) {
     },
     onSpeechStart: () => {
       console.log("Speech start")
+      setChunksList([])
     },
     onSpeechRealStart: () => {
       console.log("Speech real start")
@@ -158,9 +163,16 @@ function VADDemo({ initializationParameters }) {
       console.log("Speech end")
       const wavBuffer = utils.encodeWAV(audio)
       const base64 = utils.arrayBufferToBase64(wavBuffer)
-      const url = `data:audio/wav;base64,${base64}`
-      setAudioList((old) => [url, ...old])
+      const fullUrl = `data:audio/wav;base64,${base64}`
+      setAudioList((old) => [fullUrl, ...old])
     },
+    onEmitChunk: (audio) => {
+      console.log("Emitted Chunk.", audio.length, " samples")
+      const wavBuffer = utils.encodeWAV(audio)
+      const base64 = utils.arrayBufferToBase64(wavBuffer)
+      const chunkUrl = `data:audio/wav;base64,${base64}`
+      setChunksList((old) => [chunkUrl, ...old])
+    }
   })
   useEffect(() => {
     console.log("Created VAD with params", initializationParameters)
@@ -214,6 +226,14 @@ function VADDemo({ initializationParameters }) {
             </div>
           )
         })}
+      </div>
+      <h3>Chunks for last speech segment</h3>
+      <div>
+        {chunksList.map((chunkUrl, index) => (
+          <div key={index} style={{ marginBottom: "1rem" }}>
+            <audio controls src={chunkUrl} />
+          </div>
+        ))}
       </div>
     </div>
   )

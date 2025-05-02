@@ -35,8 +35,11 @@ export interface FrameProcessorOptions {
    */
   frameSamples: number
 
-  /** Number of frames to prepend to the audio segment that will be passed to `onSpeechEnd`. */
+  /** Number of frames to prepend to the audio segment that will be passed to `onSpeechEnd` & `emitChunk`. */
   preSpeechPadFrames: number
+
+  /** Number of frames to append to the audio segment that will be passed to `onSpeechEnd` & `emitChunk`. */
+  endSpeechPadFrames: number
 
   /** If an audio segment is detected as a speech segment according to initial algorithm but it has fewer than `minSpeechFrames`,
    * it will be discarded and `onVADMisfire` will be run instead of `onSpeechEnd`.
@@ -47,26 +50,34 @@ export interface FrameProcessorOptions {
    * If true, when the user pauses the VAD, it may trigger `onSpeechEnd`.
    */
   submitUserSpeechOnPause: boolean
+  /**
+   * New parameter
+   */
+  numFramesToEmit: number
 }
 
 export const defaultLegacyFrameProcessorOptions: FrameProcessorOptions = {
   positiveSpeechThreshold: 0.5,
   negativeSpeechThreshold: 0.5 - 0.15,
   preSpeechPadFrames: 1,
+  endSpeechPadFrames: 1,
   redemptionFrames: 8,
   frameSamples: 1536,
   minSpeechFrames: 3,
   submitUserSpeechOnPause: false,
+  numFramesToEmit: 0,
 }
 
 export const defaultV5FrameProcessorOptions: FrameProcessorOptions = {
   positiveSpeechThreshold: 0.5,
   negativeSpeechThreshold: 0.5 - 0.15,
   preSpeechPadFrames: 3,
+  endSpeechPadFrames: 3,
   redemptionFrames: 24,
   frameSamples: 512,
   minSpeechFrames: 9,
   submitUserSpeechOnPause: false,
+  numFramesToEmit: 0,
 }
 
 export function validateOptions(options: FrameProcessorOptions) {
@@ -90,8 +101,19 @@ export function validateOptions(options: FrameProcessorOptions) {
   if (options.preSpeechPadFrames < 0) {
     log.error("preSpeechPadFrames should be positive")
   }
+  if (options.endSpeechPadFrames < 0) {
+    log.error("endSpeechPadFrames should be positive")
+  }
   if (options.redemptionFrames < 0) {
     log.error("redemptionFrames should be positive")
+  }
+  if (options.numFramesToEmit < 0) {
+    log.error("numFramesToEmit should be positive")
+  }
+  if (options.redemptionFrames < options.endSpeechPadFrames) {
+    log.error(
+      "there should be more redemption frames then endSpeechPadFrames. "
+    )
   }
 }
 
@@ -130,6 +152,8 @@ export class FrameProcessor implements FrameProcessorInterface {
   speechFrameCount = 0
   active = false
   speechRealStartFired = false
+  sentRedemptionFrames = 0
+  speechStartIndex = 0
 
   constructor(
     public modelProcessFunc: (
@@ -149,6 +173,8 @@ export class FrameProcessor implements FrameProcessorInterface {
     this.modelResetFunc()
     this.redemptionCounter = 0
     this.speechFrameCount = 0
+    this.sentRedemptionFrames = 0
+    this.speechStartIndex = 0
   }
 
   pause = (handleEvent: (event: FrameProcessorEvent) => any) => {
@@ -172,7 +198,7 @@ export class FrameProcessor implements FrameProcessorInterface {
 
     if (speaking) {
       const speechFrameCount = audioBuffer.reduce((acc, item) => {
-        return item.isSpeech ? (acc + 1) : acc
+        return item.isSpeech ? acc + 1 : acc
       }, 0)
       if (speechFrameCount >= this.options.minSpeechFrames) {
         const audio = concatArrays(audioBuffer.map((item) => item.frame))
@@ -205,10 +231,12 @@ export class FrameProcessor implements FrameProcessorInterface {
     if (isSpeech) {
       this.speechFrameCount++
       this.redemptionCounter = 0
+      this.sentRedemptionFrames = 0
     }
 
     if (isSpeech && !this.speaking) {
       this.speaking = true
+      this.speechStartIndex = 0
       handleEvent({ msg: Message.SpeechStart })
     }
 
@@ -231,18 +259,100 @@ export class FrameProcessor implements FrameProcessorInterface {
       this.speaking = false
       this.speechRealStartFired = false
       const audioBuffer = this.audioBuffer
-      this.audioBuffer = []
+      let misfire = false
 
       const speechFrameCount = audioBuffer.reduce((acc, item) => {
-        return item.isSpeech ? (acc + 1) : acc
+        return item.isSpeech ? acc + 1 : acc
       }, 0)
 
       if (speechFrameCount >= this.options.minSpeechFrames) {
-        const audio = concatArrays(audioBuffer.map((item) => item.frame))
+        const frames = this.audioBuffer.map((item) => item.frame)
+        const audioBufferPad = frames.slice(
+          0,
+          frames.length -
+            (this.options.redemptionFrames - this.options.endSpeechPadFrames)
+        )
+        const audio = concatArrays(audioBufferPad)
         handleEvent({ msg: Message.SpeechEnd, audio })
       } else {
+        misfire = true
         handleEvent({ msg: Message.VADMisfire })
       }
+      // Addition to endSpeech
+      if (
+        this.sentRedemptionFrames == 0 &&
+        this.options.numFramesToEmit > 0 &&
+        !misfire
+      ) {
+        const speechEndIndex =
+          this.audioBuffer.length -
+          this.options.redemptionFrames +
+          this.options.endSpeechPadFrames
+        const framesToSend = this.audioBuffer.slice(
+          this.speechStartIndex,
+          speechEndIndex
+        )
+        const audio = concatArrays(framesToSend.map((item) => item.frame))
+        handleEvent({ msg: Message.EmitChunk, audio: audio })
+        if (
+          this.audioBuffer.length - speechEndIndex <=
+          this.options.preSpeechPadFrames
+        ) {
+          this.audioBuffer = this.audioBuffer.slice(speechEndIndex)
+        } else {
+          this.audioBuffer = this.audioBuffer.slice(
+            -this.options.preSpeechPadFrames
+          )
+        }
+      } else if (
+        this.sentRedemptionFrames > 0 &&
+        this.options.endSpeechPadFrames > this.sentRedemptionFrames &&
+        this.options.numFramesToEmit > 0 &&
+        !misfire
+      ) {
+        const speechEndIndex =
+          this.speechStartIndex +
+          this.options.endSpeechPadFrames -
+          this.sentRedemptionFrames
+        const framesToSend = this.audioBuffer.slice(
+          this.speechStartIndex,
+          speechEndIndex
+        )
+
+        const audio = concatArrays(framesToSend.map((item) => item.frame))
+        handleEvent({ msg: Message.EmitChunk, audio: audio })
+        if (
+          this.audioBuffer.length - speechEndIndex <=
+          this.options.preSpeechPadFrames
+        ) {
+          this.audioBuffer = this.audioBuffer.slice(speechEndIndex)
+        } else {
+          this.audioBuffer = this.audioBuffer.slice(
+            -this.options.preSpeechPadFrames
+          )
+        }
+      }
+
+      this.speechStartIndex = Number.MAX_SAFE_INTEGER
+      this.sentRedemptionFrames = 0
+    }
+
+    if (
+      this.speaking &&
+      this.options.numFramesToEmit > 0 &&
+      this.audioBuffer.length - this.speechStartIndex >=
+        this.options.numFramesToEmit &&
+      this.redemptionCounter <= this.options.endSpeechPadFrames
+    ) {
+      const framesToSend = this.audioBuffer.slice(
+        this.speechStartIndex,
+        this.speechStartIndex + this.options.numFramesToEmit
+      )
+      const audio = concatArrays(framesToSend.map((item) => item.frame))
+      this.speechStartIndex =
+        this.speechStartIndex + this.options.numFramesToEmit
+      this.sentRedemptionFrames = this.redemptionCounter
+      handleEvent({ msg: Message.EmitChunk, audio: audio })
     }
 
     if (!this.speaking) {
@@ -268,6 +378,7 @@ export type FrameProcessorEvent =
       msg: Message.SpeechEnd
       audio: Float32Array
     }
+  | { msg: Message.EmitChunk; audio: Float32Array }
   | {
       msg: Message.FrameProcessed
       probs: SpeechProbabilities

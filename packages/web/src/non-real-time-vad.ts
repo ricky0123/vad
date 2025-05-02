@@ -57,8 +57,10 @@ export class NonRealTimeVAD {
         negativeSpeechThreshold: fullOptions.negativeSpeechThreshold,
         redemptionFrames: fullOptions.redemptionFrames,
         preSpeechPadFrames: fullOptions.preSpeechPadFrames,
+        endSpeechPadFrames: fullOptions.endSpeechPadFrames,
         minSpeechFrames: fullOptions.minSpeechFrames,
         submitUserSpeechOnPause: fullOptions.submitUserSpeechOnPause,
+        numFramesToEmit: fullOptions.numFramesToEmit, // added this too
       }
     )
     frameProcessor.resume()
