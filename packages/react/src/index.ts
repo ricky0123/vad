@@ -4,7 +4,7 @@ import {
   MicVAD,
   getDefaultRealTimeVADOptions,
 } from "@ricky0123/vad-web"
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useReducer, useState } from "react"
 
 export { utils } from "@ricky0123/vad-web"
 
@@ -65,16 +65,21 @@ function useEventCallback<T extends (...args: any[]) => any>(fn: T): T {
 
 export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
   const [reactOptions, vadOptions] = useOptions(options)
-  const [userSpeaking, updateUserSpeaking] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [userSpeaking, updateUserSpeaking] = useReducer<
+    React.Reducer<boolean, number>
+  >(
+    (state: boolean, isSpeechProbability: number) =>
+      isSpeechProbability > reactOptions.userSpeakingThreshold,
+    false
+  )
+  const [loading, setLoading] = useState(false)
   const [errored, setErrored] = useState<false | string>(false)
   const [listening, setListening] = useState(false)
-  const [vad, setVAD] = useState<MicVAD | null>(null)
+  const vadRef = React.useRef<MicVAD | null>(null)
 
   const userOnFrameProcessed = useEventCallback(vadOptions.onFrameProcessed)
   vadOptions.onFrameProcessed = useEventCallback((probs, frame) => {
-    const isSpeaking = probs.isSpeech > reactOptions.userSpeakingThreshold
-    updateUserSpeaking(isSpeaking)
+    updateUserSpeaking(probs.isSpeech)
     userOnFrameProcessed(probs, frame)
   })
   const { onSpeechEnd, onSpeechStart, onSpeechRealStart, onVADMisfire } =
@@ -88,70 +93,63 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
   vadOptions.onVADMisfire = _onVADMisfire
   vadOptions.onSpeechRealStart = _onSpeechRealStart
 
-  useEffect(() => {
-    let myvad: MicVAD | null
-    let canceled = false
-    const setup = async (): Promise<void> => {
-      try {
-        myvad = await MicVAD.new(vadOptions)
-        if (canceled) {
-          myvad.destroy()
-          return
-        }
-      } catch (e) {
-        setLoading(false)
-        if (e instanceof Error) {
-          setErrored(e.message)
-        } else {
-          setErrored(String(e))
-        }
-        return
-      }
-      setVAD(myvad)
+  const setup = async (): Promise<MicVAD | null> => {
+    let myvad: MicVAD | null = null
+    try {
+      myvad = await MicVAD.new(vadOptions)
+    } catch (e) {
+      setErrored(e instanceof Error ? e.message : String(e))
+      return null
+    } finally {
       setLoading(false)
-      if (reactOptions.startOnLoad) {
-        myvad?.start()
-        setListening(true)
-      }
     }
-    setup().catch((e) => {
-      console.log("Well that didn't work")
-    })
+    vadRef.current = myvad
+    return myvad
+  }
+
+  useEffect(() => {
     return function cleanUp() {
-      myvad?.destroy()
-      canceled = true
-      if (!loading && !errored) {
+      if (vadRef.current) {
+        vadRef.current.pause()
         setListening(false)
+        vadRef.current?.destroy()
       }
     }
   }, [])
+
   const pause = () => {
     if (!loading && !errored) {
-      vad?.pause()
+      vadRef.current?.pause()
       setListening(false)
     }
   }
+
+  const stop = () => {
+    if (!loading && !errored && listening) {
+      vadRef.current?.destroy()
+      setListening(false)
+      vadRef.current = null
+    }
+  }
+
   const start = () => {
-    if (!loading && !errored) {
-      vad?.start()
-      setListening(true)
+    if (!listening) {
+      setLoading(true)
+      setup().then((vad) => {
+        vad?.start()
+        setListening(true)
+      })
     }
   }
-  const toggle = () => {
-    if (listening) {
-      pause()
-    } else {
-      start()
-    }
-  }
+
   return {
     listening,
     errored,
     loading,
     userSpeaking,
-    pause,
     start,
-    toggle,
+    pause,
+    stop,
   }
 }
 
