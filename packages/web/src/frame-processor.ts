@@ -47,6 +47,9 @@ export interface FrameProcessorOptions {
    * If true, when the user pauses the VAD, it may trigger `onSpeechEnd`.
    */
   submitUserSpeechOnPause: boolean
+
+  /** How often to emit an event with the current speech progress. By default, it won't emit any. */
+  speechProgressIntervalFrames?: number
 }
 
 export const defaultLegacyFrameProcessorOptions: FrameProcessorOptions = {
@@ -57,6 +60,7 @@ export const defaultLegacyFrameProcessorOptions: FrameProcessorOptions = {
   frameSamples: 1536,
   minSpeechFrames: 3,
   submitUserSpeechOnPause: false,
+  speechProgressIntervalFrames: undefined,
 }
 
 export const defaultV5FrameProcessorOptions: FrameProcessorOptions = {
@@ -67,6 +71,7 @@ export const defaultV5FrameProcessorOptions: FrameProcessorOptions = {
   frameSamples: 512,
   minSpeechFrames: 9,
   submitUserSpeechOnPause: false,
+  speechProgressIntervalFrames: undefined,
 }
 
 export function validateOptions(options: FrameProcessorOptions) {
@@ -130,6 +135,7 @@ export class FrameProcessor implements FrameProcessorInterface {
   speechFrameCount = 0
   active = false
   speechRealStartFired = false
+  speechProgressCounter = 0
 
   constructor(
     public modelProcessFunc: (
@@ -149,6 +155,7 @@ export class FrameProcessor implements FrameProcessorInterface {
     this.modelResetFunc()
     this.redemptionCounter = 0
     this.speechFrameCount = 0
+    this.speechProgressCounter = 0
   }
 
   pause = (handleEvent: (event: FrameProcessorEvent) => any) => {
@@ -172,7 +179,7 @@ export class FrameProcessor implements FrameProcessorInterface {
 
     if (speaking) {
       const speechFrameCount = audioBuffer.reduce((acc, item) => {
-        return item.isSpeech ? (acc + 1) : acc
+        return item.isSpeech ? acc + 1 : acc
       }, 0)
       if (speechFrameCount >= this.options.minSpeechFrames) {
         const audio = concatArrays(audioBuffer.map((item) => item.frame))
@@ -222,6 +229,23 @@ export class FrameProcessor implements FrameProcessorInterface {
     }
 
     if (
+      this.options.speechProgressIntervalFrames &&
+      this.options.speechProgressIntervalFrames > 0
+    ) {
+      this.speechProgressCounter =
+        (this.speechProgressCounter + 1) %
+        this.options.speechProgressIntervalFrames
+      if (
+        this.speaking &&
+        this.speechRealStartFired &&
+        this.speechProgressCounter === 0
+      ) {
+        const audio = concatArrays(this.audioBuffer.map((item) => item.frame))
+        handleEvent({ msg: Message.SpeechInProgress, audio })
+      }
+    }
+
+    if (
       probs.isSpeech < this.options.negativeSpeechThreshold &&
       this.speaking &&
       ++this.redemptionCounter >= this.options.redemptionFrames
@@ -234,7 +258,7 @@ export class FrameProcessor implements FrameProcessorInterface {
       this.audioBuffer = []
 
       const speechFrameCount = audioBuffer.reduce((acc, item) => {
-        return item.isSpeech ? (acc + 1) : acc
+        return item.isSpeech ? acc + 1 : acc
       }, 0)
 
       if (speechFrameCount >= this.options.minSpeechFrames) {
@@ -272,4 +296,8 @@ export type FrameProcessorEvent =
       msg: Message.FrameProcessed
       probs: SpeechProbabilities
       frame: Float32Array
+    }
+  | {
+      msg: Message.SpeechInProgress
+      audio: Float32Array
     }

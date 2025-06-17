@@ -44,6 +44,12 @@ interface RealTimeVADCallbacks {
    */
   onSpeechEnd: (audio: Float32Array) => any
 
+  /**
+   * Callback to run when speech is detected as in progress.
+   * This will run on every `speechProgressIntervalFrames` frames, if specified.
+   */
+  onSpeechInProgress: (audio: Float32Array) => any
+
   /** Callback to run when speech is detected as valid. (i.e. not a misfire) */
   onSpeechRealStart: () => any
 }
@@ -118,6 +124,7 @@ export const getDefaultRealTimeVADOptions: (
     onSpeechRealStart: () => {
       log.debug("Detected real speech start")
     },
+    onSpeechInProgress: () => {},
     baseAssetPath:
       "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@latest/dist/",
     onnxWASMBasePath:
@@ -250,6 +257,7 @@ export class AudioNodeVAD {
         preSpeechPadFrames: fullOptions.preSpeechPadFrames,
         minSpeechFrames: fullOptions.minSpeechFrames,
         submitUserSpeechOnPause: fullOptions.submitUserSpeechOnPause,
+        speechProgressIntervalFrames: fullOptions.speechProgressIntervalFrames,
       }
     )
 
@@ -389,6 +397,10 @@ export class AudioNodeVAD {
 
       case Message.VADMisfire:
         this.options.onVADMisfire()
+        break
+
+      case Message.SpeechInProgress:
+        this.options.onSpeechInProgress(ev.audio as Float32Array)
         break
 
       case Message.SpeechEnd:
