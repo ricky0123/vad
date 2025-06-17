@@ -1,12 +1,12 @@
-import type { RealTimeVADOptions } from "@ricky0123/vad-web"
+import type { RealTimeVADOptions } from "@tamimjabban/vad-web"
 import {
   DEFAULT_MODEL,
   MicVAD,
   getDefaultRealTimeVADOptions,
-} from "@ricky0123/vad-web"
+} from "@tamimjabban/vad-web"
 import React, { useEffect, useReducer, useState } from "react"
 
-export { utils } from "@ricky0123/vad-web"
+export { utils } from "@tamimjabban/vad-web"
 
 interface ReactOptions {
   startOnLoad: boolean
@@ -82,14 +82,21 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
     updateUserSpeaking(probs.isSpeech)
     userOnFrameProcessed(probs, frame)
   })
-  const { onSpeechEnd, onSpeechStart, onSpeechRealStart, onVADMisfire } =
-    vadOptions
+  const {
+    onSpeechEnd,
+    onSpeechStart,
+    onSpeechInProgress,
+    onSpeechRealStart,
+    onVADMisfire,
+  } = vadOptions
   const _onSpeechEnd = useEventCallback(onSpeechEnd)
   const _onSpeechStart = useEventCallback(onSpeechStart)
+  const _onSpeechInProgress = useEventCallback(onSpeechInProgress)
   const _onVADMisfire = useEventCallback(onVADMisfire)
   const _onSpeechRealStart = useEventCallback(onSpeechRealStart)
   vadOptions.onSpeechEnd = _onSpeechEnd
   vadOptions.onSpeechStart = _onSpeechStart
+  vadOptions.onSpeechInProgress = _onSpeechInProgress
   vadOptions.onVADMisfire = _onVADMisfire
   vadOptions.onSpeechRealStart = _onSpeechRealStart
 
