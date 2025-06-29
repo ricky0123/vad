@@ -1,5 +1,10 @@
 # @ricky0123/vad-web Changelog
 
+
+## next
+* Fix non-realtime event accumulation
+* test site non-realtime also displays audio segments
+
 ## 0.0.24
 
 * use correct Silero model in getDefaultRealTimeVADOptions
