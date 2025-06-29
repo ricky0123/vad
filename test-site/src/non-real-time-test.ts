@@ -1,4 +1,17 @@
-import { NonRealTimeVAD, utils } from "@ricky0123/vad-web"
+// Conditional imports based on environment
+let NonRealTimeVAD: any, utils: any
+
+if (process.env.NODE_ENV === 'development') {
+  // Use local development build
+  const localVAD = require("../../packages/web/src/index")
+  NonRealTimeVAD = localVAD.NonRealTimeVAD
+  utils = localVAD.utils
+} else {
+  // Use npm package for production
+  const npmVAD = require("@ricky0123/vad-web")
+  NonRealTimeVAD = npmVAD.NonRealTimeVAD
+  utils = npmVAD.utils
+}
 
 let showMs = true
 ;(window as any).toggleUnit = () => {
@@ -28,7 +41,18 @@ let showMs = true
   }
 }
 ;(window as any).testNonRealTime = async () => {
-  const myvad = await NonRealTimeVAD.new()
+  // Configure VAD based on environment
+  const vadConfig = process.env.NODE_ENV === 'development' 
+    ? {
+        // Use local assets in development
+        modelURL: "./silero_vad_legacy.onnx",
+        modelFetcher: (path: string) => fetch(path).then(r => r.arrayBuffer())
+      }
+    : {
+        // Use default CDN assets in production
+      }
+  
+  const myvad = await NonRealTimeVAD.new(vadConfig)
   const fileEl = document.getElementById("file-upload") as HTMLInputElement
   const audioFile = (fileEl.files as FileList)[0] as File
   const { audio, sampleRate } = await utils.audioFileToArray(audioFile)
@@ -66,6 +90,7 @@ let showMs = true
         <th class="p-2 text-left">Start (ms)</th>
         <th class="p-2 text-left">End (ms)</th>
         <th class="p-2 text-left">Duration (ms)</th>
+        <th class="p-2 text-left">Audio</th>
       </tr>
     </thead>
     <tbody>
@@ -75,8 +100,14 @@ let showMs = true
   const tbody = table.querySelector("tbody")!
 
   let segmentNumber = 0
-  for await (const { start, end } of myvad.run(audio, sampleRate)) {
+  for await (const { audio: segmentAudio, start, end } of myvad.run(audio, sampleRate)) {
     segmentNumber++
+    
+    // Create audio element for the segment
+    const wavBuffer = utils.encodeWAV(segmentAudio)
+    const base64 = utils.arrayBufferToBase64(wavBuffer)
+    const audioUrl = `data:audio/wav;base64,${base64}`
+    
     const row = document.createElement("tr")
     row.className = segmentNumber % 2 === 0 ? "bg-gray-50" : "bg-white"
     row.innerHTML = `
@@ -84,6 +115,11 @@ let showMs = true
       <td class="p-2" data-ms="${start}">${Math.round(start)}</td>
       <td class="p-2" data-ms="${end}">${Math.round(end)}</td>
       <td class="p-2" data-ms="${end - start}">${Math.round(end - start)}</td>
+      <td class="p-2">
+        <audio controls class="h-8" style="width: 150px;">
+          <source src="${audioUrl}" type="audio/wav">
+        </audio>
+      </td>
     `
     tbody.appendChild(row)
   }
@@ -102,7 +138,7 @@ let showMs = true
   if (segmentNumber === 0) {
     const noResults = document.createElement("tr")
     noResults.innerHTML = `
-      <td colspan="4" class="p-2 text-center text-gray-500 italic">
+      <td colspan="5" class="p-2 text-center text-gray-500 italic">
         No segments to display
       </td>
     `
