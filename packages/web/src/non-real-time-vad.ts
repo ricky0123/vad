@@ -88,12 +88,13 @@ export class NonRealTimeVAD {
     let end = 0
     let frameIndex = 0
 
-    let messageContainer: FrameProcessorEvent[] = []
-
     for await (const frame of resampler.stream(inputAudio)) {
+      const messageContainer: FrameProcessorEvent[] = []
+
       await this.frameProcessor.process(frame, (event) => {
         messageContainer.push(event)
       })
+
       for (const event of messageContainer) {
         switch (event.msg) {
           case Message.SpeechStart:
@@ -112,9 +113,11 @@ export class NonRealTimeVAD {
       frameIndex++
     }
 
-    const { msg, audio } = this.frameProcessor.endSegment((event) => {
+    const messageContainer: FrameProcessorEvent[] = []
+    this.frameProcessor.endSegment((event) => {
       messageContainer.push(event)
     })
+
     for (const event of messageContainer) {
       switch (event.msg) {
         case Message.SpeechEnd:
