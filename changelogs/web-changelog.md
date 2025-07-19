@@ -1,5 +1,8 @@
 # @ricky0123/vad-web Changelog
 
+## 0.0.25
+* automatically upsample native mic input from 8kHz to 16kHz
+
 ## 0.0.24
 
 * use correct Silero model in getDefaultRealTimeVADOptions
