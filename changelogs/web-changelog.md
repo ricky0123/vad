@@ -1,5 +1,9 @@
 # @ricky0123/vad-web Changelog
 
+## 0.0.24
+
+* use correct Silero model in getDefaultRealTimeVADOptions
+
 ## 0.0.23
 
 * fix types in non-realtime vad

@@ -4,3 +4,65 @@
 .md-typeset table th:nth-child(2) code {
   word-break: normal;
 }
+
+/* Improve table layout and column widths */
+.md-typeset table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+/* Set specific column widths for API options table */
+.md-typeset table th:nth-child(1),
+.md-typeset table td:nth-child(1) {
+  width: 25%; /* Option name */
+}
+
+.md-typeset table th:nth-child(2),
+.md-typeset table td:nth-child(2) {
+  width: 20%; /* Type */
+}
+
+.md-typeset table th:nth-child(3),
+.md-typeset table td:nth-child(3) {
+  width: 15%; /* Default value */
+}
+
+.md-typeset table th:nth-child(4),
+.md-typeset table td:nth-child(4) {
+  width: 40%; /* Description - give more space */
+}
+
+/* Ensure text wraps properly in all columns */
+.md-typeset table td,
+.md-typeset table th {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Widen the main content area by adjusting sidebar widths */
+@media screen and (min-width: 76.25em) {
+  /* Narrow the left navigation sidebar */
+  .md-sidebar--primary {
+    width: 16rem !important;
+  }
+  
+  /* Narrow the right table of contents sidebar */
+  .md-sidebar--secondary {
+    width: 14rem !important;
+  }
+  
+  /* Expand the main content area */
+  .md-main__inner {
+    max-width: none !important;
+  }
+  
+  .md-content__inner {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    max-width: none !important;
+  }
+  
+  .md-typeset {
+    max-width: none !important;
+  }
+}
