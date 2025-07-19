@@ -172,7 +172,7 @@ export class FrameProcessor implements FrameProcessorInterface {
 
     if (speaking) {
       const speechFrameCount = audioBuffer.reduce((acc, item) => {
-        return item.isSpeech ? (acc + 1) : acc
+        return item.isSpeech ? acc + 1 : acc
       }, 0)
       if (speechFrameCount >= this.options.minSpeechFrames) {
         const audio = concatArrays(audioBuffer.map((item) => item.frame))
@@ -234,7 +234,7 @@ export class FrameProcessor implements FrameProcessorInterface {
       this.audioBuffer = []
 
       const speechFrameCount = audioBuffer.reduce((acc, item) => {
-        return item.isSpeech ? (acc + 1) : acc
+        return item.isSpeech ? acc + 1 : acc
       }, 0)
 
       if (speechFrameCount >= this.options.minSpeechFrames) {
