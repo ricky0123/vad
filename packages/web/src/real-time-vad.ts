@@ -206,10 +206,14 @@ export class MicVAD {
 
   start = () => {
     if (!this.stream.active) {
-      this.resume()
+      this.resume().then(() => {
+        this.audioNodeVAD.start()
+        this.listening = true
+      })
+    } else {
+      this.audioNodeVAD.start()
+      this.listening = true
     }
-    this.audioNodeVAD.start()
-    this.listening = true
   }
 
   destroy = () => {
