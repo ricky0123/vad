@@ -1,5 +1,7 @@
 # @ricky0123/vad-web Changelog
 
+* Add ability to overwrite default audio constraint
+
 ## 0.0.24
 
 * use correct Silero model in getDefaultRealTimeVADOptions
