@@ -48,15 +48,6 @@ interface RealTimeVADCallbacks {
   onSpeechRealStart: () => any
 }
 
-/**
- * Customizable audio constraints for the VAD.
- * Excludes certain constraints that are set for the user by default.
- */
-type AudioConstraints = Omit<
-  MediaTrackConstraints,
-  "channelCount" | "echoCancellation" | "autoGainControl" | "noiseSuppression"
->
-
 type AssetOptions = {
   workletOptions: AudioWorkletNodeOptions
   baseAssetPath: string
@@ -73,7 +64,7 @@ interface RealTimeVADOptionsWithoutStream
     OrtOptions,
     AssetOptions,
     ModelOptions {
-  additionalAudioConstraints?: AudioConstraints
+  additionalAudioConstraints?: MediaTrackConstraints
   stream: undefined
 }
 
@@ -141,11 +132,11 @@ export class MicVAD {
     if (fullOptions.stream === undefined)
       stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          ...fullOptions.additionalAudioConstraints,
           channelCount: 1,
           echoCancellation: true,
           autoGainControl: true,
           noiseSuppression: true,
+          ...fullOptions.additionalAudioConstraints,
         },
       })
     else stream = fullOptions.stream
@@ -191,11 +182,11 @@ export class MicVAD {
         : {}
     this.stream = await navigator.mediaDevices.getUserMedia({
       audio: {
-        ...additionalAudioConstraints,
         channelCount: 1,
         echoCancellation: true,
         autoGainControl: true,
         noiseSuppression: true,
+        ...additionalAudioConstraints,
       },
     })
     this.sourceNode = new MediaStreamAudioSourceNode(this.audioContext, {
