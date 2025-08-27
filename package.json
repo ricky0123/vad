@@ -9,7 +9,7 @@
     "build-test-site": "./test-site/build.sh",
     "serve-test-site": "http-server ./test-site/dist",
     "dev": "./scripts/dev.sh",
-    "publish": "npm run publish --workspaces --if-present"
+    "publish-all": "npm run publish --workspaces --if-present"
   },
   "private": true,
   "devDependencies": {

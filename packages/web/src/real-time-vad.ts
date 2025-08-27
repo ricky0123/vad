@@ -48,15 +48,6 @@ interface RealTimeVADCallbacks {
   onSpeechRealStart: () => any
 }
 
-/**
- * Customizable audio constraints for the VAD.
- * Excludes certain constraints that are set for the user by default.
- */
-type AudioConstraints = Omit<
-  MediaTrackConstraints,
-  "channelCount" | "echoCancellation" | "autoGainControl" | "noiseSuppression"
->
-
 type AssetOptions = {
   workletOptions: AudioWorkletNodeOptions
   baseAssetPath: string
@@ -73,7 +64,7 @@ interface RealTimeVADOptionsWithoutStream
     OrtOptions,
     AssetOptions,
     ModelOptions {
-  additionalAudioConstraints?: AudioConstraints
+  additionalAudioConstraints?: MediaTrackConstraints
   stream: undefined
 }
 
@@ -141,11 +132,11 @@ export class MicVAD {
     if (fullOptions.stream === undefined)
       stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          ...fullOptions.additionalAudioConstraints,
           channelCount: 1,
           echoCancellation: true,
           autoGainControl: true,
           noiseSuppression: true,
+          ...fullOptions.additionalAudioConstraints,
         },
       })
     else stream = fullOptions.stream
@@ -177,13 +168,43 @@ export class MicVAD {
   ) {}
 
   pause = () => {
+    this.stream.getTracks().forEach((track) => {
+      track.stop()
+    })
     this.audioNodeVAD.pause()
     this.listening = false
   }
 
+  resume = async () => {
+    const additionalAudioConstraints =
+      "additionalAudioConstraints" in this.options
+        ? this.options.additionalAudioConstraints
+        : {}
+    this.stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        channelCount: 1,
+        echoCancellation: true,
+        autoGainControl: true,
+        noiseSuppression: true,
+        ...additionalAudioConstraints,
+      },
+    })
+    this.sourceNode = new MediaStreamAudioSourceNode(this.audioContext, {
+      mediaStream: this.stream,
+    })
+    this.audioNodeVAD.receive(this.sourceNode)
+  }
+
   start = () => {
-    this.audioNodeVAD.start()
-    this.listening = true
+    if (!this.stream.active) {
+      this.resume().then(() => {
+        this.audioNodeVAD.start()
+        this.listening = true
+      })
+    } else {
+      this.audioNodeVAD.start()
+      this.listening = true
+    }
   }
 
   destroy = () => {
