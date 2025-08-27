@@ -1,5 +1,9 @@
 # @ricky0123/vad-web Changelog
 
+
+## 0.0.26
+* Fix non-realtime event accumulation
+* test site non-realtime also displays audio segments
 * Add ability to overwrite default audio constraint
 
 ## 0.0.24
