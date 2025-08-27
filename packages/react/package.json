@@ -24,8 +24,8 @@
     "@ricky0123/vad-web": "0.0.25"
   },
   "peerDependencies": {
-    "react": "18",
-    "react-dom": "18"
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
   },
   "scripts": {
     "build": "tsc",
