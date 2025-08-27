@@ -13,16 +13,16 @@
   },
   "private": true,
   "devDependencies": {
-    "@types/react": "^18.2.37",
-    "@types/react-dom": "^18.2.15",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
     "esbuild": "^0.17.10",
     "http-server": "^14.1.1",
     "live-server": "^1.2.2",
     "nodemon": "^3.0.2",
     "prettier": "^2.6.2",
     "prettier-plugin-organize-imports": "^4.1.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "workspaces": [
     "packages/web",
