@@ -14,5 +14,4 @@ PR without having completed all items.
 -->
 
 - [ ] Verified that changes work on the test site, adding changes to the test site if necessary to try out your changes <!-- `npm run dev` to run the test site locally. Alternatively, you can open a PR and vercel will deploy a preview version of the test site that you can view -->
-- [ ] Updated relevant changelogs <!-- see the `/changelogs` directory -->
 - [ ] Ran `npm run format`
