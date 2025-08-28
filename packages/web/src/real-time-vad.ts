@@ -58,30 +58,19 @@ type ModelOptions = {
   model: "v5" | "legacy"
 }
 
-interface RealTimeVADOptionsWithoutStream
+export interface RealTimeVADOptions
   extends FrameProcessorOptions,
     RealTimeVADCallbacks,
     OrtOptions,
     AssetOptions,
     ModelOptions {
-  additionalAudioConstraints?: MediaTrackConstraints
-  stream: undefined
-}
 
-interface RealTimeVADOptionsWithStream
-  extends FrameProcessorOptions,
-    RealTimeVADCallbacks,
-    OrtOptions,
-    AssetOptions,
-    ModelOptions {
-  stream: MediaStream
+  getStream: () => Promise<MediaStream>
+  pauseStream: (stream: MediaStream) => Promise<void>
+  resumeStream: (stream: MediaStream) => Promise<MediaStream>
 }
 
 export const ort = ortInstance
-
-export type RealTimeVADOptions =
-  | RealTimeVADOptionsWithStream
-  | RealTimeVADOptionsWithoutStream
 
 const workletFile = "vad.worklet.bundle.min.js"
 const sileroV5File = "silero_vad_v5.onnx"
@@ -113,10 +102,34 @@ export const getDefaultRealTimeVADOptions: (
       "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@latest/dist/",
     onnxWASMBasePath:
       "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/",
-    stream: undefined,
     ortConfig: undefined,
     model: model,
     workletOptions: {},
+    getStream: async () => {
+      return await navigator.mediaDevices.getUserMedia({
+        audio: {
+          channelCount: 1,
+          echoCancellation: true,
+          autoGainControl: true,
+          noiseSuppression: true,
+        },
+      })
+    },
+    pauseStream: async (stream: MediaStream) => {
+      stream.getTracks().forEach((track) => {
+        track.stop()
+      })
+    },
+    resumeStream: async (stream: MediaStream) => {
+      return await navigator.mediaDevices.getUserMedia({
+        audio: {
+          channelCount: 1,
+          echoCancellation: true,
+          autoGainControl: true,
+          noiseSuppression: true,
+        },
+      })
+    },
   }
 }
 
@@ -128,18 +141,7 @@ export class MicVAD {
     }
     validateOptions(fullOptions)
 
-    let stream: MediaStream
-    if (fullOptions.stream === undefined)
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          channelCount: 1,
-          echoCancellation: true,
-          autoGainControl: true,
-          noiseSuppression: true,
-          ...fullOptions.additionalAudioConstraints,
-        },
-      })
-    else stream = fullOptions.stream
+    const stream = await fullOptions.getStream()
 
     const audioContext = new AudioContext()
     const sourceNode = new MediaStreamAudioSourceNode(audioContext, {
@@ -176,31 +178,18 @@ export class MicVAD {
   }
 
   resume = async () => {
-    const additionalAudioConstraints =
-      "additionalAudioConstraints" in this.options
-        ? this.options.additionalAudioConstraints
-        : {}
-    this.stream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        channelCount: 1,
-        echoCancellation: true,
-        autoGainControl: true,
-        noiseSuppression: true,
-        ...additionalAudioConstraints,
-      },
-    })
+    this.stream = await this.options.resumeStream(this.stream)
     this.sourceNode = new MediaStreamAudioSourceNode(this.audioContext, {
       mediaStream: this.stream,
     })
     this.audioNodeVAD.receive(this.sourceNode)
   }
 
-  start = () => {
+  start = async () => {
     if (!this.stream.active) {
-      this.resume().then(() => {
-        this.audioNodeVAD.start()
-        this.listening = true
-      })
+      await this.resume()
+      this.audioNodeVAD.start()
+      this.listening = true
     } else {
       this.audioNodeVAD.start()
       this.listening = true
@@ -211,9 +200,7 @@ export class MicVAD {
     if (this.listening) {
       this.pause()
     }
-    if (this.options.stream === undefined) {
-      this.stream.getTracks().forEach((track) => track.stop())
-    }
+    this.options.pauseStream(this.stream)
     this.sourceNode.disconnect()
     this.audioNodeVAD.destroy()
     this.audioContext.close()
