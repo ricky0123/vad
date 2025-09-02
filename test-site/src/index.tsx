@@ -1,5 +1,9 @@
 import type { ReactRealTimeVADOptions } from "@ricky0123/vad-react"
-import { getDefaultReactRealTimeVADOptions, useMicVAD, utils } from "@ricky0123/vad-react"
+import {
+  getDefaultReactRealTimeVADOptions,
+  useMicVAD,
+  utils,
+} from "@ricky0123/vad-react"
 import * as ort from "onnxruntime-web"
 import React, { useEffect, useState } from "react"
 import { createRoot } from "react-dom/client"
@@ -16,37 +20,40 @@ const vadAttributes = ["errored", "loading", "listening", "userSpeaking"]
 const vadMethods = ["pause", "start", "toggle"]
 
 const parsers: Partial<
-  Record<keyof ReactRealTimeVADOptions, (val: string) => string | boolean | number>
+  Record<
+    keyof ReactRealTimeVADOptions,
+    (val: string) => string | boolean | number
+  >
 > = {
   model: (val: string) => val,
   baseAssetPath: (val: string) => val,
   onnxWASMBasePath: (val: string) => val,
-  submitUserSpeechOnPause: (val: string) => val === 'true',
+  submitUserSpeechOnPause: (val: string) => val === "true",
   positiveSpeechThreshold: (val: string) => parseFloat(val),
   negativeSpeechThreshold: (val: string) => parseFloat(val),
   frameSamples: (val: string) => parseInt(val),
   redemptionFrames: (val: string) => parseInt(val),
   preSpeechPadFrames: (val: string) => parseInt(val),
   minSpeechFrames: (val: string) => parseInt(val),
-  startOnLoad: (val: string) => val === 'true',
+  startOnLoad: (val: string) => val === "true",
   userSpeakingThreshold: (val: string) => parseFloat(val),
 }
 
 const defaultParams: Partial<ReactRealTimeVADOptions> = Object.fromEntries(
-  Object.entries(getDefaultReactRealTimeVADOptions("legacy")).filter(
-    ([key, _value]) => {
+  Object.entries(getDefaultReactRealTimeVADOptions("legacy"))
+    .filter(([key, _value]) => {
       return key in parsers
-    }
-  ).map(([key, value]) => {
-    return [key, value]
-  })
+    })
+    .map(([key, value]) => {
+      return [key, value]
+    })
 )
 
 const getOptionsFromHash = () => {
   const hash = window.location.hash
   if (!hash) return {}
   const params = new URLSearchParams(hash.slice(1))
-  const opts = params.get('opts')
+  const opts = params.get("opts")
   if (!opts) return {}
   try {
     const out = JSON.parse(decodeURIComponent(opts))
@@ -60,7 +67,7 @@ const getOptionsFromHash = () => {
 
 const opts = {
   ...defaultParams,
-  ...getOptionsFromHash()
+  ...getOptionsFromHash(),
 }
 
 function App() {
@@ -68,10 +75,13 @@ function App() {
   const [newVadParams, setNewVadParams] = useState({})
   const [demo, setDemo] = useState(true)
 
-  const handleInputChange = (optionName: keyof ReactRealTimeVADOptions, newValue: string) => {
+  const handleInputChange = (
+    optionName: keyof ReactRealTimeVADOptions,
+    newValue: string
+  ) => {
     setNewVadParams((prevValues) => ({
       ...prevValues,
-      [optionName]: parsers[optionName]?.(newValue)
+      [optionName]: parsers[optionName]?.(newValue),
     }))
   }
 
@@ -88,7 +98,7 @@ function App() {
     const opts = JSON.stringify(params)
     window.location.hash = `#opts=${encodeURIComponent(opts)}`
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000))
     setDemo(true)
   }
 
@@ -115,7 +125,10 @@ function App() {
                       className="rounded mx-5"
                       type="text"
                       onChange={(e) =>
-                        handleInputChange(optionName as keyof ReactRealTimeVADOptions, e.target.value)
+                        handleInputChange(
+                          optionName as keyof ReactRealTimeVADOptions,
+                          e.target.value
+                        )
                       }
                     />
                   </th>
@@ -133,21 +146,26 @@ function App() {
         >
           Restart
         </button>
-        {demo && <VADDemo initializationParameters={initializationParameters} />}
+        {demo && (
+          <VADDemo initializationParameters={initializationParameters} />
+        )}
       </div>
     </div>
   )
 }
 
-function VADDemo({ initializationParameters }: { initializationParameters: Partial<ReactRealTimeVADOptions> }) {
+function VADDemo({
+  initializationParameters,
+}: {
+  initializationParameters: Partial<ReactRealTimeVADOptions>
+}) {
   const [audioList, setAudioList] = useState<string[]>([])
   const vad = useMicVAD({
     ...initializationParameters,
     onVADMisfire: () => {
       console.log("Vad misfire")
     },
-    onFrameProcessed: (_probabilities, _frame) => {
-    },
+    onFrameProcessed: (_probabilities, _frame) => {},
     onSpeechStart: () => {
       console.log("Speech start")
     },
@@ -176,7 +194,7 @@ function VADDemo({ initializationParameters }: { initializationParameters: Parti
           <button
             className="bg-violet-100 hover:bg-violet-200 rounded-full px-4 py-2 mx-1"
             onClick={() => {
-              (vad as any)[methodName]()
+              ;(vad as any)[methodName]()
             }}
             key={methodName}
           >
