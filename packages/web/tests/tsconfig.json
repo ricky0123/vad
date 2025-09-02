@@ -4,7 +4,8 @@
     "types": ["jest", "node"],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "rootDir": ".."
   },
   "include": [
     "**/*.ts",
