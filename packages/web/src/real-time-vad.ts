@@ -76,16 +76,14 @@ const workletFile = "vad.worklet.bundle.min.js"
 const sileroV5File = "silero_vad_v5.onnx"
 const sileroLegacyFile = "silero_vad_legacy.onnx"
 
-export const getDefaultRealTimeVADOptions: (
-  model: "v5" | "legacy"
-) => RealTimeVADOptions = (model) => {
+export const getDefaultRealTimeVADOptions = (model: "v5" | "legacy") => {
   const frameProcessorOptions =
     model === "v5"
       ? defaultV5FrameProcessorOptions
       : defaultLegacyFrameProcessorOptions
   return {
     ...frameProcessorOptions,
-    onFrameProcessed: (probabilities, frame) => {},
+    onFrameProcessed: (_probabilities: SpeechProbabilities, _frame: Float32Array) => {},
     onVADMisfire: () => {
       log.debug("VAD misfire")
     },
@@ -102,7 +100,6 @@ export const getDefaultRealTimeVADOptions: (
       "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@latest/dist/",
     onnxWASMBasePath:
       "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/",
-    ortConfig: undefined,
     model: model,
     workletOptions: {},
     getStream: async () => {
@@ -115,12 +112,12 @@ export const getDefaultRealTimeVADOptions: (
         },
       })
     },
-    pauseStream: async (stream: MediaStream) => {
-      stream.getTracks().forEach((track) => {
+    pauseStream: async (_stream: MediaStream) => {
+      _stream.getTracks().forEach((track) => {
         track.stop()
       })
     },
-    resumeStream: async (stream: MediaStream) => {
+    resumeStream: async (_stream: MediaStream) => {
       return await navigator.mediaDevices.getUserMedia({
         audio: {
           channelCount: 1,
@@ -206,15 +203,13 @@ export class MicVAD {
     this.audioContext.close()
   }
 
-  setOptions = (options) => {
+  setOptions = (options: Partial<FrameProcessorOptions>) => {
     this.audioNodeVAD.setFrameProcessorOptions(options)
   }
 }
 
 export class AudioNodeVAD {
   private audioNode!: AudioWorkletNode | ScriptProcessorNode
-  private buffer?: Float32Array
-  private bufferIndex: number = 0
   private frameProcessor: FrameProcessor
   private gainNode?: GainNode
   private resampler?: Resampler
@@ -415,7 +410,7 @@ export class AudioNodeVAD {
     this.gainNode?.disconnect()
   }
 
-  setFrameProcessorOptions = (options) => {
+  setFrameProcessorOptions = (options: Partial<FrameProcessorOptions>) => {
     this.frameProcessor.options = {
       ...this.frameProcessor.options,
       ...options,

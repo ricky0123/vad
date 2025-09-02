@@ -13,7 +13,7 @@ class Processor extends AudioWorkletProcessor {
   _stopProcessing = false
   options: WorkletOptions
 
-  constructor(options) {
+  constructor(options: any) {
     super()
     this.options = options.processorOptions as WorkletOptions
 
@@ -37,8 +37,8 @@ class Processor extends AudioWorkletProcessor {
   }
   process(
     inputs: Float32Array[][],
-    outputs: Float32Array[][],
-    parameters: Record<string, Float32Array>
+    _outputs: Float32Array[][],
+    _parameters: Record<string, Float32Array>
   ): boolean {
     if (this._stopProcessing) {
       return false

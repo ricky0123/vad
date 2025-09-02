@@ -29,7 +29,6 @@ export interface NonRealTimeVADOptions
 
 export const defaultNonRealTimeVADOptions: NonRealTimeVADOptions = {
   ...defaultLegacyFrameProcessorOptions,
-  ortConfig: undefined,
   modelURL: baseAssetPath + "silero_vad_legacy.onnx",
   modelFetcher: defaultModelFetcher,
 }

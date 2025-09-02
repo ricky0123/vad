@@ -70,19 +70,6 @@ export function encodeWAV(
   return buffer
 }
 
-function interleave(inputL: Float32Array, inputR: Float32Array) {
-  var length = inputL.length + inputR.length
-  var result = new Float32Array(length)
-  var index = 0
-  var inputIndex = 0
-  while (index < length) {
-    result[index++] = inputL[inputIndex] as number
-    result[index++] = inputR[inputIndex] as number
-    inputIndex++
-  }
-  return result
-}
-
 function writeFloat32(output: DataView, offset: number, input: Float32Array) {
   for (var i = 0; i < input.length; i++, offset += 4) {
     output.setFloat32(offset, input[i] as number, true)
@@ -111,7 +98,7 @@ export async function audioFileToArray(audioFileData: Blob) {
   const reader = new FileReader()
   let audioBuffer: AudioBuffer | null = null
   await new Promise<void>((res) => {
-    reader.addEventListener("loadend", (ev) => {
+    reader.addEventListener("loadend", (_ev) => {
       const audioData = reader.result as ArrayBuffer
       ctx.decodeAudioData(
         audioData,
@@ -119,7 +106,7 @@ export async function audioFileToArray(audioFileData: Blob) {
           audioBuffer = buffer
           ctx
             .startRendering()
-            .then((renderedBuffer) => {
+            .then((_renderedBuffer) => {
               console.log("Rendering completed successfully")
               res()
             })

@@ -6,6 +6,7 @@
     "test": "npm run test --workspaces --if-present",
     "clean": "npm run clean --workspaces --if-present",
     "format": "prettier --write '{packages,examples,test-site}/**/*.{ts,html,jsx}'",
+    "typecheck": "tsc --noEmit --project packages/web/tsconfig.json && tsc --noEmit --project packages/react/tsconfig.json",
     "build-test-site": "./test-site/build.sh",
     "serve-test-site": "http-server ./test-site/dist",
     "dev": "./scripts/dev.sh",
