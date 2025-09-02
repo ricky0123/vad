@@ -27,16 +27,15 @@ const configurableOptions: (keyof ReactRealTimeVADOptions)[] = [
   "submitUserSpeechOnPause",
   "positiveSpeechThreshold",
   "negativeSpeechThreshold",
-  "frameSamples",
-  "redemptionFrames",
-  "preSpeechPadFrames",
-  "minSpeechFrames",
+  "redemptionMs",
+  "preSpeechPadMs",
+  "minSpeechMs",
   "startOnLoad",
   "userSpeakingThreshold",
 ]
 
 const defaultParams: Partial<ReactRealTimeVADOptions> = Object.fromEntries(
-  Object.entries(getDefaultReactRealTimeVADOptions("legacy"))
+  Object.entries(getDefaultReactRealTimeVADOptions("v5"))
     .filter(([key, _value]) => {
       return configurableOptions.includes(key as keyof ReactRealTimeVADOptions)
     })
@@ -64,7 +63,118 @@ const getOptionsFromHash = () => {
 const opts = {
   ...defaultParams,
   ...getOptionsFromHash(),
+  // Ensure frameSamples is set based on model
+  frameSamples:
+    (getOptionsFromHash().model || defaultParams.model) === "v5" ? 512 : 1536,
 }
+
+// Form component for boolean values (checkboxes)
+const BooleanInput = ({
+  optionName,
+  currentValue,
+  onInputChange,
+}: {
+  optionName: keyof ReactRealTimeVADOptions
+  currentValue: boolean
+  onInputChange: (
+    optionName: keyof ReactRealTimeVADOptions,
+    newValue: string | boolean | number
+  ) => void
+}) => (
+  <input
+    type="checkbox"
+    checked={currentValue}
+    onChange={(e) => onInputChange(optionName, e.target.checked)}
+    className="rounded mx-5"
+  />
+)
+
+// Form component for model selection (dropdown)
+const ModelSelect = ({
+  optionName,
+  currentValue,
+  onInputChange,
+}: {
+  optionName: keyof ReactRealTimeVADOptions
+  currentValue: string
+  onInputChange: (
+    optionName: keyof ReactRealTimeVADOptions,
+    newValue: string | boolean | number
+  ) => void
+}) => (
+  <select
+    value={currentValue}
+    onChange={(e) => onInputChange(optionName, e.target.value)}
+    className="rounded mx-5"
+  >
+    <option value="legacy">legacy</option>
+    <option value="v5">v5</option>
+  </select>
+)
+
+// Form component for number values
+const NumberInput = ({
+  optionName,
+  currentValue,
+  onInputChange,
+}: {
+  optionName: keyof ReactRealTimeVADOptions
+  currentValue: number
+  onInputChange: (
+    optionName: keyof ReactRealTimeVADOptions,
+    newValue: string | boolean | number
+  ) => void
+}) => (
+  <input
+    type="number"
+    value={currentValue}
+    onChange={(e) => onInputChange(optionName, parseFloat(e.target.value) || 0)}
+    className="rounded mx-5"
+  />
+)
+
+// Form component for float values (thresholds)
+const FloatInput = ({
+  optionName,
+  currentValue,
+  onInputChange,
+}: {
+  optionName: keyof ReactRealTimeVADOptions
+  currentValue: number
+  onInputChange: (
+    optionName: keyof ReactRealTimeVADOptions,
+    newValue: string | boolean | number
+  ) => void
+}) => (
+  <input
+    type="number"
+    step="0.01"
+    value={currentValue}
+    onChange={(e) => onInputChange(optionName, parseFloat(e.target.value) || 0)}
+    className="rounded mx-5"
+  />
+)
+
+// Form component for text values
+const TextInput = ({
+  optionName,
+  currentValue,
+  onInputChange,
+}: {
+  optionName: keyof ReactRealTimeVADOptions
+  currentValue: string
+  onInputChange: (
+    optionName: keyof ReactRealTimeVADOptions,
+    newValue: string | boolean | number
+  ) => void
+}) => (
+  <input
+    type="text"
+    value={currentValue}
+    onChange={(e) => onInputChange(optionName, e.target.value)}
+    className="rounded mx-5"
+  />
+)
 
 function App() {
   const [initializationParameters, setVadParams] = useState(opts)
@@ -77,98 +187,15 @@ function App() {
     optionName: keyof ReactRealTimeVADOptions,
     newValue: string | boolean | number
   ) => {
-    setNewVadParams((prevValues) => ({
-      ...prevValues,
-      [optionName]: newValue,
-    }))
+    setNewVadParams((prevValues) => {
+      const updatedValues = {
+        ...prevValues,
+        [optionName]: newValue,
+      }
+
+      return updatedValues
+    })
   }
-
-  // Form component for boolean values (checkboxes)
-  const BooleanInput = ({
-    optionName,
-    currentValue,
-  }: {
-    optionName: keyof ReactRealTimeVADOptions
-    currentValue: boolean
-  }) => (
-    <input
-      type="checkbox"
-      checked={currentValue}
-      onChange={(e) => handleInputChange(optionName, e.target.checked)}
-      className="rounded mx-5"
-    />
-  )
-
-  // Form component for model selection (dropdown)
-  const ModelSelect = ({
-    optionName,
-    currentValue,
-  }: {
-    optionName: keyof ReactRealTimeVADOptions
-    currentValue: string
-  }) => (
-    <select
-      value={currentValue}
-      onChange={(e) => handleInputChange(optionName, e.target.value)}
-      className="rounded mx-5"
-    >
-      <option value="legacy">legacy</option>
-      <option value="v5">v5</option>
-    </select>
-  )
-
-  // Form component for number values
-  const NumberInput = ({
-    optionName,
-    currentValue,
-  }: {
-    optionName: keyof ReactRealTimeVADOptions
-    currentValue: number
-  }) => (
-    <input
-      type="number"
-      value={currentValue}
-      onChange={(e) =>
-        handleInputChange(optionName, parseFloat(e.target.value) || 0)
-      }
-      className="rounded mx-5"
-    />
-  )
-
-  // Form component for float values (thresholds)
-  const FloatInput = ({
-    optionName,
-    currentValue,
-  }: {
-    optionName: keyof ReactRealTimeVADOptions
-    currentValue: number
-  }) => (
-    <input
-      type="number"
-      step="0.01"
-      value={currentValue}
-      onChange={(e) =>
-        handleInputChange(optionName, parseFloat(e.target.value) || 0)
-      }
-      className="rounded mx-5"
-    />
-  )
-
-  // Form component for text values
-  const TextInput = ({
-    optionName,
-    currentValue,
-  }: {
-    optionName: keyof ReactRealTimeVADOptions
-    currentValue: string
-  }) => (
-    <input
-      type="text"
-      value={currentValue}
-      onChange={(e) => handleInputChange(optionName, e.target.value)}
-      className="rounded mx-5"
-    />
-  )
 
   // Helper function to determine the appropriate form component
   const getFormComponent = (
@@ -181,11 +208,23 @@ function App() {
       optionName === "startOnLoad" ||
       optionName === "submitUserSpeechOnPause"
     ) {
-      return <BooleanInput optionName={optionName} currentValue={newValue} />
+      return (
+        <BooleanInput
+          optionName={optionName}
+          currentValue={newValue}
+          onInputChange={handleInputChange}
+        />
+      )
     }
 
     if (optionName === "model") {
-      return <ModelSelect optionName={optionName} currentValue={newValue} />
+      return (
+        <ModelSelect
+          optionName={optionName}
+          currentValue={newValue}
+          onInputChange={handleInputChange}
+        />
+      )
     }
 
     // Use FloatInput for threshold values
@@ -194,14 +233,32 @@ function App() {
       optionName === "negativeSpeechThreshold" ||
       optionName === "userSpeakingThreshold"
     ) {
-      return <FloatInput optionName={optionName} currentValue={newValue} />
+      return (
+        <FloatInput
+          optionName={optionName}
+          currentValue={newValue}
+          onInputChange={handleInputChange}
+        />
+      )
     }
 
     if (typeof currentValue === "number") {
-      return <NumberInput optionName={optionName} currentValue={newValue} />
+      return (
+        <NumberInput
+          optionName={optionName}
+          currentValue={newValue}
+          onInputChange={handleInputChange}
+        />
+      )
     }
 
-    return <TextInput optionName={optionName} currentValue={newValue} />
+    return (
+      <TextInput
+        optionName={optionName}
+        currentValue={newValue}
+        onInputChange={handleInputChange}
+      />
+    )
   }
 
   const handleRestart = async () => {

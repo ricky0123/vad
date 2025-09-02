@@ -4,8 +4,7 @@ import {
   FrameProcessor,
   FrameProcessorEvent,
   FrameProcessorOptions,
-  defaultLegacyFrameProcessorOptions,
-  defaultV5FrameProcessorOptions,
+  defaultFrameProcessorOptions,
   validateOptions,
 } from "./frame-processor"
 import { log } from "./logging"
@@ -76,12 +75,8 @@ const sileroV5File = "silero_vad_v5.onnx"
 const sileroLegacyFile = "silero_vad_legacy.onnx"
 
 export const getDefaultRealTimeVADOptions = (model: "v5" | "legacy") => {
-  const frameProcessorOptions =
-    model === "v5"
-      ? defaultV5FrameProcessorOptions
-      : defaultLegacyFrameProcessorOptions
   return {
-    ...frameProcessorOptions,
+    ...defaultFrameProcessorOptions,
     onFrameProcessed: (
       _probabilities: SpeechProbabilities,
       _frame: Float32Array
@@ -244,21 +239,30 @@ export class AudioNodeVAD {
       throw e
     }
 
+    const frameSamples = fullOptions.model === "v5" ? 512 : 1536
+    const msPerFrame = frameSamples / 16
+
     const frameProcessor = new FrameProcessor(
       model.process,
       model.reset_state,
       {
-        frameSamples: fullOptions.frameSamples,
         positiveSpeechThreshold: fullOptions.positiveSpeechThreshold,
         negativeSpeechThreshold: fullOptions.negativeSpeechThreshold,
-        redemptionFrames: fullOptions.redemptionFrames,
-        preSpeechPadFrames: fullOptions.preSpeechPadFrames,
-        minSpeechFrames: fullOptions.minSpeechFrames,
+        redemptionMs: fullOptions.redemptionMs,
+        preSpeechPadMs: fullOptions.preSpeechPadMs,
+        minSpeechMs: fullOptions.minSpeechMs,
         submitUserSpeechOnPause: fullOptions.submitUserSpeechOnPause,
-      }
+      },
+      msPerFrame
     )
 
-    const audioNodeVAD = new AudioNodeVAD(ctx, fullOptions, frameProcessor)
+    const audioNodeVAD = new AudioNodeVAD(
+      ctx,
+      fullOptions,
+      frameProcessor,
+      frameSamples,
+      msPerFrame
+    )
     await audioNodeVAD.setupAudioNode()
     return audioNodeVAD
   }
@@ -266,7 +270,9 @@ export class AudioNodeVAD {
   constructor(
     public ctx: AudioContext,
     public options: RealTimeVADOptions,
-    frameProcessor: FrameProcessor
+    frameProcessor: FrameProcessor,
+    public frameSamples: number,
+    public msPerFrame: number
   ) {
     this.frameProcessor = frameProcessor
   }
@@ -282,7 +288,7 @@ export class AudioNodeVAD {
         const workletOptions = this.options.workletOptions ?? {}
         workletOptions.processorOptions = {
           ...(workletOptions.processorOptions ?? {}),
-          frameSamples: this.options.frameSamples,
+          frameSamples: this.frameSamples,
         }
 
         this.audioNode = new AudioWorkletNode(
@@ -319,7 +325,7 @@ export class AudioNodeVAD {
     this.resampler = new Resampler({
       nativeSampleRate: this.ctx.sampleRate,
       targetSampleRate: 16000, // VAD models expect 16kHz
-      targetFrameSize: this.options.frameSamples ?? 480,
+      targetFrameSize: this.frameSamples ?? 480,
     })
 
     // Fallback to ScriptProcessor
