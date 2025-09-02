@@ -19,30 +19,26 @@ createRoot(domContainer).render(<App />)
 const vadAttributes = ["errored", "loading", "listening", "userSpeaking"]
 const vadMethods = ["pause", "start", "toggle"]
 
-const parsers: Partial<
-  Record<
-    keyof ReactRealTimeVADOptions,
-    (val: string) => string | boolean | number
-  >
-> = {
-  model: (val: string) => val,
-  baseAssetPath: (val: string) => val,
-  onnxWASMBasePath: (val: string) => val,
-  submitUserSpeechOnPause: (val: string) => val === "true",
-  positiveSpeechThreshold: (val: string) => parseFloat(val),
-  negativeSpeechThreshold: (val: string) => parseFloat(val),
-  frameSamples: (val: string) => parseInt(val),
-  redemptionFrames: (val: string) => parseInt(val),
-  preSpeechPadFrames: (val: string) => parseInt(val),
-  minSpeechFrames: (val: string) => parseInt(val),
-  startOnLoad: (val: string) => val === "true",
-  userSpeakingThreshold: (val: string) => parseFloat(val),
-}
+// Define which options should be shown in the UI
+const configurableOptions: (keyof ReactRealTimeVADOptions)[] = [
+  "model",
+  "baseAssetPath",
+  "onnxWASMBasePath",
+  "submitUserSpeechOnPause",
+  "positiveSpeechThreshold",
+  "negativeSpeechThreshold",
+  "frameSamples",
+  "redemptionFrames",
+  "preSpeechPadFrames",
+  "minSpeechFrames",
+  "startOnLoad",
+  "userSpeakingThreshold",
+]
 
 const defaultParams: Partial<ReactRealTimeVADOptions> = Object.fromEntries(
   Object.entries(getDefaultReactRealTimeVADOptions("legacy"))
     .filter(([key, _value]) => {
-      return key in parsers
+      return configurableOptions.includes(key as keyof ReactRealTimeVADOptions)
     })
     .map(([key, value]) => {
       return [key, value]
@@ -72,17 +68,140 @@ const opts = {
 
 function App() {
   const [initializationParameters, setVadParams] = useState(opts)
-  const [newVadParams, setNewVadParams] = useState({})
+  const [newVadParams, setNewVadParams] = useState<
+    Partial<ReactRealTimeVADOptions>
+  >({})
   const [demo, setDemo] = useState(true)
 
   const handleInputChange = (
     optionName: keyof ReactRealTimeVADOptions,
-    newValue: string
+    newValue: string | boolean | number
   ) => {
     setNewVadParams((prevValues) => ({
       ...prevValues,
-      [optionName]: parsers[optionName]?.(newValue),
+      [optionName]: newValue,
     }))
+  }
+
+  // Form component for boolean values (checkboxes)
+  const BooleanInput = ({
+    optionName,
+    currentValue,
+  }: {
+    optionName: keyof ReactRealTimeVADOptions
+    currentValue: boolean
+  }) => (
+    <input
+      type="checkbox"
+      checked={currentValue}
+      onChange={(e) => handleInputChange(optionName, e.target.checked)}
+      className="rounded mx-5"
+    />
+  )
+
+  // Form component for model selection (dropdown)
+  const ModelSelect = ({
+    optionName,
+    currentValue,
+  }: {
+    optionName: keyof ReactRealTimeVADOptions
+    currentValue: string
+  }) => (
+    <select
+      value={currentValue}
+      onChange={(e) => handleInputChange(optionName, e.target.value)}
+      className="rounded mx-5"
+    >
+      <option value="legacy">legacy</option>
+      <option value="v5">v5</option>
+    </select>
+  )
+
+  // Form component for number values
+  const NumberInput = ({
+    optionName,
+    currentValue,
+  }: {
+    optionName: keyof ReactRealTimeVADOptions
+    currentValue: number
+  }) => (
+    <input
+      type="number"
+      value={currentValue}
+      onChange={(e) =>
+        handleInputChange(optionName, parseFloat(e.target.value) || 0)
+      }
+      className="rounded mx-5"
+    />
+  )
+
+  // Form component for float values (thresholds)
+  const FloatInput = ({
+    optionName,
+    currentValue,
+  }: {
+    optionName: keyof ReactRealTimeVADOptions
+    currentValue: number
+  }) => (
+    <input
+      type="number"
+      step="0.01"
+      value={currentValue}
+      onChange={(e) =>
+        handleInputChange(optionName, parseFloat(e.target.value) || 0)
+      }
+      className="rounded mx-5"
+    />
+  )
+
+  // Form component for text values
+  const TextInput = ({
+    optionName,
+    currentValue,
+  }: {
+    optionName: keyof ReactRealTimeVADOptions
+    currentValue: string
+  }) => (
+    <input
+      type="text"
+      value={currentValue}
+      onChange={(e) => handleInputChange(optionName, e.target.value)}
+      className="rounded mx-5"
+    />
+  )
+
+  // Helper function to determine the appropriate form component
+  const getFormComponent = (
+    optionName: keyof ReactRealTimeVADOptions,
+    currentValue: any
+  ) => {
+    const newValue = newVadParams[optionName] ?? currentValue
+
+    if (
+      optionName === "startOnLoad" ||
+      optionName === "submitUserSpeechOnPause"
+    ) {
+      return <BooleanInput optionName={optionName} currentValue={newValue} />
+    }
+
+    if (optionName === "model") {
+      return <ModelSelect optionName={optionName} currentValue={newValue} />
+    }
+
+    // Use FloatInput for threshold values
+    if (
+      optionName === "positiveSpeechThreshold" ||
+      optionName === "negativeSpeechThreshold" ||
+      optionName === "userSpeakingThreshold"
+    ) {
+      return <FloatInput optionName={optionName} currentValue={newValue} />
+    }
+
+    if (typeof currentValue === "number") {
+      return <NumberInput optionName={optionName} currentValue={newValue} />
+    }
+
+    return <TextInput optionName={optionName} currentValue={newValue} />
   }
 
   const handleRestart = async () => {
@@ -115,23 +234,14 @@ function App() {
             </tr>
           </thead>
           <tbody>
-            {Object.keys(initializationParameters).map((optionName) => {
+            {configurableOptions.map((optionName) => {
+              const currentValue = initializationParameters[optionName]
+
               return (
                 <tr key={optionName}>
                   <th>{optionName}</th>
-                  <th>{initializationParameters[optionName].toString()}</th>
-                  <th>
-                    <input
-                      className="rounded mx-5"
-                      type="text"
-                      onChange={(e) =>
-                        handleInputChange(
-                          optionName as keyof ReactRealTimeVADOptions,
-                          e.target.value
-                        )
-                      }
-                    />
-                  </th>
+                  <th>{currentValue?.toString()}</th>
+                  <th>{getFormComponent(optionName, currentValue)}</th>
                 </tr>
               )
             })}
