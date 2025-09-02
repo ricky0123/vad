@@ -1,3 +1,39 @@
+// Mock ONNX Runtime
+class MockTensor {
+  constructor(
+    public type: string,
+    public data: any,
+    public dims?: number[]
+  ) {}
+}
+
+class MockInferenceSession {
+  async run(inputs: any) {
+    // Mock the inference results that the VAD models expect
+    return {
+      output: { data: [0.5] }, // Mock speech probability
+      hn: new MockTensor("float32", Array(2 * 64).fill(0), [2, 1, 64]), // For legacy model
+      cn: new MockTensor("float32", Array(2 * 64).fill(0), [2, 1, 64]), // For legacy model
+      stateN: new MockTensor("float32", Array(2 * 128).fill(0), [2, 1, 128]), // For v5 model
+    }
+  }
+}
+
+const mockOrt = {
+  Tensor: MockTensor,
+  InferenceSession: {
+    create: jest.fn(() => Promise.resolve(new MockInferenceSession())),
+  },
+  env: {
+    wasm: {
+      wasmPaths: "",
+    },
+  },
+}
+
+// Mock the onnxruntime-web module
+jest.mock("onnxruntime-web", () => mockOrt)
+
 // Mock Web Audio API
 class MockAudioContext {
   state = "running"
@@ -6,6 +42,11 @@ class MockAudioContext {
   destination = {
     connect: jest.fn(),
     disconnect: jest.fn(),
+  }
+
+  // Add audioWorklet mock
+  audioWorklet = {
+    addModule: jest.fn(() => Promise.resolve()),
   }
 
   createMediaStreamSource = jest.fn(() => ({
@@ -71,6 +112,21 @@ class MockAudioWorkletNode {
   connect = jest.fn()
   disconnect = jest.fn()
   onprocessorerror = null
+
+  constructor(context: any, name: string, options?: any) {
+    // Mock constructor behavior
+  }
+}
+
+// Add MediaStreamAudioSourceNode mock
+class MockMediaStreamAudioSourceNode {
+  connect = jest.fn()
+  disconnect = jest.fn()
+  mediaStream: MediaStream
+
+  constructor(context: any, options: { mediaStream: MediaStream }) {
+    this.mediaStream = options.mediaStream
+  }
 }
 
 class MockMediaDevices {
@@ -81,6 +137,7 @@ class MockMediaDevices {
       getVideoTracks: jest.fn(() => []),
       addTrack: jest.fn(),
       removeTrack: jest.fn(),
+      active: true, // Add active property for stream state checking
     })
   )
 }
@@ -91,6 +148,7 @@ class MockMediaStream {
   getVideoTracks = jest.fn(() => [])
   addTrack = jest.fn()
   removeTrack = jest.fn()
+  active = true // Add active property for stream state checking
 }
 
 // Mock navigator.mediaDevices
@@ -115,6 +173,12 @@ Object.defineProperty(global, "webkitAudioContext", {
 // Mock AudioWorkletNode
 Object.defineProperty(global, "AudioWorkletNode", {
   value: MockAudioWorkletNode,
+  writable: true,
+})
+
+// Mock MediaStreamAudioSourceNode
+Object.defineProperty(global, "MediaStreamAudioSourceNode", {
+  value: MockMediaStreamAudioSourceNode,
   writable: true,
 })
 
