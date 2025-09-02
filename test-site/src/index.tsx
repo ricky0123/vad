@@ -34,7 +34,7 @@ const parsers: Partial<
 
 const defaultParams: Partial<ReactRealTimeVADOptions> = Object.fromEntries(
   Object.entries(getDefaultReactRealTimeVADOptions("legacy")).filter(
-    ([key, value]) => {
+    ([key, _value]) => {
       return key in parsers
     }
   ).map(([key, value]) => {
@@ -68,10 +68,10 @@ function App() {
   const [newVadParams, setNewVadParams] = useState({})
   const [demo, setDemo] = useState(true)
 
-  const handleInputChange = (optionName, newValue) => {
+  const handleInputChange = (optionName: keyof ReactRealTimeVADOptions, newValue: string) => {
     setNewVadParams((prevValues) => ({
       ...prevValues,
-      [optionName]: parsers[optionName](newValue)
+      [optionName]: parsers[optionName]?.(newValue)
     }))
   }
 
@@ -115,7 +115,7 @@ function App() {
                       className="rounded mx-5"
                       type="text"
                       onChange={(e) =>
-                        handleInputChange(optionName, e.target.value)
+                        handleInputChange(optionName as keyof ReactRealTimeVADOptions, e.target.value)
                       }
                     />
                   </th>
@@ -139,14 +139,14 @@ function App() {
   )
 }
 
-function VADDemo({ initializationParameters }) {
+function VADDemo({ initializationParameters }: { initializationParameters: Partial<ReactRealTimeVADOptions> }) {
   const [audioList, setAudioList] = useState<string[]>([])
   const vad = useMicVAD({
     ...initializationParameters,
     onVADMisfire: () => {
       console.log("Vad misfire")
     },
-    onFrameProcessed: (probabilities, frame) => {
+    onFrameProcessed: (_probabilities, _frame) => {
     },
     onSpeechStart: () => {
       console.log("Speech start")
@@ -176,7 +176,7 @@ function VADDemo({ initializationParameters }) {
           <button
             className="bg-violet-100 hover:bg-violet-200 rounded-full px-4 py-2 mx-1"
             onClick={() => {
-              vad[methodName]()
+              (vad as any)[methodName]()
             }}
             key={methodName}
           >
@@ -198,7 +198,7 @@ function VADDemo({ initializationParameters }) {
             return (
               <tr key={attribute}>
                 <th>{attribute}</th>
-                <th>{vad[attribute].toString()}</th>
+                <th>{(vad as any)[attribute].toString()}</th>
               </tr>
             )
           })}

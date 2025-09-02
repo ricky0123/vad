@@ -1,7 +1,7 @@
 // Conditional imports based on environment
 let NonRealTimeVAD: any, utils: any
 
-if (process.env.NODE_ENV === "development") {
+if (process.env["NODE_ENV"] === "development") {
   // Use local development build
   const localVAD = require("../../packages/web/src/index")
   NonRealTimeVAD = localVAD.NonRealTimeVAD
@@ -43,7 +43,7 @@ let showMs = true
 ;(window as any).testNonRealTime = async () => {
   // Configure VAD based on environment
   const vadConfig =
-    process.env.NODE_ENV === "development"
+    process.env["NODE_ENV"] === "development"
       ? {
           // Use local assets in development
           modelURL: "./silero_vad_legacy.onnx",
