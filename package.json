@@ -8,7 +8,7 @@
     "clean": "npm run clean --workspaces --if-present",
     "format": "prettier --write '{packages,examples,test-site}/**/*.{ts,tsx}'",
     "format-check": "prettier --check '{packages,examples,test-site}/**/*.{ts,tsx}'",
-    "typecheck": "tsc --noEmit --project packages/web/tsconfig.json && tsc --noEmit --project packages/web/tests/tsconfig.json && tsc --noEmit --project packages/react/tsconfig.json && tsc --noEmit --project test-site/tsconfig.json",
+    "typecheck": "tsc --noEmit --project packages/web/tsconfig.json && tsc --noEmit --project packages/react/tsconfig.json && tsc --noEmit --project test-site/tsconfig.json && tsc --noEmit --project packages/web/tests/tsconfig.json",
     "build-test-site": "./test-site/build.sh",
     "serve-test-site": "http-server ./test-site/dist",
     "dev": "./scripts/dev.sh",
