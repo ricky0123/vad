@@ -7,8 +7,6 @@ import { log } from "./logging"
 import { Message } from "./messages"
 import { SpeechProbabilities } from "./models"
 
-const RECOMMENDED_FRAME_SAMPLES = [512, 1024, 1536]
-
 export interface FrameProcessorOptions {
   /** Threshold over which values returned by the Silero VAD model will be considered as positively indicating speech.
    * The Silero VAD model is run on each frame. This number should be between 0 and 1.
@@ -20,28 +18,19 @@ export interface FrameProcessorOptions {
    */
   negativeSpeechThreshold: number
 
-  /** After a VAD value under the `negativeSpeechThreshold` is observed, the algorithm will wait `redemptionFrames` frames
+  /** After a VAD value under the `negativeSpeechThreshold` is observed, the algorithm will wait `redemptionMs` ms
    * before running `onSpeechEnd`. If the model returns a value over `positiveSpeechThreshold` during this grace period, then
    * the algorithm will consider the previously-detected "speech end" as having been a false negative.
    */
-  redemptionFrames: number
+  redemptionMs: number
 
-  /** Number of audio samples (under a sample rate of 16000) to comprise one "frame" to feed to the Silero VAD model.
-   * The `frame` serves as a unit of measurement of lengths of audio segments and many other parameters are defined in terms of
-   * frames. The authors of the Silero VAD model offer the following warning:
-   * > WARNING! Silero VAD models were trained using 512, 1024, 1536 samples for 16000 sample rate and 256, 512, 768 samples for 8000 sample rate.
-   * > Values other than these may affect model perfomance!!
-   * In this context, audio fed to the VAD model always has sample rate 16000. It is probably a good idea to leave this at 1536.
-   */
-  frameSamples: number
+  /** Number of ms to prepend to the audio segment that will be passed to `onSpeechEnd`. */
+  preSpeechPadMs: number
 
-  /** Number of frames to prepend to the audio segment that will be passed to `onSpeechEnd`. */
-  preSpeechPadFrames: number
-
-  /** If an audio segment is detected as a speech segment according to initial algorithm but it has fewer than `minSpeechFrames`,
+  /** If an audio segment is detected as a speech segment according to initial algorithm but it is shorter than `minSpeechMs`,
    * it will be discarded and `onVADMisfire` will be run instead of `onSpeechEnd`.
    */
-  minSpeechFrames: number
+  minSpeechMs: number
 
   /**
    * If true, when the user pauses the VAD, it may trigger `onSpeechEnd`.
@@ -49,30 +38,16 @@ export interface FrameProcessorOptions {
   submitUserSpeechOnPause: boolean
 }
 
-export const defaultLegacyFrameProcessorOptions: FrameProcessorOptions = {
+export const defaultFrameProcessorOptions: FrameProcessorOptions = {
   positiveSpeechThreshold: 0.5,
   negativeSpeechThreshold: 0.5 - 0.15,
-  preSpeechPadFrames: 1,
-  redemptionFrames: 8,
-  frameSamples: 1536,
-  minSpeechFrames: 3,
-  submitUserSpeechOnPause: false,
-}
-
-export const defaultV5FrameProcessorOptions: FrameProcessorOptions = {
-  positiveSpeechThreshold: 0.5,
-  negativeSpeechThreshold: 0.5 - 0.15,
-  preSpeechPadFrames: 3,
-  redemptionFrames: 24,
-  frameSamples: 512,
-  minSpeechFrames: 9,
+  preSpeechPadMs: 800,
+  redemptionMs: 1800,
+  minSpeechMs: 400,
   submitUserSpeechOnPause: false,
 }
 
 export function validateOptions(options: FrameProcessorOptions) {
-  if (!RECOMMENDED_FRAME_SAMPLES.includes(options.frameSamples)) {
-    log.warn("You are using an unusual frame size")
-  }
   if (
     options.positiveSpeechThreshold < 0 ||
     options.positiveSpeechThreshold > 1
@@ -87,11 +62,14 @@ export function validateOptions(options: FrameProcessorOptions) {
       "negativeSpeechThreshold should be between 0 and positiveSpeechThreshold"
     )
   }
-  if (options.preSpeechPadFrames < 0) {
-    log.error("preSpeechPadFrames should be positive")
+  if (options.preSpeechPadMs < 0) {
+    log.error("preSpeechPadMs should be positive")
   }
-  if (options.redemptionFrames < 0) {
-    log.error("redemptionFrames should be positive")
+  if (options.redemptionMs < 0) {
+    log.error("redemptionMs should be positive")
+  }
+  if (options.minSpeechMs < 0) {
+    log.error("minSpeechMs should be positive")
   }
 }
 
@@ -124,6 +102,9 @@ const concatArrays = (arrays: Float32Array[]): Float32Array => {
 }
 
 export class FrameProcessor implements FrameProcessorInterface {
+  redemptionFrames: number
+  preSpeechPadFrames: number
+  minSpeechFrames: number
   speaking: boolean = false
   audioBuffer: { frame: Float32Array; isSpeech: boolean }[]
   redemptionCounter = 0
@@ -136,9 +117,15 @@ export class FrameProcessor implements FrameProcessorInterface {
       frame: Float32Array
     ) => Promise<SpeechProbabilities>,
     public modelResetFunc: () => any,
-    public options: FrameProcessorOptions
+    public options: FrameProcessorOptions,
+    public msPerFrame: number
   ) {
     this.audioBuffer = []
+    this.redemptionFrames = Math.floor(options.redemptionMs / this.msPerFrame)
+    this.preSpeechPadFrames = Math.floor(
+      options.preSpeechPadMs / this.msPerFrame
+    )
+    this.minSpeechFrames = Math.floor(options.minSpeechMs / this.msPerFrame)
     this.reset()
   }
 
@@ -174,7 +161,7 @@ export class FrameProcessor implements FrameProcessorInterface {
       const speechFrameCount = audioBuffer.reduce((acc, item) => {
         return item.isSpeech ? acc + 1 : acc
       }, 0)
-      if (speechFrameCount >= this.options.minSpeechFrames) {
+      if (speechFrameCount >= this.minSpeechFrames) {
         const audio = concatArrays(audioBuffer.map((item) => item.frame))
         handleEvent({ msg: Message.SpeechEnd, audio })
       } else {
@@ -214,7 +201,7 @@ export class FrameProcessor implements FrameProcessorInterface {
 
     if (
       this.speaking &&
-      this.speechFrameCount === this.options.minSpeechFrames &&
+      this.speechFrameCount === this.minSpeechFrames &&
       !this.speechRealStartFired
     ) {
       this.speechRealStartFired = true
@@ -224,7 +211,7 @@ export class FrameProcessor implements FrameProcessorInterface {
     if (
       probs.isSpeech < this.options.negativeSpeechThreshold &&
       this.speaking &&
-      ++this.redemptionCounter >= this.options.redemptionFrames
+      ++this.redemptionCounter >= this.redemptionFrames
     ) {
       this.redemptionCounter = 0
       this.speechFrameCount = 0
@@ -237,7 +224,7 @@ export class FrameProcessor implements FrameProcessorInterface {
         return item.isSpeech ? acc + 1 : acc
       }, 0)
 
-      if (speechFrameCount >= this.options.minSpeechFrames) {
+      if (speechFrameCount >= this.minSpeechFrames) {
         const audio = concatArrays(audioBuffer.map((item) => item.frame))
         handleEvent({ msg: Message.SpeechEnd, audio })
       } else {
@@ -246,7 +233,7 @@ export class FrameProcessor implements FrameProcessorInterface {
     }
 
     if (!this.speaking) {
-      while (this.audioBuffer.length > this.options.preSpeechPadFrames) {
+      while (this.audioBuffer.length > this.preSpeechPadFrames) {
         this.audioBuffer.shift()
       }
       this.speechFrameCount = 0

@@ -3,7 +3,7 @@ import * as ortInstance from "onnxruntime-web"
 import { baseAssetPath } from "./asset-path"
 import { defaultModelFetcher } from "./default-model-fetcher"
 import {
-  defaultLegacyFrameProcessorOptions,
+  defaultFrameProcessorOptions,
   FrameProcessor,
   FrameProcessorEvent,
   FrameProcessorInterface,
@@ -28,12 +28,14 @@ export interface NonRealTimeVADOptions
 }
 
 export const defaultNonRealTimeVADOptions: NonRealTimeVADOptions = {
-  ...defaultLegacyFrameProcessorOptions,
+  ...defaultFrameProcessorOptions,
   modelURL: baseAssetPath + "silero_vad_legacy.onnx",
   modelFetcher: defaultModelFetcher,
 }
 
 export class NonRealTimeVAD {
+  frameSamples: number = 1536
+
   static async new(options: Partial<NonRealTimeVADOptions> = {}) {
     const fullOptions = {
       ...defaultNonRealTimeVADOptions,
@@ -51,14 +53,14 @@ export class NonRealTimeVAD {
       model.process,
       model.reset_state,
       {
-        frameSamples: fullOptions.frameSamples,
         positiveSpeechThreshold: fullOptions.positiveSpeechThreshold,
         negativeSpeechThreshold: fullOptions.negativeSpeechThreshold,
-        redemptionFrames: fullOptions.redemptionFrames,
-        preSpeechPadFrames: fullOptions.preSpeechPadFrames,
-        minSpeechFrames: fullOptions.minSpeechFrames,
+        redemptionMs: fullOptions.redemptionMs,
+        preSpeechPadMs: fullOptions.preSpeechPadMs,
+        minSpeechMs: fullOptions.minSpeechMs,
         submitUserSpeechOnPause: fullOptions.submitUserSpeechOnPause,
-      }
+      },
+      1536 / 16
     )
     frameProcessor.resume()
 
@@ -80,7 +82,7 @@ export class NonRealTimeVAD {
     const resamplerOptions = {
       nativeSampleRate: sampleRate,
       targetSampleRate: 16000,
-      targetFrameSize: this.options.frameSamples,
+      targetFrameSize: this.frameSamples,
     }
     const resampler = new Resampler(resamplerOptions)
     let start = 0
@@ -97,11 +99,11 @@ export class NonRealTimeVAD {
       for (const event of messageContainer) {
         switch (event.msg) {
           case Message.SpeechStart:
-            start = (frameIndex * this.options.frameSamples) / 16
+            start = (frameIndex * this.frameSamples) / 16
             break
 
           case Message.SpeechEnd:
-            end = ((frameIndex + 1) * this.options.frameSamples) / 16
+            end = ((frameIndex + 1) * this.frameSamples) / 16
             yield { audio: event.audio, start, end }
             break
 
@@ -123,7 +125,7 @@ export class NonRealTimeVAD {
           yield {
             audio: event.audio,
             start,
-            end: (frameIndex * this.options.frameSamples) / 16,
+            end: (frameIndex * this.frameSamples) / 16,
           }
       }
     }
