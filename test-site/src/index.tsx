@@ -19,6 +19,42 @@ createRoot(domContainer).render(<App />)
 const vadAttributes = ["errored", "loading", "listening", "userSpeaking"]
 const vadMethods = ["pause", "start", "toggle"]
 
+// Parameter descriptions for tooltips
+const parameterDescriptions: Record<string, string> = {
+  model:
+    "The VAD model to use. 'v5' is the latest model, 'legacy' is the older version.",
+  baseAssetPath: "Base path for VAD model assets.",
+  onnxWASMBasePath: "Base path for ONNX WebAssembly files.",
+  submitUserSpeechOnPause:
+    "Whether to submit speech segments when VAD is paused.",
+  positiveSpeechThreshold:
+    "Threshold (0-1) above which a frame is considered to contain speech. Default: 0.5",
+  negativeSpeechThreshold:
+    "Threshold (0-1) below which a frame is considered to not contain speech. Default: 0.35",
+  redemptionMs:
+    "Number of milliseconds of non-speech frames to wait before ending a speech segment. Default: 500",
+  preSpeechPadMs:
+    "Number of milliseconds of audio to prepend to a speech segment. Default: 30",
+  minSpeechMs:
+    "Minimum duration in milliseconds for a speech segment to be considered valid. Default: 250",
+  startOnLoad: "Whether to start VAD automatically when the component loads.",
+  userSpeakingThreshold:
+    "Threshold for determining when user is speaking (used for UI state).",
+}
+
+// Tooltip component using DaisyUI
+const Tooltip = ({
+  children,
+  content,
+}: {
+  children: React.ReactNode
+  content: string
+}) => (
+  <div className="tooltip tooltip-top" data-tip={content}>
+    {children}
+  </div>
+)
+
 // Define which options should be shown in the UI
 const configurableOptions: (keyof ReactRealTimeVADOptions)[] = [
   "model",
@@ -293,10 +329,22 @@ function App() {
           <tbody>
             {configurableOptions.map((optionName) => {
               const currentValue = initializationParameters[optionName]
+              const description = parameterDescriptions[optionName]
 
               return (
                 <tr key={optionName}>
-                  <th>{optionName}</th>
+                  <th>
+                    <div className="flex items-center gap-2">
+                      {optionName}
+                      {description && (
+                        <Tooltip content={description}>
+                          <span className="text-gray-500 hover:text-gray-700 cursor-help">
+                            ?
+                          </span>
+                        </Tooltip>
+                      )}
+                    </div>
+                  </th>
                   <th>{currentValue?.toString()}</th>
                   <th>{getFormComponent(optionName, currentValue)}</th>
                 </tr>
