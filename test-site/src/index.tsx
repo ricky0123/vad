@@ -28,15 +28,15 @@ const parameterDescriptions: Record<string, string> = {
   submitUserSpeechOnPause:
     "Whether to submit speech segments when VAD is paused.",
   positiveSpeechThreshold:
-    "Threshold (0-1) above which a frame is considered to contain speech. Default: 0.5",
+    "Threshold (0-1) above which a frame is considered to contain speech.",
   negativeSpeechThreshold:
-    "Threshold (0-1) below which a frame is considered to not contain speech. Default: 0.35",
+    "Threshold (0-1) below which a frame is considered to not contain speech.",
   redemptionMs:
-    "Number of milliseconds of non-speech frames to wait before ending a speech segment. Default: 500",
+    "Number of milliseconds of non-speech frames to wait before ending a speech segment.",
   preSpeechPadMs:
-    "Number of milliseconds of audio to prepend to a speech segment. Default: 30",
+    "Number of milliseconds of audio to prepend to a speech segment.",
   minSpeechMs:
-    "Minimum duration in milliseconds for a speech segment to be considered valid. Default: 250",
+    "Minimum duration in milliseconds for a speech segment to be considered valid.",
   startOnLoad: "Whether to start VAD automatically when the component loads.",
   userSpeakingThreshold:
     "Threshold for determining when user is speaking (used for UI state).",
