@@ -4,6 +4,7 @@
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
+    "test:coverage": "npm run test:coverage --workspace=packages/web",
     "clean": "npm run clean --workspaces --if-present",
     "format": "prettier --write '{packages,examples,test-site}/**/*.{ts,html,jsx}'",
     "format-check": "prettier --check '{packages,examples,test-site}/**/*.{ts,html,jsx}'",
