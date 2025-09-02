@@ -1,7 +1,7 @@
 // Conditional imports based on environment
 let NonRealTimeVAD: any, utils: any
 
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV === "development") {
   // Use local development build
   const localVAD = require("../../packages/web/src/index")
   NonRealTimeVAD = localVAD.NonRealTimeVAD
@@ -42,16 +42,18 @@ let showMs = true
 }
 ;(window as any).testNonRealTime = async () => {
   // Configure VAD based on environment
-  const vadConfig = process.env.NODE_ENV === 'development' 
-    ? {
-        // Use local assets in development
-        modelURL: "./silero_vad_legacy.onnx",
-        modelFetcher: (path: string) => fetch(path).then(r => r.arrayBuffer())
-      }
-    : {
-        // Use default CDN assets in production
-      }
-  
+  const vadConfig =
+    process.env.NODE_ENV === "development"
+      ? {
+          // Use local assets in development
+          modelURL: "./silero_vad_legacy.onnx",
+          modelFetcher: (path: string) =>
+            fetch(path).then((r) => r.arrayBuffer()),
+        }
+      : {
+          // Use default CDN assets in production
+        }
+
   const myvad = await NonRealTimeVAD.new(vadConfig)
   const fileEl = document.getElementById("file-upload") as HTMLInputElement
   const audioFile = (fileEl.files as FileList)[0] as File
@@ -100,14 +102,17 @@ let showMs = true
   const tbody = table.querySelector("tbody")!
 
   let segmentNumber = 0
-  for await (const { audio: segmentAudio, start, end } of myvad.run(audio, sampleRate)) {
+  for await (const { audio: segmentAudio, start, end } of myvad.run(
+    audio,
+    sampleRate
+  )) {
     segmentNumber++
-    
+
     // Create audio element for the segment
     const wavBuffer = utils.encodeWAV(segmentAudio)
     const base64 = utils.arrayBufferToBase64(wavBuffer)
     const audioUrl = `data:audio/wav;base64,${base64}`
-    
+
     const row = document.createElement("tr")
     row.className = segmentNumber % 2 === 0 ? "bg-gray-50" : "bg-white"
     row.innerHTML = `

@@ -64,7 +64,6 @@ export interface RealTimeVADOptions
     OrtOptions,
     AssetOptions,
     ModelOptions {
-
   getStream: () => Promise<MediaStream>
   pauseStream: (stream: MediaStream) => Promise<void>
   resumeStream: (stream: MediaStream) => Promise<MediaStream>
@@ -83,7 +82,10 @@ export const getDefaultRealTimeVADOptions = (model: "v5" | "legacy") => {
       : defaultLegacyFrameProcessorOptions
   return {
     ...frameProcessorOptions,
-    onFrameProcessed: (_probabilities: SpeechProbabilities, _frame: Float32Array) => {},
+    onFrameProcessed: (
+      _probabilities: SpeechProbabilities,
+      _frame: Float32Array
+    ) => {},
     onVADMisfire: () => {
       log.debug("VAD misfire")
     },
