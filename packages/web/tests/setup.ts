@@ -1,14 +1,10 @@
 // Mock ONNX Runtime
 class MockTensor {
-  constructor(
-    public type: string,
-    public data: any,
-    public dims?: number[]
-  ) {}
+  constructor(public type: string, public data: any, public dims?: number[]) {}
 }
 
 class MockInferenceSession {
-  async run(inputs: any) {
+  async run(_inputs: any) {
     // Mock the inference results that the VAD models expect
     return {
       output: { data: [0.5] }, // Mock speech probability
@@ -113,7 +109,7 @@ class MockAudioWorkletNode {
   disconnect = jest.fn()
   onprocessorerror = null
 
-  constructor(context: any, name: string, options?: any) {
+  constructor(_context: any, _name: string, _options?: any) {
     // Mock constructor behavior
   }
 }
@@ -124,7 +120,7 @@ class MockMediaStreamAudioSourceNode {
   disconnect = jest.fn()
   mediaStream: MediaStream
 
-  constructor(context: any, options: { mediaStream: MediaStream }) {
+  constructor(_context: any, options: { mediaStream: MediaStream }) {
     this.mediaStream = options.mediaStream
   }
 }
