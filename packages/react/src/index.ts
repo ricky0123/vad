@@ -114,7 +114,7 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
         setListening(true)
       }
     }
-    setup().catch((e) => {
+    setup().catch((_e) => {
       console.log("Well that didn't work")
     })
     return function cleanUp() {
