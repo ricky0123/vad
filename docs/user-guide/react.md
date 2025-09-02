@@ -20,6 +20,34 @@
     return <div>{vad.userSpeaking && "User is speaking"}</div>
     }
     ```
+
+    ### Custom Audio Configuration
+
+    If you need custom audio constraints or stream management, you can override the stream functions:
+
+    ```js linenums="1"
+    import { useMicVAD } from "@ricky0123/vad-react"
+
+    const MyComponent = () => {
+    const vad = useMicVAD({
+        getStream: async () => {
+            return await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    channelCount: 2,  // Stereo
+                    echoCancellation: false,
+                    autoGainControl: false,
+                    noiseSuppression: false,
+                },
+            })
+        },
+        onSpeechEnd: (audio) => {
+            console.log("User stopped talking")
+        },
+    })
+    return <div>{vad.userSpeaking && "User is speaking"}</div>
+    }
+    ```
+
     See the docs for [useMicVAD](api.md#usemicvad) for details.
 
 3. The package will work out of the box with default CDN settings. For advanced configuration or if you want to serve files locally, you can refer to the [bundling documentation](browser.md#bundling).

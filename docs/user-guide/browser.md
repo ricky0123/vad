@@ -123,5 +123,37 @@ There are now exactly two configuration parameters that control where VAD looks 
 
 By default, these are both set to the appropriate CDN paths. In other words, unless you have overridden these options, the worklet/onnx/wasm files will be loaded from a CDN. If you want to serve these files yourself, you have to specifiy those options yourself and make sure that you have made the files available at the correct location. Hopefully, this both makes it easy to get started with the package and also clears up any ambiguity about where the files are supposed to be.
 
+## Custom Audio Stream Configuration
+
+The VAD now uses a more flexible stream management system. By default, the VAD will automatically create a microphone stream with standard audio constraints (channelCount: 1, echoCancellation: true, autoGainControl: true, noiseSuppression: true). This makes the default use case frictionless - no configuration needed.
+
+If you need custom audio constraints or want to provide your own stream, you can override the stream management functions:
+
+### Custom Audio Constraints
+
+To use custom audio constraints, override the `getStream` function:
+
+```js linenums="1"
+import { MicVAD } from "@ricky0123/vad-web"
+
+const myvad = await MicVAD.new({
+  getStream: async () => {
+    return await navigator.mediaDevices.getUserMedia({
+      audio: {
+        channelCount: 2,  // Stereo instead of mono
+        echoCancellation: false,  // Disable echo cancellation
+        autoGainControl: false,   // Disable auto gain control
+        noiseSuppression: false,  // Disable noise suppression
+        sampleRate: 48000,        // Custom sample rate
+      },
+    })
+  },
+  onSpeechEnd: (audio) => {
+    // do something with `audio` (Float32Array of audio samples at sample rate 16000)...
+  },
+})
+myvad.start()
+```
+
 ## API
 `@ricky0123/vad-web` supports the [MicVAD](api.md#micvad) and [NonRealTimeVAD](api.md#nonrealtimevad) APIs.
