@@ -29,7 +29,7 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "onnxruntime-web": "1.14.0"
+    "onnxruntime-web": "^1.17.0"
   },
   "scripts": {
     "build": "./scripts/build.sh",

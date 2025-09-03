@@ -20,7 +20,7 @@
     "@types/react": "18.0.28"
   },
   "dependencies": {
-    "onnxruntime-web": "1.14.0",
+    "onnxruntime-web": "^1.17.0",
     "@ricky0123/vad-web": "0.0.27"
   },
   "peerDependencies": {

@@ -40,6 +40,7 @@ const parameterDescriptions: Record<string, string> = {
   startOnLoad: "Whether to start VAD automatically when the component loads.",
   userSpeakingThreshold:
     "Threshold for determining when user is speaking (used for UI state).",
+  customStream: "When enabled, supplies custom getStream, pauseStream, and resumeStream functions.",
 }
 
 // Tooltip component using DaisyUI
@@ -218,6 +219,7 @@ function App() {
     Partial<ReactRealTimeVADOptions>
   >({})
   const [demo, setDemo] = useState(true)
+  const [customStreamEnabled, setCustomStreamEnabled] = useState(false)
 
   const handleInputChange = (
     optionName: keyof ReactRealTimeVADOptions,
@@ -305,6 +307,28 @@ function App() {
       ...newVadParams,
     }
 
+    // Add custom stream functions if enabled
+    if (customStreamEnabled) {
+      console.log("Getting custom stream")
+      const customStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          channelCount: 1,
+          echoCancellation: true,
+          autoGainControl: true,
+          noiseSuppression: true,
+        },
+      })
+      params.getStream = async () => {
+        return customStream
+      }
+      params.pauseStream = async (stream: MediaStream) => {
+        console.log("Custom pauseStream called", stream)
+      }
+      params.resumeStream = async (_stream: MediaStream) => {
+        return customStream
+      }
+    }
+
     setVadParams(params)
 
     const opts = JSON.stringify(params)
@@ -352,6 +376,24 @@ function App() {
             })}
           </tbody>
         </table>
+        
+        <h3>Custom Settings</h3>
+        <div className="flex items-center gap-2 mb-4">
+          <input
+            type="checkbox"
+            checked={customStreamEnabled}
+            onChange={(e) => setCustomStreamEnabled(e.target.checked)}
+            className="rounded"
+          />
+          <label className="flex items-center gap-2">
+            Custom stream - reuse custom stream
+            <Tooltip content={parameterDescriptions['customStream'] || ''}>
+              <span className="text-gray-500 hover:text-gray-700 cursor-help">
+                ?
+              </span>
+            </Tooltip>
+          </label>
+        </div>
       </div>
       <div>
         <h3>Run</h3>
@@ -375,7 +417,7 @@ function VADDemo({
   initializationParameters: Partial<ReactRealTimeVADOptions>
 }) {
   const [audioList, setAudioList] = useState<string[]>([])
-  const vad = useMicVAD({
+  const fullParams: Partial<ReactRealTimeVADOptions> = {
     ...initializationParameters,
     onVADMisfire: () => {
       console.log("Vad misfire")
@@ -394,9 +436,14 @@ function VADDemo({
       const url = `data:audio/wav;base64,${base64}`
       setAudioList((old) => [url, ...old])
     },
-  })
+    ortConfig: (ort) => {
+      console.log("Setting ort config")
+      ort.env.logLevel = "warning"
+    },
+  }
+  const vad = useMicVAD(fullParams)
   useEffect(() => {
-    console.log("Created VAD with params", initializationParameters)
+    console.log("Created VAD with params", fullParams)
   }, [initializationParameters])
 
   console.log("test re-render")

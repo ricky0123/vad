@@ -74,7 +74,7 @@ const workletFile = "vad.worklet.bundle.min.js"
 const sileroV5File = "silero_vad_v5.onnx"
 const sileroLegacyFile = "silero_vad_legacy.onnx"
 
-export const getDefaultRealTimeVADOptions = (model: "v5" | "legacy") => {
+export const getDefaultRealTimeVADOptions = (model: "v5" | "legacy"): RealTimeVADOptions => {
   return {
     ...defaultFrameProcessorOptions,
     onFrameProcessed: (
@@ -123,6 +123,9 @@ export const getDefaultRealTimeVADOptions = (model: "v5" | "legacy") => {
           noiseSuppression: true,
         },
       })
+    },
+    ortConfig: (ort) => {
+      ort.env.logLevel = "error"
     },
   }
 }
