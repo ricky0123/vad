@@ -13,8 +13,8 @@ The VAD algorithm works as follows:
 
 All of the main APIs accept certain common configuration parameters that modify the VAD algorithm.
 
-* `positiveSpeechThreshold: number` - determines the threshold over which a probability is considered to indicate the presence of speech. default: `0.5`
-* `negativeSpeechThreshold: number` - determines the threshold under which a probability is considered to indicate the absence of speech. default: `0.35`
-* `redemptionMs: number` - number of milliseconds of speech-negative frames to wait before ending a speech segment. default: `500`
-* `preSpeechPadMs: number` - number of milliseconds of audio to prepend to a speech segment. default: `30`
-* `minSpeechMs: number` - minimum duration in milliseconds for a speech segment. default: `250`
+* `positiveSpeechThreshold: number` - determines the threshold over which a probability is considered to indicate the presence of speech. default: `0.3`
+* `negativeSpeechThreshold: number` - determines the threshold under which a probability is considered to indicate the absence of speech. default: `0.25`
+* `redemptionMs: number` - number of milliseconds of speech-negative frames to wait before ending a speech segment. default: `1400`
+* `preSpeechPadMs: number` - number of milliseconds of audio to prepend to a speech segment. default: `800`
+* `minSpeechMs: number` - minimum duration in milliseconds for a speech segment. default: `400`

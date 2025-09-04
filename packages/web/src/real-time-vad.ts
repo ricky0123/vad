@@ -74,7 +74,9 @@ const workletFile = "vad.worklet.bundle.min.js"
 const sileroV5File = "silero_vad_v5.onnx"
 const sileroLegacyFile = "silero_vad_legacy.onnx"
 
-export const getDefaultRealTimeVADOptions = (model: "v5" | "legacy") => {
+export const getDefaultRealTimeVADOptions = (
+  model: "v5" | "legacy"
+): RealTimeVADOptions => {
   return {
     ...defaultFrameProcessorOptions,
     onFrameProcessed: (
@@ -93,10 +95,8 @@ export const getDefaultRealTimeVADOptions = (model: "v5" | "legacy") => {
     onSpeechRealStart: () => {
       log.debug("Detected real speech start")
     },
-    baseAssetPath:
-      "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@latest/dist/",
-    onnxWASMBasePath:
-      "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/",
+    baseAssetPath: "./",
+    onnxWASMBasePath: "./",
     model: model,
     workletOptions: {},
     getStream: async () => {
@@ -123,6 +123,9 @@ export const getDefaultRealTimeVADOptions = (model: "v5" | "legacy") => {
           noiseSuppression: true,
         },
       })
+    },
+    ortConfig: (ort) => {
+      ort.env.logLevel = "error"
     },
   }
 }
@@ -164,9 +167,7 @@ export class MicVAD {
   ) {}
 
   pause = () => {
-    this.stream.getTracks().forEach((track) => {
-      track.stop()
-    })
+    this.options.pauseStream(this.stream)
     this.audioNodeVAD.pause()
     this.listening = false
   }
