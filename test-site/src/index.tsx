@@ -15,7 +15,6 @@ const domContainer = document.querySelector("#demo")
 // @ts-ignore
 createRoot(domContainer).render(<App />)
 
-
 interface SettableParameters {
   // Directly translatable VAD parameters
   model: "v5" | "legacy"
@@ -27,7 +26,7 @@ interface SettableParameters {
   minSpeechMs: number
   startOnLoad: boolean
   userSpeakingThreshold: number
-  
+
   // Custom parameters
   assetPaths: AssetPathsOption
   customStream: boolean
@@ -60,9 +59,13 @@ const settableParameterDescriptions: Record<SettableParameter, string> = {
     "When enabled, supplies custom getStream, pauseStream, and resumeStream functions.",
 }
 
-const settableParameterValidators: Record<SettableParameter, (value: any) => boolean> = {
+const settableParameterValidators: Record<
+  SettableParameter,
+  (value: any) => boolean
+> = {
   model: (value) => value === "v5" || value === "legacy",
-  assetPaths: (value) => value === "root" || value === "subpath" || value === "cdn",
+  assetPaths: (value) =>
+    value === "root" || value === "subpath" || value === "cdn",
   submitUserSpeechOnPause: (value) => typeof value === "boolean",
   positiveSpeechThreshold: (value) => typeof value === "number",
   negativeSpeechThreshold: (value) => typeof value === "number",
@@ -77,16 +80,47 @@ const settableParameterValidators: Record<SettableParameter, (value: any) => boo
 type SettableParameterFormElement = {
   [K in keyof SettableParameters]: (
     newValue: SettableParameters[K],
-    setSettableParamsFn: (fn: (prevValues: SettableParameters) => SettableParameters) => void
+    setSettableParamsFn: (
+      fn: (prevValues: SettableParameters) => SettableParameters
+    ) => void
   ) => JSX.Element
 }
 
 const settableParameterFormElement: SettableParameterFormElement = {
-  model: (newValue, setSettableParamsFn) => <ModelSelect newValue={newValue} setSettableParamsFn={setSettableParamsFn} />,
-  assetPaths: (oldValue, newValue, setSettableParamsFn) => <AssetPathsSelect optionName="assetPaths" currentValue={oldValue} onInputChange={newValue} />,
-  submitUserSpeechOnPause: (oldValue, newValue) => <BooleanInput optionName="submitUserSpeechOnPause" currentValue={oldValue} onInputChange={newValue} />,
-  positiveSpeechThreshold: (oldValue, newValue) => <FloatInput optionName="positiveSpeechThreshold" currentValue={oldValue} onInputChange={newValue} />,
-  negativeSpeechThreshold: (oldValue, newValue) => <FloatInput optionName="negativeSpeechThreshold" currentValue={oldValue} onInputChange={newValue} />,
+  model: (newValue, setSettableParamsFn) => (
+    <ModelSelect
+      newValue={newValue}
+      setSettableParamsFn={setSettableParamsFn}
+    />
+  ),
+  assetPaths: (oldValue, newValue, setSettableParamsFn) => (
+    <AssetPathsSelect
+      optionName="assetPaths"
+      currentValue={oldValue}
+      onInputChange={newValue}
+    />
+  ),
+  submitUserSpeechOnPause: (oldValue, newValue) => (
+    <BooleanInput
+      optionName="submitUserSpeechOnPause"
+      currentValue={oldValue}
+      onInputChange={newValue}
+    />
+  ),
+  positiveSpeechThreshold: (oldValue, newValue) => (
+    <FloatInput
+      optionName="positiveSpeechThreshold"
+      currentValue={oldValue}
+      onInputChange={newValue}
+    />
+  ),
+  negativeSpeechThreshold: (oldValue, newValue) => (
+    <FloatInput
+      optionName="negativeSpeechThreshold"
+      currentValue={oldValue}
+      onInputChange={newValue}
+    />
+  ),
 }
 
 const ModelSelect = ({
@@ -94,28 +128,30 @@ const ModelSelect = ({
   setSettableParamsFn,
 }: {
   newValue: "v5" | "legacy"
-  setSettableParamsFn: (fn: (prevValues: SettableParameters) => SettableParameters) => void
-}) =>  (
-    <select
-  value={newValue}
-  onChange={(e) => setSettableParamsFn((prevValues) => {
-    if (e.target.value != "legacy" && e.target.value != "v5") {
-      console.error(`Invalid value for model: ${e.target.value}`)
-      return prevValues
+  setSettableParamsFn: (
+    fn: (prevValues: SettableParameters) => SettableParameters
+  ) => void
+}) => (
+  <select
+    value={newValue}
+    onChange={(e) =>
+      setSettableParamsFn((prevValues) => {
+        if (e.target.value != "legacy" && e.target.value != "v5") {
+          console.error(`Invalid value for model: ${e.target.value}`)
+          return prevValues
+        }
+        return {
+          ...prevValues,
+          model: e.target.value,
+        }
+      })
     }
-    return {
-      ...prevValues,
-      model: e.target.value
-    }
-  })}
-  className="rounded mx-5"
->
-  <option value="legacy">legacy</option>
-  <option value="v5">v5</option>
-</select>
-  )
-
-
+    className="rounded mx-5"
+  >
+    <option value="legacy">legacy</option>
+    <option value="v5">v5</option>
+  </select>
+)
 
 // Tooltip component using DaisyUI
 const Tooltip = ({
@@ -152,7 +188,8 @@ const assetPathsConfig: Record<
   },
 }
 
-const defaultVADOptions: ReactRealTimeVADOptions = getDefaultReactRealTimeVADOptions("v5")
+const defaultVADOptions: ReactRealTimeVADOptions =
+  getDefaultReactRealTimeVADOptions("v5")
 
 const defaultSettableParams: SettableParameters = {
   model: defaultVADOptions.model,
@@ -179,9 +216,13 @@ const getSettableParamsFromHash = (): SettableParameters => {
     console.log("Parsed settable params from hash:", out)
 
     // Validate the settable parameters
-    for (const [key, validator] of Object.entries(settableParameterValidators)) {
+    for (const [key, validator] of Object.entries(
+      settableParameterValidators
+    )) {
       if (!validator(out[key])) {
-        console.error(`Invalid value for ${key}: ${out[key as SettableParameter]}`)
+        console.error(
+          `Invalid value for ${key}: ${out[key as SettableParameter]}`
+        )
         return defaultSettableParams
       }
     }
@@ -195,15 +236,15 @@ const getSettableParamsFromHash = (): SettableParameters => {
 
 const initialSettableParams = getSettableParamsFromHash()
 
-
 // Convert settable parameters to VAD parameters
-const settableParamsToVADParams = async(
+const settableParamsToVADParams = async (
   settableParams: SettableParameters
 ): Promise<ReactRealTimeVADOptions> => {
-
   const assetConfig = assetPathsConfig[settableParams.assetPaths]
 
-  const defaultVADParams = getDefaultReactRealTimeVADOptions(settableParams.model)
+  const defaultVADParams = getDefaultReactRealTimeVADOptions(
+    settableParams.model
+  )
 
   let getStream = defaultVADParams.getStream
   let pauseStream = defaultVADParams.pauseStream
@@ -227,9 +268,12 @@ const settableParamsToVADParams = async(
     preSpeechPadMs: settableParams.preSpeechPadMs,
     minSpeechMs: settableParams.minSpeechMs,
     submitUserSpeechOnPause: settableParams.submitUserSpeechOnPause,
-    
+
     // From RealTimeVADCallbacks
-    onFrameProcessed: (_probabilities: SpeechProbabilities, _frame: Float32Array) => {},
+    onFrameProcessed: (
+      _probabilities: SpeechProbabilities,
+      _frame: Float32Array
+    ) => {},
     onVADMisfire: () => {
       console.log("VAD misfire")
     },
@@ -242,26 +286,26 @@ const settableParamsToVADParams = async(
     onSpeechRealStart: () => {
       console.log("Speech real start")
     },
-    
+
     // From OrtOptions
     ortConfig: (ortInstance) => {
       console.log("Setting ort config")
       ortInstance.env.logLevel = "warning"
     },
-    
+
     // From AssetOptions
     workletOptions: {},
     baseAssetPath: assetConfig.baseAssetPath,
     onnxWASMBasePath: assetConfig.onnxWASMBasePath,
-    
+
     // From ModelOptions
     model: settableParams.model,
-    
+
     // From RealTimeVADOptions (direct fields)
     getStream: getStream,
     pauseStream: pauseStream,
     resumeStream: resumeStream,
-    
+
     // From ReactOptions
     startOnLoad: settableParams.startOnLoad,
     userSpeakingThreshold: settableParams.userSpeakingThreshold,
@@ -290,8 +334,6 @@ const BooleanInput = ({
     className="rounded mx-5"
   />
 )
-
-
 
 // Form component for number values
 const NumberInput = ({
@@ -357,14 +399,13 @@ const TextInput = ({
   />
 )
 
-
-
 function App() {
   const [settableParams, setSettableParams] = useState<SettableParameters>(
     initialSettableParams
   )
   const [demo, setDemo] = useState(false)
-  const [vadParams, setVadParams] = useState<ReactRealTimeVADOptions>(defaultVADOptions)
+  const [vadParams, setVadParams] =
+    useState<ReactRealTimeVADOptions>(defaultVADOptions)
 
   useEffect(() => {
     const setup = async () => {
@@ -548,11 +589,7 @@ function App() {
   )
 }
 
-function VADDemo({
-  vadParams,
-}: {
-  vadParams: ReactRealTimeVADOptions
-}) {
+function VADDemo({ vadParams }: { vadParams: ReactRealTimeVADOptions }) {
   const [audioList, setAudioList] = useState<string[]>([])
   const vad = useMicVAD({
     ...vadParams,
@@ -562,7 +599,7 @@ function VADDemo({
       const base64 = utils.arrayBufferToBase64(wavBuffer)
       const url = `data:audio/wav;base64,${base64}`
       setAudioList((old) => [url, ...old])
-    }
+    },
   })
 
   console.log("test re-render")
