@@ -50,6 +50,7 @@ Then, make sure these files are available under the paths you specified:
 1. serve the `silero_vad_legacy.onnx` and `silero_vad_v5.onnx` files that come distributed with `@ricky0123/vad-web` (under `baseAssetPath`)
 2. serve the `vad.worklet.bundle.min.js` file that comes distributed with `@ricky0123/vad-web` (under `baseAssetPath`)
 3. serve the wasm files that come distributed with the package `onnxruntime-web` (under `onnxWASMBasePath`)
+4. **Important for newer versions of onnxruntime-web**: Also serve the `.mjs` files that come distributed with `onnxruntime-web` (under `onnxWASMBasePath`). These JavaScript bindings are required for proper initialization of the WebAssembly modules.
 
 One way to accomplish this is to run a shell script that copies these files into your `dist` directory (or whatever you have named your output directory) during your build process - see the [build script](https://github.com/ricky0123/vad-site/blob/master/scripts/build.sh) for this website for an example. Or, if you are using Webpack 5, this can be acheived by adding the following to your webpack.config.js (other bundlers may have similar options/plugins):
 ```js linenums="1"
@@ -71,6 +72,7 @@ module.exports = {
           to: "[name][ext]",
         },
         { from: "node_modules/onnxruntime-web/dist/*.wasm", to: "[name][ext]" },
+        { from: "node_modules/onnxruntime-web/dist/*.mjs", to: "[name][ext]" },
       ],
     }),
   ],
@@ -99,6 +101,10 @@ export default defineConfig({
         },
         {
           src: 'node_modules/onnxruntime-web/dist/*.wasm',
+          dest: './'
+        },
+        {
+          src: 'node_modules/onnxruntime-web/dist/*.mjs',
           dest: './'
         }
       ]
