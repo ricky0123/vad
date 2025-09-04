@@ -167,9 +167,7 @@ export class MicVAD {
   ) {}
 
   pause = () => {
-    this.stream.getTracks().forEach((track) => {
-      track.stop()
-    })
+    this.options.pauseStream(this.stream)
     this.audioNodeVAD.pause()
     this.listening = false
   }
