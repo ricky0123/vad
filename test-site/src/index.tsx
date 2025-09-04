@@ -23,7 +23,8 @@ const vadMethods = ["pause", "start", "toggle"]
 const parameterDescriptions: Record<string, string> = {
   model:
     "The VAD model to use. 'v5' is the latest model, 'legacy' is the older version.",
-  assetPaths: "Asset path configuration: 'root' for local root, 'subpath' for local subpath, 'cdn' for CDN delivery.",
+  assetPaths:
+    "Asset path configuration: 'root' for local root, 'subpath' for local subpath, 'cdn' for CDN delivery.",
   submitUserSpeechOnPause:
     "Whether to submit speech segments when VAD is paused.",
   positiveSpeechThreshold:
@@ -39,7 +40,8 @@ const parameterDescriptions: Record<string, string> = {
   startOnLoad: "Whether to start VAD automatically when the component loads.",
   userSpeakingThreshold:
     "Threshold for determining when user is speaking (used for UI state).",
-  customStream: "When enabled, supplies custom getStream, pauseStream, and resumeStream functions.",
+  customStream:
+    "When enabled, supplies custom getStream, pauseStream, and resumeStream functions.",
 }
 
 // Tooltip component using DaisyUI
@@ -57,23 +59,31 @@ const Tooltip = ({
 
 // Asset paths configuration
 type AssetPathsOption = "root" | "subpath" | "cdn"
-const assetPathsConfig: Record<AssetPathsOption, { baseAssetPath: string; onnxWASMBasePath: string }> = {
+const assetPathsConfig: Record<
+  AssetPathsOption,
+  { baseAssetPath: string; onnxWASMBasePath: string }
+> = {
   root: {
     baseAssetPath: "./",
-    onnxWASMBasePath: "./"
+    onnxWASMBasePath: "./",
   },
   subpath: {
     baseAssetPath: "./subpath/",
-    onnxWASMBasePath: "./subpath/"
+    onnxWASMBasePath: "./subpath/",
   },
   cdn: {
-    baseAssetPath: "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@latest/dist/",
-    onnxWASMBasePath: "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/"
-  }
+    baseAssetPath:
+      "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@latest/dist/",
+    onnxWASMBasePath:
+      "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/",
+  },
 }
 
 // Unified parameter system
-type SettableParameter = keyof ReactRealTimeVADOptions | 'assetPaths' | 'customStream'
+type SettableParameter =
+  | keyof ReactRealTimeVADOptions
+  | "assetPaths"
+  | "customStream"
 
 interface SettableParameters {
   // VAD parameters
@@ -114,12 +124,14 @@ const defaultSettableParams: SettableParameters = {
   ...Object.fromEntries(
     Object.entries(getDefaultReactRealTimeVADOptions("v5"))
       .filter(([key, _value]) => {
-        return configurableOptions.includes(key as keyof ReactRealTimeVADOptions)
+        return configurableOptions.includes(
+          key as keyof ReactRealTimeVADOptions
+        )
       })
       .map(([key, value]) => {
         return [key, value]
       })
-  )
+  ),
 }
 
 const getSettableParamsFromHash = (): SettableParameters => {
@@ -139,29 +151,40 @@ const getSettableParamsFromHash = (): SettableParameters => {
 }
 
 // Convert settable parameters to VAD parameters
-const settableParamsToVADParams = (settableParams: SettableParameters): Partial<ReactRealTimeVADOptions> => {
+const settableParamsToVADParams = (
+  settableParams: SettableParameters
+): Partial<ReactRealTimeVADOptions> => {
   const vadParams: Partial<ReactRealTimeVADOptions> = {}
-  
+
   // Copy VAD parameters directly
-  if (settableParams.model !== undefined) vadParams.model = settableParams.model as "v5" | "legacy"
-  if (settableParams.submitUserSpeechOnPause !== undefined) vadParams.submitUserSpeechOnPause = settableParams.submitUserSpeechOnPause
-  if (settableParams.positiveSpeechThreshold !== undefined) vadParams.positiveSpeechThreshold = settableParams.positiveSpeechThreshold
-  if (settableParams.negativeSpeechThreshold !== undefined) vadParams.negativeSpeechThreshold = settableParams.negativeSpeechThreshold
-  if (settableParams.redemptionMs !== undefined) vadParams.redemptionMs = settableParams.redemptionMs
-  if (settableParams.preSpeechPadMs !== undefined) vadParams.preSpeechPadMs = settableParams.preSpeechPadMs
-  if (settableParams.minSpeechMs !== undefined) vadParams.minSpeechMs = settableParams.minSpeechMs
-  if (settableParams.startOnLoad !== undefined) vadParams.startOnLoad = settableParams.startOnLoad
-  if (settableParams.userSpeakingThreshold !== undefined) vadParams.userSpeakingThreshold = settableParams.userSpeakingThreshold
-  
+  if (settableParams.model !== undefined)
+    vadParams.model = settableParams.model as "v5" | "legacy"
+  if (settableParams.submitUserSpeechOnPause !== undefined)
+    vadParams.submitUserSpeechOnPause = settableParams.submitUserSpeechOnPause
+  if (settableParams.positiveSpeechThreshold !== undefined)
+    vadParams.positiveSpeechThreshold = settableParams.positiveSpeechThreshold
+  if (settableParams.negativeSpeechThreshold !== undefined)
+    vadParams.negativeSpeechThreshold = settableParams.negativeSpeechThreshold
+  if (settableParams.redemptionMs !== undefined)
+    vadParams.redemptionMs = settableParams.redemptionMs
+  if (settableParams.preSpeechPadMs !== undefined)
+    vadParams.preSpeechPadMs = settableParams.preSpeechPadMs
+  if (settableParams.minSpeechMs !== undefined)
+    vadParams.minSpeechMs = settableParams.minSpeechMs
+  if (settableParams.startOnLoad !== undefined)
+    vadParams.startOnLoad = settableParams.startOnLoad
+  if (settableParams.userSpeakingThreshold !== undefined)
+    vadParams.userSpeakingThreshold = settableParams.userSpeakingThreshold
+
   // Convert asset paths to baseAssetPath and onnxWASMBasePath
   if (settableParams.assetPaths) {
     const assetConfig = assetPathsConfig[settableParams.assetPaths]
     vadParams.baseAssetPath = assetConfig.baseAssetPath
     vadParams.onnxWASMBasePath = assetConfig.onnxWASMBasePath
   }
-  
+
   // Note: frameSamples is calculated internally by the VAD based on the model
-  
+
   return vadParams
 }
 
@@ -229,7 +252,9 @@ const AssetPathsSelect = ({
 }) => (
   <select
     value={currentValue}
-    onChange={(e) => onInputChange(optionName, e.target.value as AssetPathsOption)}
+    onChange={(e) =>
+      onInputChange(optionName, e.target.value as AssetPathsOption)
+    }
     className="rounded mx-5"
   >
     <option value="root">root</option>
@@ -303,9 +328,11 @@ const TextInput = ({
 )
 
 function App() {
-  const [settableParams, setSettableParams] = useState<SettableParameters>(initialSettableParams)
+  const [settableParams, setSettableParams] = useState<SettableParameters>(
+    initialSettableParams
+  )
   const [demo, setDemo] = useState(true)
-  
+
   // Convert settable parameters to VAD parameters
   const vadParams = settableParamsToVADParams(settableParams)
 
@@ -328,7 +355,8 @@ function App() {
     optionName: SettableParameter,
     currentValue: any
   ) => {
-    const newValue = settableParams[optionName as keyof SettableParameters] ?? currentValue
+    const newValue =
+      settableParams[optionName as keyof SettableParameters] ?? currentValue
 
     if (
       optionName === "startOnLoad" ||
@@ -448,7 +476,9 @@ function App() {
           </thead>
           <tbody>
             {configurableOptions.map((optionName) => {
-              const currentValue = settableParams[optionName as keyof SettableParameters] ?? defaultSettableParams[optionName as keyof SettableParameters]
+              const currentValue =
+                settableParams[optionName as keyof SettableParameters] ??
+                defaultSettableParams[optionName as keyof SettableParameters]
               const description = parameterDescriptions[optionName]
 
               return (
@@ -472,7 +502,7 @@ function App() {
             })}
           </tbody>
         </table>
-        
+
         <h3>Final VAD Parameters</h3>
         <div className="mb-4">
           <textarea
@@ -482,7 +512,8 @@ function App() {
             onClick={(e) => (e.target as HTMLTextAreaElement).select()}
           />
           <p className="text-sm text-gray-600 mt-1">
-            Click to select all - these are the actual parameters passed to the VAD
+            Click to select all - these are the actual parameters passed to the
+            VAD
           </p>
         </div>
       </div>
@@ -494,9 +525,7 @@ function App() {
         >
           Restart
         </button>
-        {demo && (
-          <VADDemo initializationParameters={vadParams} />
-        )}
+        {demo && <VADDemo initializationParameters={vadParams} />}
       </div>
     </div>
   )
