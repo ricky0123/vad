@@ -7,13 +7,17 @@ import {
 import { SpeechProbabilities } from "@ricky0123/vad-web/dist/models/common"
 import React, { useEffect, useState } from "react"
 import { createRoot } from "react-dom/client"
+import NonRealTimeTest from "./non-real-time-test"
 
 React // prevent prettier imports plugin from removing React
 
 const domContainer = document.querySelector("#demo")
+const nonRealTimeContainer = document.querySelector("#non-real-time-test")
 
 // @ts-ignore
 createRoot(domContainer).render(<App />)
+// @ts-ignore
+createRoot(nonRealTimeContainer).render(<NonRealTimeTest />)
 
 interface SettableParameters {
   // Directly translatable VAD parameters
