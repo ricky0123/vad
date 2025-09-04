@@ -93,32 +93,73 @@ const settableParameterFormElement: SettableParameterFormElement = {
       setSettableParamsFn={setSettableParamsFn}
     />
   ),
-  assetPaths: (oldValue, newValue, setSettableParamsFn) => (
+  assetPaths: (newValue, setSettableParamsFn) => (
     <AssetPathsSelect
-      optionName="assetPaths"
-      currentValue={oldValue}
-      onInputChange={newValue}
+      newValue={newValue}
+      setSettableParamsFn={setSettableParamsFn}
     />
   ),
-  submitUserSpeechOnPause: (oldValue, newValue) => (
+  submitUserSpeechOnPause: (newValue, setSettableParamsFn) => (
     <BooleanInput
       optionName="submitUserSpeechOnPause"
-      currentValue={oldValue}
-      onInputChange={newValue}
+      newValue={newValue}
+      setSettableParamsFn={setSettableParamsFn}
     />
   ),
-  positiveSpeechThreshold: (oldValue, newValue) => (
+  positiveSpeechThreshold: (newValue, setSettableParamsFn) => (
     <FloatInput
       optionName="positiveSpeechThreshold"
-      currentValue={oldValue}
-      onInputChange={newValue}
+      newValue={newValue}
+      setSettableParamsFn={setSettableParamsFn}
     />
   ),
-  negativeSpeechThreshold: (oldValue, newValue) => (
+  negativeSpeechThreshold: (newValue, setSettableParamsFn) => (
     <FloatInput
       optionName="negativeSpeechThreshold"
-      currentValue={oldValue}
-      onInputChange={newValue}
+      newValue={newValue}
+      setSettableParamsFn={setSettableParamsFn}
+    />
+  ),
+  redemptionMs: (newValue, setSettableParamsFn) => (
+    <NumberInput
+      optionName="redemptionMs"
+      newValue={newValue}
+      setSettableParamsFn={setSettableParamsFn}
+    />
+  ),
+  preSpeechPadMs: (newValue, setSettableParamsFn) => (
+    <NumberInput
+      optionName="preSpeechPadMs"
+      newValue={newValue}
+      setSettableParamsFn={setSettableParamsFn}
+    />
+  ),
+  minSpeechMs: (newValue, setSettableParamsFn) => (
+    <NumberInput
+      optionName="minSpeechMs"
+      newValue={newValue}
+      setSettableParamsFn={setSettableParamsFn}
+    />
+  ),
+  startOnLoad: (newValue, setSettableParamsFn) => (
+    <BooleanInput
+      optionName="startOnLoad"
+      newValue={newValue}
+      setSettableParamsFn={setSettableParamsFn}
+    />
+  ),
+  userSpeakingThreshold: (newValue, setSettableParamsFn) => (
+    <FloatInput
+      optionName="userSpeakingThreshold"
+      newValue={newValue}
+      setSettableParamsFn={setSettableParamsFn}
+    />
+  ),
+  customStream: (newValue, setSettableParamsFn) => (
+    <BooleanInput
+      optionName="customStream"
+      newValue={newValue}
+      setSettableParamsFn={setSettableParamsFn}
     />
   ),
 }
@@ -150,6 +191,41 @@ const ModelSelect = ({
   >
     <option value="legacy">legacy</option>
     <option value="v5">v5</option>
+  </select>
+)
+
+const AssetPathsSelect = ({
+  newValue,
+  setSettableParamsFn,
+}: {
+  newValue: AssetPathsOption
+  setSettableParamsFn: (
+    fn: (prevValues: SettableParameters) => SettableParameters
+  ) => void
+}) => (
+  <select
+    value={newValue}
+    onChange={(e) =>
+      setSettableParamsFn((prevValues) => {
+        if (
+          e.target.value != "root" &&
+          e.target.value != "subpath" &&
+          e.target.value != "cdn"
+        ) {
+          console.error(`Invalid value for assetPaths: ${e.target.value}`)
+          return prevValues
+        }
+        return {
+          ...prevValues,
+          assetPaths: e.target.value,
+        }
+      })
+    }
+    className="rounded mx-5"
+  >
+    <option value="root">root</option>
+    <option value="subpath">subpath</option>
+    <option value="cdn">cdn</option>
   </select>
 )
 
@@ -317,20 +393,26 @@ const settableParamsToVADParams = async (
 // Form component for boolean values (checkboxes)
 const BooleanInput = ({
   optionName,
-  currentValue,
-  onInputChange,
+  newValue,
+  setSettableParamsFn,
 }: {
   optionName: SettableParameter
-  currentValue: boolean
-  onInputChange: (
-    optionName: SettableParameter,
-    newValue: string | boolean | number
+  newValue: boolean
+  setSettableParamsFn: (
+    fn: (prevValues: SettableParameters) => SettableParameters
   ) => void
 }) => (
   <input
     type="checkbox"
-    checked={currentValue}
-    onChange={(e) => onInputChange(optionName, e.target.checked)}
+    checked={newValue}
+    onChange={(e) =>
+      setSettableParamsFn((prevValues) => {
+        return {
+          ...prevValues,
+          [optionName]: e.target.checked,
+        }
+      })
+    }
     className="rounded mx-5"
   />
 )
@@ -338,20 +420,31 @@ const BooleanInput = ({
 // Form component for number values
 const NumberInput = ({
   optionName,
-  currentValue,
-  onInputChange,
+  newValue,
+  setSettableParamsFn,
 }: {
   optionName: SettableParameter
-  currentValue: number
-  onInputChange: (
-    optionName: SettableParameter,
-    newValue: string | boolean | number
+  newValue: number
+  setSettableParamsFn: (
+    fn: (prevValues: SettableParameters) => SettableParameters
   ) => void
 }) => (
   <input
     type="number"
-    value={currentValue}
-    onChange={(e) => onInputChange(optionName, parseFloat(e.target.value) || 0)}
+    value={newValue}
+    onChange={(e) =>
+      setSettableParamsFn((prevValues) => {
+        const parsedValue = parseFloat(e.target.value)
+        if (isNaN(parsedValue)) {
+          console.error(`Invalid value for ${optionName}: ${e.target.value}`)
+          return prevValues
+        }
+        return {
+          ...prevValues,
+          [optionName]: parsedValue,
+        }
+      })
+    }
     className="rounded mx-5"
   />
 )
@@ -359,21 +452,32 @@ const NumberInput = ({
 // Form component for float values (thresholds)
 const FloatInput = ({
   optionName,
-  currentValue,
-  onInputChange,
+  newValue,
+  setSettableParamsFn,
 }: {
   optionName: SettableParameter
-  currentValue: number
-  onInputChange: (
-    optionName: SettableParameter,
-    newValue: string | boolean | number
+  newValue: number
+  setSettableParamsFn: (
+    fn: (prevValues: SettableParameters) => SettableParameters
   ) => void
 }) => (
   <input
     type="number"
     step="0.01"
-    value={currentValue}
-    onChange={(e) => onInputChange(optionName, parseFloat(e.target.value) || 0)}
+    value={newValue}
+    onChange={(e) =>
+      setSettableParamsFn((prevValues) => {
+        const parsedValue = parseFloat(e.target.value)
+        if (isNaN(parsedValue)) {
+          console.error(`Invalid value for ${optionName}: ${e.target.value}`)
+          return prevValues
+        }
+        return {
+          ...prevValues,
+          [optionName]: parsedValue,
+        }
+      })
+    }
     className="rounded mx-5"
   />
 )
@@ -552,32 +656,7 @@ function App() {
                 )}
               </th>
             </tr>
-
-            {configurableOptions.map((optionName) => {
-              const currentValue =
-                settableParams[optionName as keyof SettableParameters] ??
-                defaultSettableParams[optionName as keyof SettableParameters]
-              const description = settableParameterDescriptions[optionName]
-
-              return (
-                <tr key={optionName}>
-                  <th>
-                    <div className="flex items-center gap-2">
-                      {optionName}
-                      {description && (
-                        <Tooltip content={description}>
-                          <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                            ?
-                          </span>
-                        </Tooltip>
-                      )}
-                    </div>
-                  </th>
-                  <th>{currentValue?.toString()}</th>
-                  <th>{getFormComponent(optionName, currentValue)}</th>
-                </tr>
-              )
-            })}
+            // Add all settable parameters
           </tbody>
         </table>
 
