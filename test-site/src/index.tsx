@@ -329,10 +329,14 @@ const settableParamsToVADParams = async (
   if (settableParams.customStream) {
     const stream = await defaultVADParams.getStream()
     getStream = async () => {
+      console.log("called getStream")
       return stream
     }
-    pauseStream = async (_stream: MediaStream) => {}
+    pauseStream = async (_stream: MediaStream) => {
+      console.log("called pauseStream")
+    }
     resumeStream = async (_stream: MediaStream) => {
+      console.log("called resumeStream")
       return stream
     }
   }
