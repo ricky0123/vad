@@ -533,6 +533,26 @@ function App() {
             </tr>
           </thead>
           <tbody>
+            <tr key="model">
+              <th>
+                <div className="flex items-center gap-2">
+                  model
+                  <Tooltip content={settableParameterDescriptions.model}>
+                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
+                      ?
+                    </span>
+                  </Tooltip>
+                </div>
+              </th>
+              <th>{settableParams.model}</th>
+              <th>
+                {settableParameterFormElement.model(
+                  settableParams.model,
+                  setSettableParams
+                )}
+              </th>
+            </tr>
+
             {configurableOptions.map((optionName) => {
               const currentValue =
                 settableParams[optionName as keyof SettableParameters] ??
