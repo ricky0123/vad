@@ -93,10 +93,8 @@ export const getDefaultRealTimeVADOptions = (model: "v5" | "legacy"): RealTimeVA
     onSpeechRealStart: () => {
       log.debug("Detected real speech start")
     },
-    baseAssetPath:
-      "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@latest/dist/",
-    onnxWASMBasePath:
-      "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/",
+    baseAssetPath: "./",
+    onnxWASMBasePath: "./",
     model: model,
     workletOptions: {},
     getStream: async () => {

@@ -23,8 +23,7 @@ const vadMethods = ["pause", "start", "toggle"]
 const parameterDescriptions: Record<string, string> = {
   model:
     "The VAD model to use. 'v5' is the latest model, 'legacy' is the older version.",
-  baseAssetPath: "Base path for VAD model assets.",
-  onnxWASMBasePath: "Base path for ONNX WebAssembly files.",
+  assetPaths: "Asset path configuration: 'root' for local root, 'subpath' for local subpath, 'cdn' for CDN delivery.",
   submitUserSpeechOnPause:
     "Whether to submit speech segments when VAD is paused.",
   positiveSpeechThreshold:
@@ -56,11 +55,46 @@ const Tooltip = ({
   </div>
 )
 
+// Asset paths configuration
+type AssetPathsOption = "root" | "subpath" | "cdn"
+const assetPathsConfig: Record<AssetPathsOption, { baseAssetPath: string; onnxWASMBasePath: string }> = {
+  root: {
+    baseAssetPath: "./",
+    onnxWASMBasePath: "./"
+  },
+  subpath: {
+    baseAssetPath: "./subpath/",
+    onnxWASMBasePath: "./subpath/"
+  },
+  cdn: {
+    baseAssetPath: "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@latest/dist/",
+    onnxWASMBasePath: "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/"
+  }
+}
+
+// Unified parameter system
+type SettableParameter = keyof ReactRealTimeVADOptions | 'assetPaths' | 'customStream'
+
+interface SettableParameters {
+  // VAD parameters
+  model?: string
+  submitUserSpeechOnPause?: boolean
+  positiveSpeechThreshold?: number
+  negativeSpeechThreshold?: number
+  redemptionMs?: number
+  preSpeechPadMs?: number
+  minSpeechMs?: number
+  startOnLoad?: boolean
+  userSpeakingThreshold?: number
+  // Custom parameters
+  assetPaths?: AssetPathsOption
+  customStream?: boolean
+}
+
 // Define which options should be shown in the UI
-const configurableOptions: (keyof ReactRealTimeVADOptions)[] = [
+const configurableOptions: SettableParameter[] = [
   "model",
-  "baseAssetPath",
-  "onnxWASMBasePath",
+  "assetPaths",
   "submitUserSpeechOnPause",
   "positiveSpeechThreshold",
   "negativeSpeechThreshold",
@@ -69,19 +103,26 @@ const configurableOptions: (keyof ReactRealTimeVADOptions)[] = [
   "minSpeechMs",
   "startOnLoad",
   "userSpeakingThreshold",
+  "customStream",
 ]
 
-const defaultParams: Partial<ReactRealTimeVADOptions> = Object.fromEntries(
-  Object.entries(getDefaultReactRealTimeVADOptions("v5"))
-    .filter(([key, _value]) => {
-      return configurableOptions.includes(key as keyof ReactRealTimeVADOptions)
-    })
-    .map(([key, value]) => {
-      return [key, value]
-    })
-)
+// Default values for settable parameters
+const defaultSettableParams: SettableParameters = {
+  model: "v5",
+  assetPaths: "root",
+  customStream: false,
+  ...Object.fromEntries(
+    Object.entries(getDefaultReactRealTimeVADOptions("v5"))
+      .filter(([key, _value]) => {
+        return configurableOptions.includes(key as keyof ReactRealTimeVADOptions)
+      })
+      .map(([key, value]) => {
+        return [key, value]
+      })
+  )
+}
 
-const getOptionsFromHash = () => {
+const getSettableParamsFromHash = (): SettableParameters => {
   const hash = window.location.hash
   if (!hash) return {}
   const params = new URLSearchParams(hash.slice(1))
@@ -89,20 +130,44 @@ const getOptionsFromHash = () => {
   if (!opts) return {}
   try {
     const out = JSON.parse(decodeURIComponent(opts))
-    console.log("Parsed opts from hash:", out)
+    console.log("Parsed settable params from hash:", out)
     return out
   } catch (e) {
-    console.error("Failed to parse opts from hash:", e)
+    console.error("Failed to parse settable params from hash:", e)
     return {}
   }
 }
 
-const opts = {
-  ...defaultParams,
-  ...getOptionsFromHash(),
-  // Ensure frameSamples is set based on model
-  frameSamples:
-    (getOptionsFromHash().model || defaultParams.model) === "v5" ? 512 : 1536,
+// Convert settable parameters to VAD parameters
+const settableParamsToVADParams = (settableParams: SettableParameters): Partial<ReactRealTimeVADOptions> => {
+  const vadParams: Partial<ReactRealTimeVADOptions> = {}
+  
+  // Copy VAD parameters directly
+  if (settableParams.model !== undefined) vadParams.model = settableParams.model as "v5" | "legacy"
+  if (settableParams.submitUserSpeechOnPause !== undefined) vadParams.submitUserSpeechOnPause = settableParams.submitUserSpeechOnPause
+  if (settableParams.positiveSpeechThreshold !== undefined) vadParams.positiveSpeechThreshold = settableParams.positiveSpeechThreshold
+  if (settableParams.negativeSpeechThreshold !== undefined) vadParams.negativeSpeechThreshold = settableParams.negativeSpeechThreshold
+  if (settableParams.redemptionMs !== undefined) vadParams.redemptionMs = settableParams.redemptionMs
+  if (settableParams.preSpeechPadMs !== undefined) vadParams.preSpeechPadMs = settableParams.preSpeechPadMs
+  if (settableParams.minSpeechMs !== undefined) vadParams.minSpeechMs = settableParams.minSpeechMs
+  if (settableParams.startOnLoad !== undefined) vadParams.startOnLoad = settableParams.startOnLoad
+  if (settableParams.userSpeakingThreshold !== undefined) vadParams.userSpeakingThreshold = settableParams.userSpeakingThreshold
+  
+  // Convert asset paths to baseAssetPath and onnxWASMBasePath
+  if (settableParams.assetPaths) {
+    const assetConfig = assetPathsConfig[settableParams.assetPaths]
+    vadParams.baseAssetPath = assetConfig.baseAssetPath
+    vadParams.onnxWASMBasePath = assetConfig.onnxWASMBasePath
+  }
+  
+  // Note: frameSamples is calculated internally by the VAD based on the model
+  
+  return vadParams
+}
+
+const initialSettableParams: SettableParameters = {
+  ...defaultSettableParams,
+  ...getSettableParamsFromHash(),
 }
 
 // Form component for boolean values (checkboxes)
@@ -111,10 +176,10 @@ const BooleanInput = ({
   currentValue,
   onInputChange,
 }: {
-  optionName: keyof ReactRealTimeVADOptions
+  optionName: SettableParameter
   currentValue: boolean
   onInputChange: (
-    optionName: keyof ReactRealTimeVADOptions,
+    optionName: SettableParameter,
     newValue: string | boolean | number
   ) => void
 }) => (
@@ -132,10 +197,10 @@ const ModelSelect = ({
   currentValue,
   onInputChange,
 }: {
-  optionName: keyof ReactRealTimeVADOptions
+  optionName: SettableParameter
   currentValue: string
   onInputChange: (
-    optionName: keyof ReactRealTimeVADOptions,
+    optionName: SettableParameter,
     newValue: string | boolean | number
   ) => void
 }) => (
@@ -149,16 +214,40 @@ const ModelSelect = ({
   </select>
 )
 
+// Form component for asset paths selection (dropdown)
+const AssetPathsSelect = ({
+  optionName,
+  currentValue,
+  onInputChange,
+}: {
+  optionName: SettableParameter
+  currentValue: AssetPathsOption
+  onInputChange: (
+    optionName: SettableParameter,
+    newValue: string | boolean | number
+  ) => void
+}) => (
+  <select
+    value={currentValue}
+    onChange={(e) => onInputChange(optionName, e.target.value as AssetPathsOption)}
+    className="rounded mx-5"
+  >
+    <option value="root">root</option>
+    <option value="subpath">subpath</option>
+    <option value="cdn">cdn</option>
+  </select>
+)
+
 // Form component for number values
 const NumberInput = ({
   optionName,
   currentValue,
   onInputChange,
 }: {
-  optionName: keyof ReactRealTimeVADOptions
+  optionName: SettableParameter
   currentValue: number
   onInputChange: (
-    optionName: keyof ReactRealTimeVADOptions,
+    optionName: SettableParameter,
     newValue: string | boolean | number
   ) => void
 }) => (
@@ -176,10 +265,10 @@ const FloatInput = ({
   currentValue,
   onInputChange,
 }: {
-  optionName: keyof ReactRealTimeVADOptions
+  optionName: SettableParameter
   currentValue: number
   onInputChange: (
-    optionName: keyof ReactRealTimeVADOptions,
+    optionName: SettableParameter,
     newValue: string | boolean | number
   ) => void
 }) => (
@@ -198,10 +287,10 @@ const TextInput = ({
   currentValue,
   onInputChange,
 }: {
-  optionName: keyof ReactRealTimeVADOptions
+  optionName: SettableParameter
   currentValue: string
   onInputChange: (
-    optionName: keyof ReactRealTimeVADOptions,
+    optionName: SettableParameter,
     newValue: string | boolean | number
   ) => void
 }) => (
@@ -214,18 +303,17 @@ const TextInput = ({
 )
 
 function App() {
-  const [initializationParameters, setVadParams] = useState(opts)
-  const [newVadParams, setNewVadParams] = useState<
-    Partial<ReactRealTimeVADOptions>
-  >({})
+  const [settableParams, setSettableParams] = useState<SettableParameters>(initialSettableParams)
   const [demo, setDemo] = useState(true)
-  const [customStreamEnabled, setCustomStreamEnabled] = useState(false)
+  
+  // Convert settable parameters to VAD parameters
+  const vadParams = settableParamsToVADParams(settableParams)
 
   const handleInputChange = (
-    optionName: keyof ReactRealTimeVADOptions,
+    optionName: SettableParameter,
     newValue: string | boolean | number
   ) => {
-    setNewVadParams((prevValues) => {
+    setSettableParams((prevValues) => {
       const updatedValues = {
         ...prevValues,
         [optionName]: newValue,
@@ -237,14 +325,15 @@ function App() {
 
   // Helper function to determine the appropriate form component
   const getFormComponent = (
-    optionName: keyof ReactRealTimeVADOptions,
+    optionName: SettableParameter,
     currentValue: any
   ) => {
-    const newValue = newVadParams[optionName] ?? currentValue
+    const newValue = settableParams[optionName as keyof SettableParameters] ?? currentValue
 
     if (
       optionName === "startOnLoad" ||
-      optionName === "submitUserSpeechOnPause"
+      optionName === "submitUserSpeechOnPause" ||
+      optionName === "customStream"
     ) {
       return (
         <BooleanInput
@@ -258,6 +347,16 @@ function App() {
     if (optionName === "model") {
       return (
         <ModelSelect
+          optionName={optionName}
+          currentValue={newValue}
+          onInputChange={handleInputChange}
+        />
+      )
+    }
+
+    if (optionName === "assetPaths") {
+      return (
+        <AssetPathsSelect
           optionName={optionName}
           currentValue={newValue}
           onInputChange={handleInputChange}
@@ -302,13 +401,11 @@ function App() {
   const handleRestart = async () => {
     setDemo(false)
 
-    const params = {
-      ...initializationParameters,
-      ...newVadParams,
-    }
+    // Convert current settable parameters to VAD parameters
+    const params = settableParamsToVADParams(settableParams)
 
     // Add custom stream functions if enabled
-    if (customStreamEnabled) {
+    if (settableParams.customStream) {
       console.log("Getting custom stream")
       const customStream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -329,9 +426,8 @@ function App() {
       }
     }
 
-    setVadParams(params)
-
-    const opts = JSON.stringify(params)
+    // Save settable parameters to URL hash
+    const opts = JSON.stringify(settableParams)
     window.location.hash = `#opts=${encodeURIComponent(opts)}`
 
     await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -341,7 +437,7 @@ function App() {
   return (
     <div className="flex">
       <div className="mr-5">
-        <h3>Initialization parameters</h3>
+        <h3>Configuration Parameters</h3>
         <table>
           <thead>
             <tr>
@@ -352,7 +448,7 @@ function App() {
           </thead>
           <tbody>
             {configurableOptions.map((optionName) => {
-              const currentValue = initializationParameters[optionName]
+              const currentValue = settableParams[optionName as keyof SettableParameters] ?? defaultSettableParams[optionName as keyof SettableParameters]
               const description = parameterDescriptions[optionName]
 
               return (
@@ -377,22 +473,17 @@ function App() {
           </tbody>
         </table>
         
-        <h3>Custom Settings</h3>
-        <div className="flex items-center gap-2 mb-4">
-          <input
-            type="checkbox"
-            checked={customStreamEnabled}
-            onChange={(e) => setCustomStreamEnabled(e.target.checked)}
-            className="rounded"
+        <h3>Final VAD Parameters</h3>
+        <div className="mb-4">
+          <textarea
+            value={JSON.stringify(vadParams, null, 2)}
+            readOnly
+            className="w-full h-40 p-2 border rounded font-mono text-sm bg-gray-50"
+            onClick={(e) => (e.target as HTMLTextAreaElement).select()}
           />
-          <label className="flex items-center gap-2">
-            Custom stream - reuse custom stream
-            <Tooltip content={parameterDescriptions['customStream'] || ''}>
-              <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                ?
-              </span>
-            </Tooltip>
-          </label>
+          <p className="text-sm text-gray-600 mt-1">
+            Click to select all - these are the actual parameters passed to the VAD
+          </p>
         </div>
       </div>
       <div>
@@ -404,7 +495,7 @@ function App() {
           Restart
         </button>
         {demo && (
-          <VADDemo initializationParameters={initializationParameters} />
+          <VADDemo initializationParameters={vadParams} />
         )}
       </div>
     </div>
