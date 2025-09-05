@@ -36,6 +36,6 @@
     "clean": "rm -rf dist",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "publish": "npm publish --access public"
+    "release": "npm publish --access public"
   }
 }
