@@ -5,14 +5,16 @@ The `@ricky0123/vad-web` package aims to provide an accurate, user-friendly voic
 ## Script tags quick start
 The VAD can be used via script tags as follows:
 ```html linenums="1"
-<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.27/dist/bundle.min.js"></script>
 <script>
   async function main() {
     const myvad = await vad.MicVAD.new({
       onSpeechEnd: (audio) => {
         // do something with `audio` (Float32Array of audio samples at sample rate 16000)...
       },
+      onnxWASMBasePath: "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/",
+      baseAssetPath: "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.27/dist/",
     })
     myvad.start()
   }

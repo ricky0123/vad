@@ -30,6 +30,6 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
-    "publish": "npm publish --access public"
+    "release": "npm publish --access public"
   }
 }

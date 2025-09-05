@@ -12,8 +12,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@ricky0123/vad-react": "^0.0.29",
-    "onnxruntime-web": "^1.14.0",
+    "@ricky0123/vad-react": "^0.0.33",
+    "onnxruntime-web": "^1.22.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

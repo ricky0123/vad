@@ -14,6 +14,7 @@ module.exports = {
           to: "[name][ext]",
         },
         { from: "node_modules/onnxruntime-web/dist/*.wasm", to: "[name][ext]" },
+        { from: "node_modules/onnxruntime-web/dist/*.mjs", to: "[name][ext]" },
         { from: "src/index.html", to: "[name][ext]" },
       ],
     }),
