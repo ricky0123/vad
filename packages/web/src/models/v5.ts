@@ -20,7 +20,6 @@ export class SileroV5 {
     modelFetcher: ModelFetcher
   ) => {
     log.debug("Loading VAD...")
-    log.debug("ort loglevel set to", ortInstance.env.logLevel)
     const modelArrayBuffer = await modelFetcher()
     const _session = await ortInstance.InferenceSession.create(modelArrayBuffer)
     // @ts-ignore
