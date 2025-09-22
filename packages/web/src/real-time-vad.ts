@@ -181,6 +181,9 @@ export class MicVAD {
       return
     }
     this.stream = await this.options.resumeStream(this.stream)
+    if (this.sourceNode) {
+      this.sourceNode.disconnect()
+    }
     this.sourceNode = new MediaStreamAudioSourceNode(this.audioContext, {
       mediaStream: this.stream,
     })
@@ -189,12 +192,12 @@ export class MicVAD {
 
   start = async () => {
     if (!this.initialized) {
+      this.initialized = true
       this.stream = await this.options.getStream()
       this.sourceNode = new MediaStreamAudioSourceNode(this.audioContext, {
         mediaStream: this.stream,
       })
       this.audioNodeVAD.receive(this.sourceNode)
-      this.initialized = true
     }
 
     if (!this.stream?.active) {
@@ -211,11 +214,15 @@ export class MicVAD {
     if (this.listening) {
       this.pause()
     }
-    if (!this.stream || !this.sourceNode) {
-      console.warn("Stream not initialized")
-    } else {
+    if (this.stream) {
       this.options.pauseStream(this.stream)
+    } else {
+      console.warn("Stream not initialized")
+    }
+    if (this.sourceNode) {
       this.sourceNode.disconnect()
+    } else {
+      console.warn("Source node not initialized")
     }
     this.audioNodeVAD.destroy()
     this.audioContext.close()
