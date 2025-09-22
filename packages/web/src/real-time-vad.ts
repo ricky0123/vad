@@ -189,9 +189,9 @@ export class MicVAD {
 
   start = async () => {
     if (!this.initialized) {
-      const stream = await this.options.getStream()
+      this.stream = await this.options.getStream()
       this.sourceNode = new MediaStreamAudioSourceNode(this.audioContext, {
-        mediaStream: stream,
+        mediaStream: this.stream,
       })
       this.audioNodeVAD.receive(this.sourceNode)
       this.initialized = true
