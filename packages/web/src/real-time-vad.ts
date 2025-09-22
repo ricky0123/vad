@@ -66,6 +66,7 @@ export interface RealTimeVADOptions
   getStream: () => Promise<MediaStream>
   pauseStream: (stream: MediaStream) => Promise<void>
   resumeStream: (stream: MediaStream) => Promise<MediaStream>
+  startOnLoad: boolean
 }
 
 export const ort = ortInstance
@@ -127,10 +128,15 @@ export const getDefaultRealTimeVADOptions = (
     ortConfig: (ort) => {
       ort.env.logLevel = "error"
     },
+    startOnLoad: true,
   }
 }
 
 export class MicVAD {
+  public stream?: MediaStream
+  private sourceNode?: MediaStreamAudioSourceNode
+  private initialized = false
+
   static async new(options: Partial<RealTimeVADOptions> = {}) {
     const fullOptions: RealTimeVADOptions = {
       ...getDefaultRealTimeVADOptions(options.model ?? DEFAULT_MODEL),
@@ -138,42 +144,46 @@ export class MicVAD {
     }
     validateOptions(fullOptions)
 
-    const stream = await fullOptions.getStream()
-
     const audioContext = new AudioContext()
-    const sourceNode = new MediaStreamAudioSourceNode(audioContext, {
-      mediaStream: stream,
-    })
-
     const audioNodeVAD = await AudioNodeVAD.new(audioContext, fullOptions)
-    audioNodeVAD.receive(sourceNode)
 
-    return new MicVAD(
-      fullOptions,
-      audioContext,
-      stream,
-      audioNodeVAD,
-      sourceNode
-    )
+    const micVad = new MicVAD(fullOptions, audioContext, audioNodeVAD)
+
+    if (fullOptions.startOnLoad) {
+      try {
+        await micVad.start()
+      } catch (e) {
+        console.error("Error starting micVad", e)
+      }
+    }
+
+    return micVad
   }
 
   private constructor(
     public options: RealTimeVADOptions,
     private audioContext: AudioContext,
-    private stream: MediaStream,
     private audioNodeVAD: AudioNodeVAD,
-    private sourceNode: MediaStreamAudioSourceNode,
     private listening = false
   ) {}
 
   pause = () => {
-    this.options.pauseStream(this.stream)
+    if (this.stream) {
+      this.options.pauseStream(this.stream)
+    }
     this.audioNodeVAD.pause()
     this.listening = false
   }
 
   resume = async () => {
+    if (!this.stream) {
+      console.warn("Stream not initialized")
+      return
+    }
     this.stream = await this.options.resumeStream(this.stream)
+    if (this.sourceNode) {
+      this.sourceNode.disconnect()
+    }
     this.sourceNode = new MediaStreamAudioSourceNode(this.audioContext, {
       mediaStream: this.stream,
     })
@@ -181,7 +191,16 @@ export class MicVAD {
   }
 
   start = async () => {
-    if (!this.stream.active) {
+    if (!this.initialized) {
+      this.initialized = true
+      this.stream = await this.options.getStream()
+      this.sourceNode = new MediaStreamAudioSourceNode(this.audioContext, {
+        mediaStream: this.stream,
+      })
+      this.audioNodeVAD.receive(this.sourceNode)
+    }
+
+    if (!this.stream?.active) {
       await this.resume()
       this.audioNodeVAD.start()
       this.listening = true
@@ -195,8 +214,16 @@ export class MicVAD {
     if (this.listening) {
       this.pause()
     }
-    this.options.pauseStream(this.stream)
-    this.sourceNode.disconnect()
+    if (this.stream) {
+      this.options.pauseStream(this.stream)
+    } else {
+      console.warn("Stream not initialized")
+    }
+    if (this.sourceNode) {
+      this.sourceNode.disconnect()
+    } else {
+      console.warn("Source node not initialized")
+    }
     this.audioNodeVAD.destroy()
     this.audioContext.close()
   }

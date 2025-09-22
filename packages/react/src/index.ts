@@ -9,14 +9,12 @@ import React, { useEffect, useState } from "react"
 export { utils } from "@ricky0123/vad-web"
 
 interface ReactOptions {
-  startOnLoad: boolean
   userSpeakingThreshold: number
 }
 
 export type ReactRealTimeVADOptions = RealTimeVADOptions & ReactOptions
 
 const defaultReactOptions: ReactOptions = {
-  startOnLoad: true,
   userSpeakingThreshold: 0.6,
 }
 
@@ -109,7 +107,7 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
       }
       setVAD(myvad)
       setLoading(false)
-      if (reactOptions.startOnLoad) {
+      if (vadOptions.startOnLoad) {
         myvad?.start()
         setListening(true)
       }
