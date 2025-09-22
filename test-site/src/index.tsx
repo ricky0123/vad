@@ -319,7 +319,7 @@ const initialSettableParams = getSettableParamsFromHash()
 // Convert settable parameters to VAD parameters
 const settableParamsToVADParams = async (
   settableParams: SettableParameters
-): Promise<ReactRealTimeVADOptions> => {
+): Promise<{ params: ReactRealTimeVADOptions; stream: MediaStream | null }> => {
   const assetConfig = assetPathsConfig[settableParams.assetPaths]
 
   const defaultVADParams = getDefaultReactRealTimeVADOptions(
@@ -330,22 +330,24 @@ const settableParamsToVADParams = async (
   let pauseStream = defaultVADParams.pauseStream
   let resumeStream = defaultVADParams.resumeStream
 
+  let stream: MediaStream | null = null
   if (settableParams.customStream) {
-    const stream = await defaultVADParams.getStream()
+    const _stream = await defaultVADParams.getStream()
+    stream = _stream
     getStream = async () => {
       console.log("called getStream")
-      return stream
+      return _stream
     }
     pauseStream = async (_stream: MediaStream) => {
       console.log("called pauseStream")
     }
     resumeStream = async (_stream: MediaStream) => {
       console.log("called resumeStream")
-      return stream
+      return _stream
     }
   }
 
-  const vadParams: ReactRealTimeVADOptions = {
+  const params: ReactRealTimeVADOptions = {
     positiveSpeechThreshold: settableParams.positiveSpeechThreshold,
     negativeSpeechThreshold: settableParams.negativeSpeechThreshold,
     redemptionMs: settableParams.redemptionMs,
@@ -395,7 +397,7 @@ const settableParamsToVADParams = async (
     userSpeakingThreshold: settableParams.userSpeakingThreshold,
   }
 
-  return vadParams
+  return { params, stream }
 }
 
 // Form component for boolean values (checkboxes)
@@ -497,10 +499,13 @@ function App() {
   const [demo, setDemo] = useState(false)
   const [vadParams, setVadParams] =
     useState<ReactRealTimeVADOptions>(defaultVADOptions)
+  const [stream, setStream] = useState<MediaStream | null>(null)
 
   useEffect(() => {
     const setup = async () => {
-      setVadParams(await settableParamsToVADParams(settableParams))
+      const { params, stream } = await settableParamsToVADParams(settableParams)
+      setVadParams(params)
+      setStream(stream)
       setDemo(true)
     }
     setup().catch((e) => {
@@ -515,7 +520,9 @@ function App() {
     const opts = JSON.stringify(settableParams)
     window.location.hash = `#opts=${encodeURIComponent(opts)}`
 
-    setVadParams(await settableParamsToVADParams(settableParams))
+    const { params, stream } = await settableParamsToVADParams(settableParams)
+    setVadParams(params)
+    setStream(stream)
 
     await new Promise((resolve) => setTimeout(resolve, 1000))
     setDemo(true)
@@ -796,13 +803,19 @@ function App() {
         >
           Restart
         </button>
-        {demo && <VADDemo vadParams={vadParams} />}
+        {demo && <VADDemo vadParams={vadParams} stream={stream} />}
       </div>
     </div>
   )
 }
 
-function VADDemo({ vadParams }: { vadParams: ReactRealTimeVADOptions }) {
+function VADDemo({
+  vadParams,
+  stream,
+}: {
+  vadParams: ReactRealTimeVADOptions
+  stream: MediaStream | null
+}) {
   const [audioList, setAudioList] = useState<string[]>([])
   const vad = useMicVAD({
     ...vadParams,
@@ -816,6 +829,17 @@ function VADDemo({ vadParams }: { vadParams: ReactRealTimeVADOptions }) {
   })
 
   console.log("test re-render")
+
+  useEffect(() => {
+    return () => {
+      if (stream) {
+        console.log("Stopping custom stream tracks")
+        stream.getTracks().forEach((track) => {
+          track.stop()
+        })
+      }
+    }
+  }, [])
 
   return (
     <div>
