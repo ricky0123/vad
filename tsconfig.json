@@ -35,6 +35,6 @@
     "noUnusedParameters": true,
     
     // Additional helpful options
-  "skipLibCheck": true
+    "skipLibCheck": true
   }
 }
