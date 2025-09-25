@@ -67,6 +67,8 @@ export interface RealTimeVADOptions
   pauseStream: (stream: MediaStream) => Promise<void>
   resumeStream: (stream: MediaStream) => Promise<MediaStream>
   startOnLoad: boolean
+  /** Optional AudioContext to reuse. If omitted a new one will be created internally. */
+  audioContext?: AudioContext
 }
 
 export const ort = ortInstance
@@ -136,6 +138,7 @@ export class MicVAD {
   public stream?: MediaStream
   private sourceNode?: MediaStreamAudioSourceNode
   private initialized = false
+  private ownsAudioContext: boolean = false
 
   static async new(options: Partial<RealTimeVADOptions> = {}) {
     const fullOptions: RealTimeVADOptions = {
@@ -144,10 +147,11 @@ export class MicVAD {
     }
     validateOptions(fullOptions)
 
-    const audioContext = new AudioContext()
+    const audioContext = fullOptions.audioContext ?? new AudioContext()
+    const ownsAudioContext = !fullOptions.audioContext
     const audioNodeVAD = await AudioNodeVAD.new(audioContext, fullOptions)
-
     const micVad = new MicVAD(fullOptions, audioContext, audioNodeVAD)
+    micVad.ownsAudioContext = ownsAudioContext
 
     if (fullOptions.startOnLoad) {
       try {
@@ -225,7 +229,9 @@ export class MicVAD {
       console.warn("Source node not initialized")
     }
     this.audioNodeVAD.destroy()
-    this.audioContext.close()
+    if (this.ownsAudioContext) {
+      this.audioContext.close()
+    }
   }
 
   setOptions = (options: Partial<FrameProcessorOptions>) => {
