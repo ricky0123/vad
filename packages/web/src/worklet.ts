@@ -18,9 +18,8 @@ class Processor extends AudioWorkletProcessor {
     this.options = options.processorOptions as WorkletOptions
 
     this.port.onmessage = (ev) => {
-      log.debug("Received something")
       if (ev.data === Message.SpeechStop) {
-        log.debug("Speech stop message received")
+        log.debug("Worklet received speech stop message")
         this._stopProcessing = true
       }
     }

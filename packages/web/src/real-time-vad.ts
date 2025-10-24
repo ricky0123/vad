@@ -140,21 +140,6 @@ export const getDefaultRealTimeVADOptions = (
   }
 }
 
-/*
-
-1. user supplies Partial<RealTimeVADOptions>
-1. if startOnLoad true:
-  1. get stream (before initializing audio context, so that context is not suspended)
-  1. if audio context not supplied, create it
-  1. create MediaStreamAudioSourceNode from stream
-  1. create audio worklet or script processor
-  1. connect MediaStreamAudioSourceNode to AudioWorklet or ScriptProcessor with port msg handlers
-1. else:
-  1. do that when start is called (audio context needed for setup of basically everything)
-1. we return control object
-
-*/
-
 const detectProcessorType = (
   ctx: AudioContext
 ): "AudioWorklet" | "ScriptProcessor" => {
