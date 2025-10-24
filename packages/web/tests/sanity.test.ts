@@ -1,5 +1,4 @@
 import {
-  AudioNodeVAD,
   DEFAULT_MODEL,
   MicVAD,
   NonRealTimeVAD,
@@ -10,7 +9,6 @@ import {
 describe("VAD Web Package Sanity Tests", () => {
   describe("Package Import", () => {
     test("should import main exports successfully", () => {
-      expect(AudioNodeVAD).toBeDefined()
       expect(MicVAD).toBeDefined()
       expect(NonRealTimeVAD).toBeDefined()
       expect(DEFAULT_MODEL).toBeDefined()
@@ -76,15 +74,6 @@ describe("VAD Web Package Sanity Tests", () => {
 
     test("should create MicVAD with default options", async () => {
       const vad = await MicVAD.new({ model: "legacy" })
-      expect(vad).toBeDefined()
-      expect(typeof vad.start).toBe("function")
-      expect(typeof vad.pause).toBe("function")
-      expect(typeof vad.destroy).toBe("function")
-    })
-
-    test("should create AudioNodeVAD with default options", async () => {
-      const audioContext = new AudioContext()
-      const vad = await AudioNodeVAD.new(audioContext, { model: "legacy" })
       expect(vad).toBeDefined()
       expect(typeof vad.start).toBe("function")
       expect(typeof vad.pause).toBe("function")

@@ -347,12 +347,11 @@ export class MicVAD {
   }
 
   start = async () => {
-    log.debug("Start called")
-
     switch (this.initializationState) {
       case "uninitialized":
-        log.debug("Initializing")
+        log.debug("initializing micVAD")
         this.initializationState = "initializing"
+        this.frameProcessor.resume()
 
         this._stream = await this.options.getStream()
         this._audioContext = this.options.getAudioContext()
@@ -396,7 +395,7 @@ export class MicVAD {
           }
         )
         this._mediaStreamAudioSourceNode.connect(this._vadNode)
-        log.debug("Initialized finished")
+        log.debug("started micVAD")
 
         this.initializationState = "initialized"
         break
@@ -410,6 +409,7 @@ export class MicVAD {
           return
         }
         this.listening = true
+        this.frameProcessor.resume()
 
         const { stream, audioContext, vadNode } = this.getAudioInstances()
         this._stream = await this.options.resumeStream(stream)
@@ -439,10 +439,16 @@ export class MicVAD {
     }
     this.listening = false
 
-    const { stream, mediaStreamAudioSourceNode } = this.getAudioInstances()
+    const { stream, mediaStreamAudioSourceNode, vadNode } =
+      this.getAudioInstances()
     await this.options.pauseStream(stream)
 
+    if (this._audioProcessorAdapterType == "AudioWorklet") {
+      ;(vadNode as any).port.postMessage(Message.SpeechStop)
+    }
+
     mediaStreamAudioSourceNode.disconnect()
+    this.frameProcessor.pause(this.handleFrameProcessorEvent)
   }
 
   destroy = () => {

@@ -18,7 +18,9 @@ class Processor extends AudioWorkletProcessor {
     this.options = options.processorOptions as WorkletOptions
 
     this.port.onmessage = (ev) => {
-      if (ev.data.message === Message.SpeechStop) {
+      log.debug("Received something")
+      if (ev.data === Message.SpeechStop) {
+        log.debug("Speech stop message received")
         this._stopProcessing = true
       }
     }
@@ -40,8 +42,8 @@ class Processor extends AudioWorkletProcessor {
     _outputs: Float32Array[][],
     _parameters: Record<string, Float32Array>
   ): boolean {
-    log.debug("process called")
     if (this._stopProcessing) {
+      // This will not stop process from running, just a prerequisite for the browser to garbage collect
       return false
     }
 
