@@ -1,4 +1,4 @@
-import * as ort from "onnxruntime-web"
+import * as ort from "onnxruntime-web/wasm"
 import { log } from "../logging"
 import { ModelFactory, ModelFetcher, SpeechProbabilities } from "./common"
 

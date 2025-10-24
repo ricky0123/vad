@@ -40,6 +40,7 @@ class Processor extends AudioWorkletProcessor {
     _outputs: Float32Array[][],
     _parameters: Record<string, Float32Array>
   ): boolean {
+    log.debug("process called")
     if (this._stopProcessing) {
       return false
     }
