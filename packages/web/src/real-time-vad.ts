@@ -226,6 +226,10 @@ async function getVADNodeAsScriptProcessor(
     }
   }
 
+  // https://github.com/WebAudio/web-audio-api/issues/345
+  // -> we need to connect an output or will not work due to chrome bug
+  audioNode.connect(audioContext.destination)
+
   return audioNode
 }
 
