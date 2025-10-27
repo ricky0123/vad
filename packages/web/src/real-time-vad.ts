@@ -444,11 +444,8 @@ export class MicVAD {
     }
   }
 
-  setOptions = (options: Partial<FrameProcessorOptions>) => {
-    this.frameProcessor.options = {
-      ...this.frameProcessor.options,
-      ...options,
-    }
+  setOptions = (update: Partial<FrameProcessorOptions>) => {
+    this.frameProcessor.setOptions(update)
   }
 
   processFrame = async (frame: Float32Array) => {
