@@ -155,7 +155,7 @@ async function getVADNodeAsWorklet(
   audioContext: AudioContext,
   frameSamples: number,
   processFrame: ProcessFrameFunc
-): Promise<AudioNode> {
+): Promise<AudioWorkletNode> {
   await audioContext.audioWorklet.addModule(workletURL)
 
   workletOptions.processorOptions = {
@@ -189,12 +189,13 @@ async function getVADNodeAsScriptProcessor(
   audioContext: AudioContext,
   frameSamples: number,
   processFrame: ProcessFrameFunc
-): Promise<AudioNode> {
+): Promise<ScriptProcessorNode> {
   const resampler = new Resampler({
     nativeSampleRate: audioContext.sampleRate,
     targetSampleRate: 16000, // VAD models expect 16kHz
     targetFrameSize: frameSamples ?? 480,
   })
+  log.debug("using script processor")
 
   // Fallback to ScriptProcessor
   const bufferSize = 4096 // Increased for more stable processing
@@ -239,7 +240,7 @@ export class MicVAD {
     public errored: string | null = null,
     private _stream: MediaStream | null = null,
     private _audioContext: AudioContext | null = null,
-    private _vadNode: AudioNode | null = null,
+    private _vadNode: AudioWorkletNode | ScriptProcessorNode | null = null,
     private _mediaStreamAudioSourceNode: MediaStreamAudioSourceNode | null = null,
     private _audioProcessorAdapterType:
       | "AudioWorklet"
@@ -310,7 +311,7 @@ export class MicVAD {
   private getAudioInstances = (): {
     stream: MediaStream
     audioContext: AudioContext
-    vadNode: AudioNode
+    vadNode: AudioWorkletNode | ScriptProcessorNode
     mediaStreamAudioSourceNode: MediaStreamAudioSourceNode
   } => {
     if (
@@ -346,7 +347,7 @@ export class MicVAD {
             ? detectProcessorType(this._audioContext)
             : this.options.processorType
 
-        let _vadNode: AudioNode
+        let _vadNode: AudioWorkletNode | ScriptProcessorNode
         switch (this._audioProcessorAdapterType) {
           case "AudioWorklet":
             _vadNode = await getVADNodeAsWorklet(
@@ -428,8 +429,8 @@ export class MicVAD {
       this.getAudioInstances()
     await this.options.pauseStream(stream)
 
-    if (this._audioProcessorAdapterType == "AudioWorklet") {
-      ;(vadNode as any).port.postMessage(Message.SpeechStop)
+    if (vadNode instanceof AudioWorkletNode) {
+      vadNode.port.postMessage(Message.SpeechStop)
     }
 
     mediaStreamAudioSourceNode.disconnect()
