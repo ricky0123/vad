@@ -55,8 +55,6 @@ function useOptions(
     onnxWASMBasePath: fullOptions.onnxWASMBasePath,
     model: fullOptions.model,
     workletOptions: fullOptions.workletOptions,
-    getAudioContext: fullOptions.getAudioContext,
-    onDestroy: fullOptions.onDestroy,
     getStream: fullOptions.getStream,
     pauseStream: fullOptions.pauseStream,
     resumeStream: fullOptions.resumeStream,
@@ -65,6 +63,9 @@ function useOptions(
   }
   if (fullOptions.ortConfig) {
     vadOptions.ortConfig = fullOptions.ortConfig
+  }
+  if (fullOptions.audioContext) {
+    vadOptions.audioContext = fullOptions.audioContext
   }
   return [reactOptions, vadOptions]
 }

@@ -63,8 +63,7 @@ export interface RealTimeVADOptions
     OrtOptions,
     AssetOptions,
     ModelOptions {
-  getAudioContext: () => AudioContext
-  onDestroy: (audioContext: AudioContext | null) => void
+  audioContext?: AudioContext
   getStream: () => Promise<MediaStream>
   pauseStream: (stream: MediaStream) => Promise<void>
   resumeStream: (stream: MediaStream) => Promise<MediaStream>
@@ -100,12 +99,6 @@ export const getDefaultRealTimeVADOptions = (
     onnxWASMBasePath: "./",
     model: model,
     workletOptions: {},
-    getAudioContext: () => {
-      return new AudioContext()
-    },
-    onDestroy: (audioContext: AudioContext | null) => {
-      audioContext?.close()
-    },
     getStream: async () => {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -257,7 +250,8 @@ export class MicVAD {
       | "initializing"
       | "initialized"
       | "destroyed"
-      | "errored" = "uninitialized"
+      | "errored" = "uninitialized",
+    private ownsAudioContext = false
   ) {}
 
   static async new(options: Partial<RealTimeVADOptions> = {}) {
@@ -362,7 +356,14 @@ export class MicVAD {
           }
           throw error
         }
-        this._audioContext = this.options.getAudioContext()
+        if (!this.options.audioContext) {
+          this._audioContext = new AudioContext()
+          this.ownsAudioContext = true
+        }
+        if (!this._audioContext || this._audioContext.state != "running") {
+          this.setErrored("Audio context is null or not running")
+          throw Error("Audio context is null or not running")
+        }
 
         this._audioProcessorAdapterType =
           this.options.processorType == "auto"
@@ -480,7 +481,9 @@ export class MicVAD {
     if (this.listening) {
       this.pause()
     }
-    this.options.onDestroy(this._audioContext)
+    if (this.ownsAudioContext) {
+      this._audioContext?.close()
+    }
   }
 
   setOptions = (update: Partial<FrameProcessorOptions>) => {
