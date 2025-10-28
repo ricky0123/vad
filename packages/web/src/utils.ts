@@ -10,7 +10,7 @@ export function arrayBufferToBase64(buffer: ArrayBuffer) {
   const bytes = new Uint8Array(buffer)
   const len = bytes.byteLength
   const binary = new Array(len)
-  for (var i = 0; i < len; i++) {
+  for (let i = 0; i < len; i++) {
     const byte = bytes[i]
     if (byte === undefined) {
       break
@@ -31,10 +31,10 @@ export function encodeWAV(
   numChannels: number = 1,
   bitDepth: number = 32
 ) {
-  var bytesPerSample = bitDepth / 8
-  var blockAlign = numChannels * bytesPerSample
-  var buffer = new ArrayBuffer(44 + samples.length * bytesPerSample)
-  var view = new DataView(buffer)
+  const bytesPerSample = bitDepth / 8
+  const blockAlign = numChannels * bytesPerSample
+  const buffer = new ArrayBuffer(44 + samples.length * bytesPerSample)
+  const view = new DataView(buffer)
   /* RIFF identifier */
   writeString(view, 0, "RIFF")
   /* RIFF chunk length */
@@ -71,7 +71,7 @@ export function encodeWAV(
 }
 
 function writeFloat32(output: DataView, offset: number, input: Float32Array) {
-  for (var i = 0; i < input.length; i++, offset += 4) {
+  for (let i = 0; i < input.length; i++, offset += 4) {
     output.setFloat32(offset, input[i] as number, true)
   }
 }
@@ -81,14 +81,14 @@ function floatTo16BitPCM(
   offset: number,
   input: Float32Array
 ) {
-  for (var i = 0; i < input.length; i++, offset += 2) {
-    var s = Math.max(-1, Math.min(1, input[i] as number))
+  for (let i = 0; i < input.length; i++, offset += 2) {
+    const s = Math.max(-1, Math.min(1, input[i] as number))
     output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true)
   }
 }
 
 function writeString(view: DataView, offset: number, string: string) {
-  for (var i = 0; i < string.length; i++) {
+  for (let i = 0; i < string.length; i++) {
     view.setUint8(offset + i, string.charCodeAt(i))
   }
 }
@@ -124,8 +124,8 @@ export async function audioFileToArray(audioFileData: Blob) {
   if (audioBuffer === null) {
     throw Error("some shit")
   }
-  let _audioBuffer = audioBuffer as AudioBuffer
-  let out = new Float32Array(_audioBuffer.length)
+  const _audioBuffer = audioBuffer as AudioBuffer
+  const out = new Float32Array(_audioBuffer.length)
   for (let i = 0; i < _audioBuffer.length; i++) {
     for (let j = 0; j < _audioBuffer.numberOfChannels; j++) {
       // @ts-ignore
