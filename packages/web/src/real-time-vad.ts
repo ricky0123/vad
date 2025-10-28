@@ -256,7 +256,8 @@ export class MicVAD {
       | "uninitialized"
       | "initializing"
       | "initialized"
-      | "destroyed" = "uninitialized"
+      | "destroyed"
+      | "errored" = "uninitialized"
   ) {}
 
   static async new(options: Partial<RealTimeVADOptions> = {}) {
@@ -309,6 +310,7 @@ export class MicVAD {
         await micVad.start()
       } catch (e) {
         console.error("Error starting micVad", e)
+        throw e
       }
     }
     return micVad
@@ -338,6 +340,11 @@ export class MicVAD {
     }
   }
 
+  setErrored = (error: string) => {
+    this.initializationState = "errored"
+    this.errored = error
+  }
+
   start = async () => {
     switch (this.initializationState) {
       case "uninitialized": {
@@ -345,7 +352,16 @@ export class MicVAD {
         this.initializationState = "initializing"
         this.frameProcessor.resume()
 
-        this._stream = await this.options.getStream()
+        try {
+          this._stream = await this.options.getStream()
+        } catch (error) {
+          if (error instanceof Error) {
+            this.setErrored(error.message)
+          } else {
+            this.setErrored(String(error))
+          }
+          throw error
+        }
         this._audioContext = this.options.getAudioContext()
 
         this._audioProcessorAdapterType =
@@ -426,6 +442,11 @@ export class MicVAD {
         break
       }
 
+      case "errored": {
+        log.error("start called after errored")
+        break
+      }
+
       default: {
         log.warn("weird initialization state")
         break
@@ -439,13 +460,8 @@ export class MicVAD {
     }
     this.listening = false
 
-    const { stream, mediaStreamAudioSourceNode, vadNode } =
-      this.getAudioInstances()
+    const { stream, mediaStreamAudioSourceNode } = this.getAudioInstances()
     await this.options.pauseStream(stream)
-
-    if (vadNode instanceof AudioWorkletNode) {
-      vadNode.port.postMessage(Message.SpeechStop)
-    }
 
     mediaStreamAudioSourceNode.disconnect()
     this.frameProcessor.pause(this.handleFrameProcessorEvent)
@@ -454,6 +470,12 @@ export class MicVAD {
   destroy = () => {
     log.debug("destroy called")
     this.initializationState = "destroyed"
+
+    const { vadNode } = this.getAudioInstances()
+    if (vadNode instanceof AudioWorkletNode) {
+      vadNode.port.postMessage(Message.SpeechStop)
+    }
+
     if (this.listening) {
       this.pause()
     }
