@@ -26,25 +26,25 @@ interface RealTimeVADCallbacks {
   onFrameProcessed: (
     probabilities: SpeechProbabilities,
     frame: Float32Array
-  ) => any
+  ) => Promise<void> | void
 
   /** Callback to run if speech start was detected but `onSpeechEnd` will not be run because the
    * audio segment is smaller than `minSpeechFrames`.
    */
-  onVADMisfire: () => any
+  onVADMisfire: () => Promise<void> | void
 
   /** Callback to run when speech start is detected */
-  onSpeechStart: () => any
+  onSpeechStart: () => Promise<void> | void
 
   /**
    * Callback to run when speech end is detected.
    * Takes as arg a Float32Array of audio samples between -1 and 1, sample rate 16000.
    * This will not run if the audio segment is smaller than `minSpeechFrames`.
    */
-  onSpeechEnd: (audio: Float32Array) => any
+  onSpeechEnd: (audio: Float32Array) => Promise<void> | void
 
   /** Callback to run when speech is detected as valid. (i.e. not a misfire) */
-  onSpeechRealStart: () => any
+  onSpeechRealStart: () => Promise<void> | void
 }
 
 type AssetOptions = {
@@ -83,10 +83,7 @@ export const getDefaultRealTimeVADOptions = (
 ): RealTimeVADOptions => {
   return {
     ...defaultFrameProcessorOptions,
-    onFrameProcessed: (
-      _probabilities: SpeechProbabilities,
-      _frame: Float32Array
-    ) => {},
+    onFrameProcessed: () => {},
     onVADMisfire: () => {
       log.debug("VAD misfire")
     },
@@ -125,7 +122,7 @@ export const getDefaultRealTimeVADOptions = (
         track.stop()
       })
     },
-    resumeStream: async (_stream: MediaStream) => {
+    resumeStream: async () => {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           channelCount: 1,
@@ -174,7 +171,7 @@ async function getVADNodeAsWorklet(
   )
   audioNode.port.onmessage = async (ev: MessageEvent) => {
     switch (ev.data?.message) {
-      case Message.AudioFrame:
+      case Message.AudioFrame: {
         let buffer: ArrayBuffer = ev.data.data
         if (!(buffer instanceof ArrayBuffer)) {
           buffer = new ArrayBuffer(ev.data.data.byteLength)
@@ -183,6 +180,7 @@ async function getVADNodeAsWorklet(
         const frame = new Float32Array(buffer)
         await processFrame(frame)
         break
+      }
     }
   }
 
@@ -355,32 +353,35 @@ export class MicVAD {
             ? detectProcessorType(this._audioContext)
             : this.options.processorType
 
-        let _vadNode: AudioWorkletNode | ScriptProcessorNode
         switch (this._audioProcessorAdapterType) {
           case "AudioWorklet":
-            _vadNode = await getVADNodeAsWorklet(
-              this.options.baseAssetPath + workletFile,
-              this.options.workletOptions ?? {},
-              this._audioContext,
-              this.frameSamples,
-              this.processFrame
-            )
+            {
+              this._vadNode = await getVADNodeAsWorklet(
+                this.options.baseAssetPath + workletFile,
+                this.options.workletOptions ?? {},
+                this._audioContext,
+                this.frameSamples,
+                this.processFrame
+              )
+            }
             break
 
           case "ScriptProcessor":
-            _vadNode = await getVADNodeAsScriptProcessor(
-              this._audioContext,
-              this.frameSamples,
-              this.processFrame
-            )
+            {
+              this._vadNode = await getVADNodeAsScriptProcessor(
+                this._audioContext,
+                this.frameSamples,
+                this.processFrame
+              )
+            }
             break
 
-          default:
+          default: {
             throw new Error(
               `Unsupported audio processor adapter type: ${this._audioProcessorAdapterType}`
             )
+          }
         }
-        this._vadNode = _vadNode
 
         this._mediaStreamAudioSourceNode = new MediaStreamAudioSourceNode(
           this._audioContext,
