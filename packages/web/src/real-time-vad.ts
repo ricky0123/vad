@@ -64,6 +64,7 @@ export interface RealTimeVADOptions
     AssetOptions,
     ModelOptions {
   getAudioContext: () => AudioContext
+  onDestroy: (audioContext: AudioContext | null) => void
   getStream: () => Promise<MediaStream>
   pauseStream: (stream: MediaStream) => Promise<void>
   resumeStream: (stream: MediaStream) => Promise<MediaStream>
@@ -104,6 +105,9 @@ export const getDefaultRealTimeVADOptions = (
     workletOptions: {},
     getAudioContext: () => {
       return new AudioContext()
+    },
+    onDestroy: (audioContext: AudioContext | null) => {
+      audioContext?.close()
     },
     getStream: async () => {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -443,9 +447,11 @@ export class MicVAD {
 
   destroy = () => {
     log.debug("destroy called")
+    this.initializationState = "destroyed"
     if (this.listening) {
       this.pause()
     }
+    this.options.onDestroy(this._audioContext)
   }
 
   setOptions = (update: Partial<FrameProcessorOptions>) => {
