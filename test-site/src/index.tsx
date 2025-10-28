@@ -399,6 +399,9 @@ const settableParamsToVADParams = async (
     getAudioContext: () => {
       return new AudioContext()
     },
+    onDestroy: (audioContext: AudioContext | null) => {
+      audioContext?.close()
+    },
     positiveSpeechThreshold: settableParams.positiveSpeechThreshold,
     negativeSpeechThreshold: settableParams.negativeSpeechThreshold,
     redemptionMs: settableParams.redemptionMs,
