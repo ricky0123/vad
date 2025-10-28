@@ -408,6 +408,7 @@ export class MicVAD {
         this._mediaStreamAudioSourceNode.connect(this._vadNode)
         log.debug("started micVAD")
 
+        this.listening = true
         this.initializationState = "initialized"
         break
       }
