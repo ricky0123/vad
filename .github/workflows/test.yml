@@ -2,9 +2,9 @@ name: Test
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master"]
   pull_request:
-    branches: [ "master" ]
+    branches: ["master"]
 
 jobs:
   test:
@@ -16,8 +16,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
-          cache: 'npm'
+          node-version: "18.x"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -25,5 +25,5 @@ jobs:
       - name: Build packages
         run: npm run build
 
-      - name: Run tests with coverage
-        run: npm run test:coverage
+      - name: Run tests
+        run: npm run test
