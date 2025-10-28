@@ -360,9 +360,9 @@ export class MicVAD {
           this._audioContext = new AudioContext()
           this.ownsAudioContext = true
         }
-        if (!this._audioContext || this._audioContext.state != "running") {
-          this.setErrored("Audio context is null or not running")
-          throw Error("Audio context is null or not running")
+        if (!this._audioContext) {
+          this.setErrored("Audio context is null")
+          throw Error("Audio context is null")
         }
 
         this._audioProcessorAdapterType =
