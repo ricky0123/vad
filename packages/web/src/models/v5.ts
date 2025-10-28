@@ -22,7 +22,7 @@ export class SileroV5 {
     log.debug("Loading VAD...")
     const modelArrayBuffer = await modelFetcher()
     const _session = await ortInstance.InferenceSession.create(modelArrayBuffer)
-    // @ts-ignore
+
     const _sr = new ortInstance.Tensor("int64", [16000n])
     const _state = getNewState(ortInstance)
     log.debug("...finished loading VAD")
@@ -45,11 +45,15 @@ export class SileroV5 {
     }
     const out = await this._session.run(inputs)
 
-    // @ts-ignore
-    this._state = out["stateN"]
+    if (!out["stateN"]) {
+      throw new Error("No state from model")
+    }
+    this._state = out["stateN"] as ort.Tensor
 
-    // @ts-ignore
-    const [isSpeech] = out["output"]?.data
+    if (!out["output"]?.data) {
+      throw new Error("No output from model")
+    }
+    const [isSpeech] = out["output"]?.data as unknown as [number]
     const notSpeech = 1 - isSpeech
     return { notSpeech, isSpeech }
   }

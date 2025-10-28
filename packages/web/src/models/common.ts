@@ -7,7 +7,7 @@ export interface SpeechProbabilities {
   isSpeech: number
 }
 
-export type OrtConfigurer = (ortInstance: typeof ort) => any
+export type OrtConfigurer = (ortInstance: typeof ort) => void
 export type OrtModule = typeof ort
 
 export type ModelFactory = (

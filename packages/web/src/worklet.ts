@@ -7,13 +7,11 @@ interface WorkletOptions {
 }
 
 class Processor extends AudioWorkletProcessor {
-  // @ts-ignore
   resampler: Resampler
-  _initialized = false
   _stopProcessing = false
   options: WorkletOptions
 
-  constructor(options: any) {
+  constructor(options: AudioWorkletNodeOptions) {
     super()
     this.options = options.processorOptions as WorkletOptions
 
@@ -24,39 +22,33 @@ class Processor extends AudioWorkletProcessor {
       }
     }
 
-    this.init()
-  }
-  init = async () => {
-    log.debug("initializing worklet")
     this.resampler = new Resampler({
       nativeSampleRate: sampleRate,
       targetSampleRate: 16000,
       targetFrameSize: this.options.frameSamples,
     })
-    this._initialized = true
-    log.debug("initialized worklet")
   }
-  process(
-    inputs: Float32Array[][],
-    _outputs: Float32Array[][],
-    _parameters: Record<string, Float32Array>
-  ): boolean {
+  process(inputs: Float32Array[][]): boolean {
     if (this._stopProcessing) {
       // This will not stop process from running, just a prerequisite for the browser to garbage collect
       return false
     }
 
-    // @ts-ignore
-    const arr = inputs[0][0]
+    const r = inputs[0]
+    if (r === undefined) {
+      return true
+    }
+    const arr = r[0]
+    if (arr === undefined) {
+      return true
+    }
 
-    if (this._initialized && arr instanceof Float32Array) {
-      const frames = this.resampler.process(arr)
-      for (const frame of frames) {
-        this.port.postMessage(
-          { message: Message.AudioFrame, data: frame.buffer },
-          [frame.buffer]
-        )
-      }
+    const frames = this.resampler.process(arr)
+    for (const frame of frames) {
+      this.port.postMessage(
+        { message: Message.AudioFrame, data: frame.buffer },
+        [frame.buffer]
+      )
     }
 
     return true

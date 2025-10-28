@@ -340,7 +340,7 @@ export class MicVAD {
 
   start = async () => {
     switch (this.initializationState) {
-      case "uninitialized":
+      case "uninitialized": {
         log.debug("initializing micVAD")
         this.initializationState = "initializing"
         this.frameProcessor.resume()
@@ -394,12 +394,14 @@ export class MicVAD {
 
         this.initializationState = "initialized"
         break
+      }
 
-      case "initializing":
+      case "initializing": {
         log.warn("start called while initializing")
         break
+      }
 
-      case "initialized":
+      case "initialized": {
         if (this.listening) {
           return
         }
@@ -417,14 +419,17 @@ export class MicVAD {
 
         mediaStreamAudioSourceNode.connect(vadNode)
         break
+      }
 
-      case "destroyed":
+      case "destroyed": {
         log.warn("start called after destroyed")
         break
+      }
 
-      default:
+      default: {
         log.warn("weird initialization state")
         break
+      }
     }
   }
 

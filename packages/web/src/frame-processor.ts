@@ -77,9 +77,9 @@ export interface FrameProcessorInterface {
   resume: () => void
   process: (
     arr: Float32Array,
-    handleEvent: (event: FrameProcessorEvent) => any
-  ) => Promise<any>
-  endSegment: (handleEvent: (event: FrameProcessorEvent) => any) => {
+    handleEvent: (event: FrameProcessorEvent) => void
+  ) => Promise<void>
+  endSegment: (handleEvent: (event: FrameProcessorEvent) => void) => {
     msg?: Message
     audio?: Float32Array
   }
@@ -126,7 +126,7 @@ export class FrameProcessor implements FrameProcessorInterface {
     public modelProcessFunc: (
       frame: Float32Array
     ) => Promise<SpeechProbabilities>,
-    public modelResetFunc: () => any,
+    public modelResetFunc: () => void,
     public options: FrameProcessorOptions,
     public msPerFrame: number
   ) {
@@ -157,7 +157,7 @@ export class FrameProcessor implements FrameProcessorInterface {
     this.speechFrameCount = 0
   }
 
-  pause = (handleEvent: (event: FrameProcessorEvent) => any) => {
+  pause = (handleEvent: (event: FrameProcessorEvent) => void) => {
     this.active = false
     if (this.options.submitUserSpeechOnPause) {
       this.endSegment(handleEvent)
@@ -170,7 +170,7 @@ export class FrameProcessor implements FrameProcessorInterface {
     this.active = true
   }
 
-  endSegment = (handleEvent: (event: FrameProcessorEvent) => any) => {
+  endSegment = (handleEvent: (event: FrameProcessorEvent) => void) => {
     const audioBuffer = this.audioBuffer
     this.audioBuffer = []
     const speaking = this.speaking
@@ -192,7 +192,7 @@ export class FrameProcessor implements FrameProcessorInterface {
 
   process = async (
     frame: Float32Array,
-    handleEvent: (event: FrameProcessorEvent) => any
+    handleEvent: (event: FrameProcessorEvent) => void
   ) => {
     if (!this.active) {
       return

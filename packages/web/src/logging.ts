@@ -1,8 +1,6 @@
-const mkLogger =
-  (level: string) =>
-  (...args: any) => {
-    console.log(`VAD | ${level} >`, ...args)
-  }
+const mkLogger = (level: "error" | "debug" | "warn") => (message: string) => {
+  console.log(`VAD | ${level} >`, message)
+}
 
 export const log = {
   error: mkLogger("error"),

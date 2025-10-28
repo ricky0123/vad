@@ -6,9 +6,6 @@ import tseslint from "typescript-eslint"
 
 export default defineConfig([
   {
-    files: ["packages/**/*.{ts,tsx}"],
-  },
-  {
     plugins: { js },
     extends: ["js/recommended"],
     languageOptions: { globals: globals.browser },

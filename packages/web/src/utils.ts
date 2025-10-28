@@ -98,7 +98,7 @@ export async function audioFileToArray(audioFileData: Blob) {
   const reader = new FileReader()
   let audioBuffer: AudioBuffer | null = null
   await new Promise<void>((res) => {
-    reader.addEventListener("loadend", (_ev) => {
+    reader.addEventListener("loadend", () => {
       const audioData = reader.result as ArrayBuffer
       ctx.decodeAudioData(
         audioData,
@@ -106,7 +106,7 @@ export async function audioFileToArray(audioFileData: Blob) {
           audioBuffer = buffer
           ctx
             .startRendering()
-            .then((_renderedBuffer) => {
+            .then(() => {
               console.log("Rendering completed successfully")
               res()
             })
@@ -128,8 +128,12 @@ export async function audioFileToArray(audioFileData: Blob) {
   const out = new Float32Array(_audioBuffer.length)
   for (let i = 0; i < _audioBuffer.length; i++) {
     for (let j = 0; j < _audioBuffer.numberOfChannels; j++) {
-      // @ts-ignore
-      out[i] += _audioBuffer.getChannelData(j)[i]
+      const sample = _audioBuffer.getChannelData(j)[i]
+      const current = out[i]
+      if (sample === undefined || current === undefined) {
+        throw new Error("sample or out[i] is undefined")
+      }
+      out[i] = current + sample
     }
   }
   return { audio: out, sampleRate: _audioBuffer.sampleRate }
