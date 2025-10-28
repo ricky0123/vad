@@ -30,6 +30,8 @@
   "scripts": {
     "build": "./scripts/build.sh",
     "clean": "rm -rf dist",
+    "test": "web-test-runner \"test/**/*.test.ts\" --node-resolve",
+    "test:manual": "web-test-runner --manual \"test/**/*.test.ts\" --node-resolve",
     "release": "npm publish --access public"
   }
 }

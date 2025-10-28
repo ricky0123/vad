@@ -19,8 +19,12 @@
   "private": true,
   "devDependencies": {
     "@eslint/js": "^9.38.0",
+    "@esm-bundle/chai": "^4.3.4-fix.0",
+    "@types/mocha": "^10.0.10",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
+    "@web/dev-server-esbuild": "^1.0.4",
+    "@web/test-runner": "^0.20.2",
     "esbuild": "^0.17.10",
     "eslint": "^9.38.0",
     "eslint-plugin-react": "^7.37.5",
