@@ -8,3 +8,4 @@ webpack.config.js
 playwright.config.ts
 tsconfig*
 !*.onnx
+test-results/

@@ -1,4 +1,4 @@
-import * as ortInstance from "onnxruntime-web"
+import * as ortInstance from "onnxruntime-web/wasm"
 import { defaultModelFetcher } from "./default-model-fetcher"
 import {
   FrameProcessor,
@@ -26,25 +26,25 @@ interface RealTimeVADCallbacks {
   onFrameProcessed: (
     probabilities: SpeechProbabilities,
     frame: Float32Array
-  ) => any
+  ) => Promise<void> | void
 
   /** Callback to run if speech start was detected but `onSpeechEnd` will not be run because the
    * audio segment is smaller than `minSpeechFrames`.
    */
-  onVADMisfire: () => any
+  onVADMisfire: () => Promise<void> | void
 
   /** Callback to run when speech start is detected */
-  onSpeechStart: () => any
+  onSpeechStart: () => Promise<void> | void
 
   /**
    * Callback to run when speech end is detected.
    * Takes as arg a Float32Array of audio samples between -1 and 1, sample rate 16000.
    * This will not run if the audio segment is smaller than `minSpeechFrames`.
    */
-  onSpeechEnd: (audio: Float32Array) => any
+  onSpeechEnd: (audio: Float32Array) => Promise<void> | void
 
   /** Callback to run when speech is detected as valid. (i.e. not a misfire) */
-  onSpeechRealStart: () => any
+  onSpeechRealStart: () => Promise<void> | void
 }
 
 type AssetOptions = {
@@ -63,10 +63,12 @@ export interface RealTimeVADOptions
     OrtOptions,
     AssetOptions,
     ModelOptions {
+  audioContext?: AudioContext
   getStream: () => Promise<MediaStream>
   pauseStream: (stream: MediaStream) => Promise<void>
   resumeStream: (stream: MediaStream) => Promise<MediaStream>
   startOnLoad: boolean
+  processorType: "AudioWorklet" | "ScriptProcessor" | "auto"
 }
 
 export const ort = ortInstance
@@ -80,10 +82,7 @@ export const getDefaultRealTimeVADOptions = (
 ): RealTimeVADOptions => {
   return {
     ...defaultFrameProcessorOptions,
-    onFrameProcessed: (
-      _probabilities: SpeechProbabilities,
-      _frame: Float32Array
-    ) => {},
+    onFrameProcessed: () => {},
     onVADMisfire: () => {
       log.debug("VAD misfire")
     },
@@ -101,7 +100,7 @@ export const getDefaultRealTimeVADOptions = (
     model: model,
     workletOptions: {},
     getStream: async () => {
-      return await navigator.mediaDevices.getUserMedia({
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           channelCount: 1,
           echoCancellation: true,
@@ -109,14 +108,15 @@ export const getDefaultRealTimeVADOptions = (
           noiseSuppression: true,
         },
       })
+      return stream
     },
     pauseStream: async (_stream: MediaStream) => {
       _stream.getTracks().forEach((track) => {
         track.stop()
       })
     },
-    resumeStream: async (_stream: MediaStream) => {
-      return await navigator.mediaDevices.getUserMedia({
+    resumeStream: async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           channelCount: 1,
           echoCancellation: true,
@@ -124,129 +124,141 @@ export const getDefaultRealTimeVADOptions = (
           noiseSuppression: true,
         },
       })
+      return stream
     },
     ortConfig: (ort) => {
       ort.env.logLevel = "error"
     },
     startOnLoad: true,
+    processorType: "auto",
   }
 }
 
+const detectProcessorType = (
+  ctx: AudioContext
+): "AudioWorklet" | "ScriptProcessor" => {
+  if ("audioWorklet" in ctx && typeof AudioWorkletNode === "function") {
+    return "AudioWorklet"
+  }
+  return "ScriptProcessor"
+}
+
+async function getVADNodeAsWorklet(
+  workletURL: string,
+  workletOptions: AudioWorkletNodeOptions,
+  audioContext: AudioContext,
+  frameSamples: number,
+  processFrame: ProcessFrameFunc
+): Promise<AudioWorkletNode> {
+  await audioContext.audioWorklet.addModule(workletURL)
+
+  workletOptions.processorOptions = {
+    ...(workletOptions.processorOptions ?? {}),
+    frameSamples: frameSamples,
+  }
+
+  const audioNode = new AudioWorkletNode(
+    audioContext,
+    "vad-helper-worklet",
+    workletOptions
+  )
+  audioNode.port.onmessage = async (ev: MessageEvent) => {
+    switch (ev.data?.message) {
+      case Message.AudioFrame: {
+        let buffer: ArrayBuffer = ev.data.data
+        if (!(buffer instanceof ArrayBuffer)) {
+          buffer = new ArrayBuffer(ev.data.data.byteLength)
+          new Uint8Array(buffer).set(new Uint8Array(ev.data.data))
+        }
+        const frame = new Float32Array(buffer)
+        await processFrame(frame)
+        break
+      }
+    }
+  }
+
+  return audioNode
+}
+
+async function getVADNodeAsScriptProcessor(
+  audioContext: AudioContext,
+  frameSamples: number,
+  processFrame: ProcessFrameFunc
+): Promise<ScriptProcessorNode> {
+  const resampler = new Resampler({
+    nativeSampleRate: audioContext.sampleRate,
+    targetSampleRate: 16000, // VAD models expect 16kHz
+    targetFrameSize: frameSamples ?? 480,
+  })
+  log.debug("using script processor")
+
+  // Fallback to ScriptProcessor
+  const bufferSize = 4096 // Increased for more stable processing
+  const audioNode = audioContext.createScriptProcessor(bufferSize, 1, 1)
+
+  let processingAudio = false
+
+  audioNode.onaudioprocess = async (e: AudioProcessingEvent) => {
+    if (processingAudio) return
+    processingAudio = true
+
+    try {
+      const input = e.inputBuffer.getChannelData(0)
+      const output = e.outputBuffer.getChannelData(0)
+      output.fill(0)
+
+      // Process through resampler
+      if (resampler) {
+        const frames = resampler.process(input)
+        for (const frame of frames) {
+          await processFrame(frame)
+        }
+      }
+    } catch (error) {
+      console.error("Error processing audio:", error)
+    } finally {
+      processingAudio = false
+    }
+  }
+
+  // https://github.com/WebAudio/web-audio-api/issues/345
+  // -> we need to connect an output or will not work due to chrome bug
+  audioNode.connect(audioContext.destination)
+
+  return audioNode
+}
+
+type ProcessFrameFunc = (frame: Float32Array) => Promise<void>
+
 export class MicVAD {
-  public stream?: MediaStream
-  private sourceNode?: MediaStreamAudioSourceNode
-  private initialized = false
+  private constructor(
+    public options: RealTimeVADOptions,
+    private readonly frameProcessor: FrameProcessor,
+    private readonly frameSamples: 512 | 1536,
+    public listening = false,
+    public errored: string | null = null,
+    private _stream: MediaStream | null = null,
+    private _audioContext: AudioContext | null = null,
+    private _vadNode: AudioWorkletNode | ScriptProcessorNode | null = null,
+    private _mediaStreamAudioSourceNode: MediaStreamAudioSourceNode | null = null,
+    private _audioProcessorAdapterType:
+      | "AudioWorklet"
+      | "ScriptProcessor"
+      | null = null,
+    private initializationState:
+      | "uninitialized"
+      | "initializing"
+      | "initialized"
+      | "destroyed"
+      | "errored" = "uninitialized",
+    private ownsAudioContext = false
+  ) {}
 
   static async new(options: Partial<RealTimeVADOptions> = {}) {
     const fullOptions: RealTimeVADOptions = {
       ...getDefaultRealTimeVADOptions(options.model ?? DEFAULT_MODEL),
       ...options,
     }
-    validateOptions(fullOptions)
-
-    const audioContext = new AudioContext()
-    const audioNodeVAD = await AudioNodeVAD.new(audioContext, fullOptions)
-
-    const micVad = new MicVAD(fullOptions, audioContext, audioNodeVAD)
-
-    if (fullOptions.startOnLoad) {
-      try {
-        await micVad.start()
-      } catch (e) {
-        console.error("Error starting micVad", e)
-      }
-    }
-
-    return micVad
-  }
-
-  private constructor(
-    public options: RealTimeVADOptions,
-    private audioContext: AudioContext,
-    private audioNodeVAD: AudioNodeVAD,
-    private listening = false
-  ) {}
-
-  pause = () => {
-    if (this.stream) {
-      this.options.pauseStream(this.stream)
-    }
-    this.audioNodeVAD.pause()
-    this.listening = false
-  }
-
-  resume = async () => {
-    if (!this.stream) {
-      console.warn("Stream not initialized")
-      return
-    }
-    this.stream = await this.options.resumeStream(this.stream)
-    if (this.sourceNode) {
-      this.sourceNode.disconnect()
-    }
-    this.sourceNode = new MediaStreamAudioSourceNode(this.audioContext, {
-      mediaStream: this.stream,
-    })
-    this.audioNodeVAD.receive(this.sourceNode)
-  }
-
-  start = async () => {
-    if (!this.initialized) {
-      this.initialized = true
-      this.stream = await this.options.getStream()
-      this.sourceNode = new MediaStreamAudioSourceNode(this.audioContext, {
-        mediaStream: this.stream,
-      })
-      this.audioNodeVAD.receive(this.sourceNode)
-    }
-
-    if (!this.stream?.active) {
-      await this.resume()
-      this.audioNodeVAD.start()
-      this.listening = true
-    } else {
-      this.audioNodeVAD.start()
-      this.listening = true
-    }
-  }
-
-  destroy = () => {
-    if (this.listening) {
-      this.pause()
-    }
-    if (this.stream) {
-      this.options.pauseStream(this.stream)
-    } else {
-      console.warn("Stream not initialized")
-    }
-    if (this.sourceNode) {
-      this.sourceNode.disconnect()
-    } else {
-      console.warn("Source node not initialized")
-    }
-    this.audioNodeVAD.destroy()
-    this.audioContext.close()
-  }
-
-  setOptions = (options: Partial<FrameProcessorOptions>) => {
-    this.audioNodeVAD.setFrameProcessorOptions(options)
-  }
-}
-
-export class AudioNodeVAD {
-  private audioNode!: AudioWorkletNode | ScriptProcessorNode
-  private frameProcessor: FrameProcessor
-  private gainNode?: GainNode
-  private resampler?: Resampler
-
-  static async new(
-    ctx: AudioContext,
-    options: Partial<RealTimeVADOptions> = {}
-  ) {
-    const fullOptions: RealTimeVADOptions = {
-      ...getDefaultRealTimeVADOptions(options.model ?? DEFAULT_MODEL),
-      ...options,
-    } as RealTimeVADOptions
     validateOptions(fullOptions)
 
     ort.env.wasm.wasmPaths = fullOptions.onnxWASMBasePath
@@ -284,128 +296,198 @@ export class AudioNodeVAD {
       msPerFrame
     )
 
-    const audioNodeVAD = new AudioNodeVAD(
-      ctx,
-      fullOptions,
-      frameProcessor,
-      frameSamples,
-      msPerFrame
-    )
-    await audioNodeVAD.setupAudioNode()
-    return audioNodeVAD
-  }
+    const micVad = new MicVAD(fullOptions, frameProcessor, frameSamples)
 
-  constructor(
-    public ctx: AudioContext,
-    public options: RealTimeVADOptions,
-    frameProcessor: FrameProcessor,
-    public frameSamples: number,
-    public msPerFrame: number
-  ) {
-    this.frameProcessor = frameProcessor
-  }
-
-  private async setupAudioNode() {
-    const hasAudioWorklet =
-      "audioWorklet" in this.ctx && typeof AudioWorkletNode === "function"
-    if (hasAudioWorklet) {
+    // things would be simpler if we didn't have to startOnLoad by default, but we are locked in
+    if (fullOptions.startOnLoad) {
       try {
-        const workletURL = this.options.baseAssetPath + workletFile
-        await this.ctx.audioWorklet.addModule(workletURL)
-
-        const workletOptions = this.options.workletOptions ?? {}
-        workletOptions.processorOptions = {
-          ...(workletOptions.processorOptions ?? {}),
-          frameSamples: this.frameSamples,
-        }
-
-        this.audioNode = new AudioWorkletNode(
-          this.ctx,
-          "vad-helper-worklet",
-          workletOptions
-        )
-        ;(this.audioNode as AudioWorkletNode).port.onmessage = async (
-          ev: MessageEvent
-        ) => {
-          switch (ev.data?.message) {
-            case Message.AudioFrame:
-              let buffer: ArrayBuffer = ev.data.data
-              if (!(buffer instanceof ArrayBuffer)) {
-                buffer = new ArrayBuffer(ev.data.data.byteLength)
-                new Uint8Array(buffer).set(new Uint8Array(ev.data.data))
-              }
-              const frame = new Float32Array(buffer)
-              await this.processFrame(frame)
-              break
-          }
-        }
-
-        return
+        await micVad.start()
       } catch (e) {
-        console.log(
-          "AudioWorklet setup failed, falling back to ScriptProcessor",
-          e
-        )
+        console.error("Error starting micVad", e)
+        throw e
       }
     }
-
-    // Initialize resampler for ScriptProcessor
-    this.resampler = new Resampler({
-      nativeSampleRate: this.ctx.sampleRate,
-      targetSampleRate: 16000, // VAD models expect 16kHz
-      targetFrameSize: this.frameSamples ?? 480,
-    })
-
-    // Fallback to ScriptProcessor
-    const bufferSize = 4096 // Increased for more stable processing
-    this.audioNode = this.ctx.createScriptProcessor(bufferSize, 1, 1)
-
-    // Create a gain node with zero gain to handle the audio chain
-    this.gainNode = this.ctx.createGain()
-    this.gainNode.gain.value = 0
-
-    let processingAudio = false
-
-    ;(this.audioNode as ScriptProcessorNode).onaudioprocess = async (
-      e: AudioProcessingEvent
-    ) => {
-      if (processingAudio) return
-      processingAudio = true
-
-      try {
-        const input = e.inputBuffer.getChannelData(0)
-        const output = e.outputBuffer.getChannelData(0)
-        output.fill(0)
-
-        // Process through resampler
-        if (this.resampler) {
-          const frames = this.resampler.process(input)
-          for (const frame of frames) {
-            await this.processFrame(frame)
-          }
-        }
-      } catch (error) {
-        console.error("Error processing audio:", error)
-      } finally {
-        processingAudio = false
-      }
-    }
-
-    // Connect the audio chain
-    this.audioNode.connect(this.gainNode)
-    this.gainNode.connect(this.ctx.destination)
+    return micVad
   }
 
-  pause = () => {
+  private getAudioInstances = (): {
+    stream: MediaStream
+    audioContext: AudioContext
+    vadNode: AudioWorkletNode | ScriptProcessorNode
+    mediaStreamAudioSourceNode: MediaStreamAudioSourceNode
+  } => {
+    if (
+      this._stream === null ||
+      this._audioContext === null ||
+      this._vadNode == null ||
+      this._mediaStreamAudioSourceNode == null
+    ) {
+      throw new Error(
+        "MicVAD has null stream, audio context, or processor adapter"
+      )
+    }
+    return {
+      stream: this._stream,
+      audioContext: this._audioContext,
+      vadNode: this._vadNode,
+      mediaStreamAudioSourceNode: this._mediaStreamAudioSourceNode,
+    }
+  }
+
+  setErrored = (error: string) => {
+    this.initializationState = "errored"
+    this.errored = error
+  }
+
+  start = async () => {
+    switch (this.initializationState) {
+      case "uninitialized": {
+        log.debug("initializing micVAD")
+        this.initializationState = "initializing"
+        this.frameProcessor.resume()
+
+        try {
+          this._stream = await this.options.getStream()
+        } catch (error) {
+          if (error instanceof Error) {
+            this.setErrored(error.message)
+          } else {
+            this.setErrored(String(error))
+          }
+          throw error
+        }
+        if (!this.options.audioContext) {
+          this._audioContext = new AudioContext()
+          this.ownsAudioContext = true
+        }
+        if (!this._audioContext) {
+          this.setErrored("Audio context is null")
+          throw Error("Audio context is null")
+        }
+
+        this._audioProcessorAdapterType =
+          this.options.processorType == "auto"
+            ? detectProcessorType(this._audioContext)
+            : this.options.processorType
+
+        switch (this._audioProcessorAdapterType) {
+          case "AudioWorklet":
+            {
+              this._vadNode = await getVADNodeAsWorklet(
+                this.options.baseAssetPath + workletFile,
+                this.options.workletOptions ?? {},
+                this._audioContext,
+                this.frameSamples,
+                this.processFrame
+              )
+            }
+            break
+
+          case "ScriptProcessor":
+            {
+              this._vadNode = await getVADNodeAsScriptProcessor(
+                this._audioContext,
+                this.frameSamples,
+                this.processFrame
+              )
+            }
+            break
+
+          default: {
+            throw new Error(
+              `Unsupported audio processor adapter type: ${this._audioProcessorAdapterType}`
+            )
+          }
+        }
+
+        this._mediaStreamAudioSourceNode = new MediaStreamAudioSourceNode(
+          this._audioContext,
+          {
+            mediaStream: this._stream,
+          }
+        )
+        this._mediaStreamAudioSourceNode.connect(this._vadNode)
+        log.debug("started micVAD")
+
+        this.listening = true
+        this.initializationState = "initialized"
+        break
+      }
+
+      case "initializing": {
+        log.warn("start called while initializing")
+        break
+      }
+
+      case "initialized": {
+        if (this.listening) {
+          return
+        }
+        this.listening = true
+        this.frameProcessor.resume()
+
+        const { stream, audioContext, vadNode } = this.getAudioInstances()
+        this._stream = await this.options.resumeStream(stream)
+
+        const mediaStreamAudioSourceNode = new MediaStreamAudioSourceNode(
+          audioContext,
+          { mediaStream: this._stream }
+        )
+        this._mediaStreamAudioSourceNode = mediaStreamAudioSourceNode
+
+        mediaStreamAudioSourceNode.connect(vadNode)
+        break
+      }
+
+      case "destroyed": {
+        log.warn("start called after destroyed")
+        break
+      }
+
+      case "errored": {
+        log.error("start called after errored")
+        break
+      }
+
+      default: {
+        log.warn("weird initialization state")
+        break
+      }
+    }
+  }
+
+  pause = async () => {
+    if (!this.listening) {
+      return
+    }
+    this.listening = false
+
+    const { stream, mediaStreamAudioSourceNode } = this.getAudioInstances()
+    await this.options.pauseStream(stream)
+
+    mediaStreamAudioSourceNode.disconnect()
     this.frameProcessor.pause(this.handleFrameProcessorEvent)
   }
 
-  start = () => {
-    this.frameProcessor.resume()
+  destroy = () => {
+    log.debug("destroy called")
+    this.initializationState = "destroyed"
+
+    const { vadNode } = this.getAudioInstances()
+    if (vadNode instanceof AudioWorkletNode) {
+      vadNode.port.postMessage(Message.SpeechStop)
+    }
+
+    if (this.listening) {
+      this.pause()
+    }
+    if (this.ownsAudioContext) {
+      this._audioContext?.close()
+    }
   }
 
-  receive = (node: AudioNode) => {
-    node.connect(this.audioNode)
+  setOptions = (update: Partial<FrameProcessorOptions>) => {
+    this.frameProcessor.setOptions(update)
   }
 
   processFrame = async (frame: Float32Array) => {
@@ -433,23 +515,6 @@ export class AudioNodeVAD {
       case Message.SpeechEnd:
         this.options.onSpeechEnd(ev.audio as Float32Array)
         break
-    }
-  }
-
-  destroy = () => {
-    if (this.audioNode instanceof AudioWorkletNode) {
-      this.audioNode.port.postMessage({
-        message: Message.SpeechStop,
-      })
-    }
-    this.audioNode.disconnect()
-    this.gainNode?.disconnect()
-  }
-
-  setFrameProcessorOptions = (options: Partial<FrameProcessorOptions>) => {
-    this.frameProcessor.options = {
-      ...this.frameProcessor.options,
-      ...options,
     }
   }
 }

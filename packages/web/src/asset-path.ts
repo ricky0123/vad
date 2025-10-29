@@ -10,7 +10,7 @@ if (currentScript) {
   basePath = currentScript.src
     .replace(/#.*$/, "")
     .replace(/\?.*$/, "")
-    .replace(/\/[^\/]+$/, "/")
+    .replace(/\/[^/]+$/, "/")
 }
 
 export const baseAssetPath = basePath

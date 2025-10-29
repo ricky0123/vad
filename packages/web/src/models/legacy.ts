@@ -1,4 +1,4 @@
-import * as ort from "onnxruntime-web"
+import * as ort from "onnxruntime-web/wasm"
 import { log } from "../logging"
 import { ModelFactory, ModelFetcher, SpeechProbabilities } from "./common"
 
@@ -18,7 +18,7 @@ export class SileroLegacy {
     log.debug("initializing vad")
     const modelArrayBuffer = await modelFetcher()
     const _session = await ortInstance.InferenceSession.create(modelArrayBuffer)
-    // @ts-ignore
+
     const _sr = new ortInstance.Tensor("int64", [16000n])
     const zeroes = Array(2 * 64).fill(0)
     const _h = new ortInstance.Tensor("float32", zeroes, [2, 1, 64])

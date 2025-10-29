@@ -1,4 +1,4 @@
-import * as ort from "onnxruntime-web"
+import * as ort from "onnxruntime-web/wasm"
 
 export type ModelFetcher = () => Promise<ArrayBuffer>
 
@@ -7,7 +7,7 @@ export interface SpeechProbabilities {
   isSpeech: number
 }
 
-export type OrtConfigurer = (ortInstance: typeof ort) => any
+export type OrtConfigurer = (ortInstance: typeof ort) => void
 export type OrtModule = typeof ort
 
 export type ModelFactory = (

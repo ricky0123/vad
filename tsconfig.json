@@ -36,5 +36,9 @@
     
     // Additional helpful options
     "skipLibCheck": true
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

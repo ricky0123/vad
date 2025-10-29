@@ -4,7 +4,8 @@ import {
   MicVAD,
   getDefaultRealTimeVADOptions,
 } from "@ricky0123/vad-web"
-import React, { useEffect, useState } from "react"
+import { SpeechProbabilities } from "@ricky0123/vad-web/dist/models"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 export { utils } from "@ricky0123/vad-web"
 
@@ -27,74 +28,140 @@ export const getDefaultReactRealTimeVADOptions = (
   }
 }
 
-const reactOptionKeys = Object.keys(defaultReactOptions)
-const vadOptionKeys = Object.keys(getDefaultRealTimeVADOptions("v5"))
-
-const _filter = (keys: string[], obj: any) => {
-  return keys.reduce((acc, key) => {
-    acc[key] = obj[key]
-    return acc
-  }, {} as { [key: string]: any })
-}
-
 function useOptions(
   options: Partial<ReactRealTimeVADOptions>
 ): [ReactOptions, RealTimeVADOptions] {
   const model = options.model ?? DEFAULT_MODEL
-  options = { ...getDefaultReactRealTimeVADOptions(model), ...options }
-  const reactOptions = _filter(reactOptionKeys, options) as ReactOptions
-  const vadOptions = _filter(vadOptionKeys, options) as RealTimeVADOptions
+  const fullOptions: ReactRealTimeVADOptions = {
+    ...getDefaultReactRealTimeVADOptions(model),
+    ...options,
+  }
+  const reactOptions: ReactOptions = {
+    userSpeakingThreshold: fullOptions.userSpeakingThreshold,
+  }
+  const vadOptions: RealTimeVADOptions = {
+    positiveSpeechThreshold: fullOptions.positiveSpeechThreshold,
+    negativeSpeechThreshold: fullOptions.negativeSpeechThreshold,
+    redemptionMs: fullOptions.redemptionMs,
+    preSpeechPadMs: fullOptions.preSpeechPadMs,
+    minSpeechMs: fullOptions.minSpeechMs,
+    submitUserSpeechOnPause: fullOptions.submitUserSpeechOnPause,
+    onFrameProcessed: fullOptions.onFrameProcessed,
+    onVADMisfire: fullOptions.onVADMisfire,
+    onSpeechStart: fullOptions.onSpeechStart,
+    onSpeechEnd: fullOptions.onSpeechEnd,
+    onSpeechRealStart: fullOptions.onSpeechRealStart,
+    baseAssetPath: fullOptions.baseAssetPath,
+    onnxWASMBasePath: fullOptions.onnxWASMBasePath,
+    model: fullOptions.model,
+    workletOptions: fullOptions.workletOptions,
+    getStream: fullOptions.getStream,
+    pauseStream: fullOptions.pauseStream,
+    resumeStream: fullOptions.resumeStream,
+    startOnLoad: fullOptions.startOnLoad,
+    processorType: fullOptions.processorType,
+  }
+  if (fullOptions.ortConfig) {
+    vadOptions.ortConfig = fullOptions.ortConfig
+  }
+  if (fullOptions.audioContext) {
+    vadOptions.audioContext = fullOptions.audioContext
+  }
   return [reactOptions, vadOptions]
-}
-
-function useEventCallback<T extends (...args: any[]) => any>(fn: T): T {
-  const ref: any = React.useRef(fn)
-
-  // we copy a ref to the callback scoped to the current state/props on each render
-  useIsomorphicLayoutEffect(() => {
-    ref.current = fn
-  })
-
-  return React.useCallback(
-    (...args: any[]) => ref.current.apply(void 0, args),
-    []
-  ) as T
 }
 
 export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
   const [reactOptions, vadOptions] = useOptions(options)
+  const model = options["model"] ?? DEFAULT_MODEL
   const [userSpeaking, updateUserSpeaking] = useState(false)
   const [loading, setLoading] = useState(true)
   const [errored, setErrored] = useState<false | string>(false)
   const [listening, setListening] = useState(false)
   const [vad, setVAD] = useState<MicVAD | null>(null)
 
-  const userOnFrameProcessed = useEventCallback(vadOptions.onFrameProcessed)
-  vadOptions.onFrameProcessed = useEventCallback((probs, frame) => {
-    const isSpeaking = probs.isSpeech > reactOptions.userSpeakingThreshold
-    updateUserSpeaking(isSpeaking)
-    userOnFrameProcessed(probs, frame)
-  })
-  const { onSpeechEnd, onSpeechStart, onSpeechRealStart, onVADMisfire } =
-    vadOptions
-  const _onSpeechEnd = useEventCallback(onSpeechEnd)
-  const _onSpeechStart = useEventCallback(onSpeechStart)
-  const _onVADMisfire = useEventCallback(onVADMisfire)
-  const _onSpeechRealStart = useEventCallback(onSpeechRealStart)
-  vadOptions.onSpeechEnd = _onSpeechEnd
-  vadOptions.onSpeechStart = _onSpeechStart
-  vadOptions.onVADMisfire = _onVADMisfire
-  vadOptions.onSpeechRealStart = _onSpeechRealStart
+  // Use refs to store the latest callbacks so they can be called without recreating the VAD
+  const onFrameProcessedRef = useRef(vadOptions.onFrameProcessed)
+  const onSpeechEndRef = useRef(vadOptions.onSpeechEnd)
+  const onSpeechStartRef = useRef(vadOptions.onSpeechStart)
+  const onSpeechRealStartRef = useRef(vadOptions.onSpeechRealStart)
+  const onVADMisfireRef = useRef(vadOptions.onVADMisfire)
+  const getStreamRef = useRef(vadOptions.getStream)
+
+  // Update refs when callbacks change
+  useEffect(() => {
+    onFrameProcessedRef.current = vadOptions.onFrameProcessed
+    onSpeechEndRef.current = vadOptions.onSpeechEnd
+    onSpeechStartRef.current = vadOptions.onSpeechStart
+    onSpeechRealStartRef.current = vadOptions.onSpeechRealStart
+    onVADMisfireRef.current = vadOptions.onVADMisfire
+  }, [
+    vadOptions.onFrameProcessed,
+    vadOptions.onSpeechEnd,
+    vadOptions.onSpeechStart,
+    vadOptions.onSpeechRealStart,
+    vadOptions.onVADMisfire,
+  ])
+
+  // Update getStream ref - this is the key fix!
+  useEffect(() => {
+    getStreamRef.current = vadOptions.getStream
+  }, [vadOptions.getStream])
+
+  // Serialize getStream function to detect changes
+  // We use a simple approach: convert function to string
+  const getStreamKey = vadOptions.getStream.toString()
 
   useEffect(() => {
-    let myvad: MicVAD | null
+    let myvad: MicVAD | null = null
     let canceled = false
+
     const setup = async (): Promise<void> => {
       try {
-        myvad = await MicVAD.new(vadOptions)
+        setLoading(true)
+        setErrored(false)
+
+        // Create VAD options with stable callback wrappers
+        const finalVadOptions: RealTimeVADOptions = {
+          ...vadOptions,
+          onFrameProcessed: (
+            probs: SpeechProbabilities,
+            frame: Float32Array
+          ) => {
+            const isSpeaking =
+              probs.isSpeech > reactOptions.userSpeakingThreshold
+            updateUserSpeaking(isSpeaking)
+            onFrameProcessedRef.current(probs, frame)
+          },
+          onSpeechEnd: (audio: Float32Array) => {
+            onSpeechEndRef.current(audio)
+          },
+          onSpeechStart: () => {
+            onSpeechStartRef.current()
+          },
+          onSpeechRealStart: () => {
+            onSpeechRealStartRef.current()
+          },
+          onVADMisfire: () => {
+            onVADMisfireRef.current()
+          },
+          getStream: () => {
+            return getStreamRef.current()
+          },
+        }
+
+        myvad = await MicVAD.new(finalVadOptions)
+
         if (canceled) {
           myvad.destroy()
           return
+        }
+
+        setVAD(myvad)
+        setLoading(false)
+
+        if (vadOptions.startOnLoad) {
+          myvad.start()
+          setListening(true)
         }
       } catch (e) {
         setLoading(false)
@@ -103,45 +170,46 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
         } else {
           setErrored(String(e))
         }
-        return
-      }
-      setVAD(myvad)
-      setLoading(false)
-      if (vadOptions.startOnLoad) {
-        myvad?.start()
-        setListening(true)
       }
     }
-    setup().catch((_e) => {
-      console.log("Well that didn't work")
+
+    setup().catch(() => {
+      // Error already handled in setup function
     })
+
     return function cleanUp() {
-      myvad?.destroy()
       canceled = true
+      if (myvad) {
+        myvad.destroy()
+      }
       if (!loading && !errored) {
         setListening(false)
       }
     }
-  }, [])
-  const pause = () => {
+  }, [getStreamKey, model]) // Recreate when getStream changes or model changes
+
+  const pause = useCallback(() => {
     if (!loading && !errored) {
       vad?.pause()
       setListening(false)
     }
-  }
-  const start = () => {
+  }, [loading, errored, vad])
+
+  const start = useCallback(() => {
     if (!loading && !errored) {
       vad?.start()
       setListening(true)
     }
-  }
-  const toggle = () => {
+  }, [loading, errored, vad])
+
+  const toggle = useCallback(() => {
     if (listening) {
       pause()
     } else {
       start()
     }
-  }
+  }, [listening, pause, start])
+
   return {
     listening,
     errored,
@@ -152,10 +220,3 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
     toggle,
   }
 }
-
-const useIsomorphicLayoutEffect =
-  typeof window !== "undefined" &&
-  typeof window.document !== "undefined" &&
-  typeof window.document.createElement !== "undefined"
-    ? React.useLayoutEffect
-    : React.useEffect

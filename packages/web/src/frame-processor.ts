@@ -77,9 +77,9 @@ export interface FrameProcessorInterface {
   resume: () => void
   process: (
     arr: Float32Array,
-    handleEvent: (event: FrameProcessorEvent) => any
-  ) => Promise<any>
-  endSegment: (handleEvent: (event: FrameProcessorEvent) => any) => {
+    handleEvent: (event: FrameProcessorEvent) => void
+  ) => Promise<void>
+  endSegment: (handleEvent: (event: FrameProcessorEvent) => void) => {
     msg?: Message
     audio?: Float32Array
   }
@@ -101,6 +101,16 @@ const concatArrays = (arrays: Float32Array[]): Float32Array => {
   return outArray
 }
 
+function calculateFrameParams(
+  options: FrameProcessorOptions,
+  msPerFrame: number
+) {
+  const redemptionFrames = Math.floor(options.redemptionMs / msPerFrame)
+  const preSpeechPadFrames = Math.floor(options.preSpeechPadMs / msPerFrame)
+  const minSpeechFrames = Math.floor(options.minSpeechMs / msPerFrame)
+  return { redemptionFrames, preSpeechPadFrames, minSpeechFrames }
+}
+
 export class FrameProcessor implements FrameProcessorInterface {
   redemptionFrames: number
   preSpeechPadFrames: number
@@ -116,17 +126,26 @@ export class FrameProcessor implements FrameProcessorInterface {
     public modelProcessFunc: (
       frame: Float32Array
     ) => Promise<SpeechProbabilities>,
-    public modelResetFunc: () => any,
+    public modelResetFunc: () => void,
     public options: FrameProcessorOptions,
     public msPerFrame: number
   ) {
     this.audioBuffer = []
-    this.redemptionFrames = Math.floor(options.redemptionMs / this.msPerFrame)
-    this.preSpeechPadFrames = Math.floor(
-      options.preSpeechPadMs / this.msPerFrame
-    )
-    this.minSpeechFrames = Math.floor(options.minSpeechMs / this.msPerFrame)
+    const { redemptionFrames, preSpeechPadFrames, minSpeechFrames } =
+      calculateFrameParams(this.options, this.msPerFrame)
+    this.redemptionFrames = redemptionFrames
+    this.preSpeechPadFrames = preSpeechPadFrames
+    this.minSpeechFrames = minSpeechFrames
     this.reset()
+  }
+
+  setOptions = (update: Partial<FrameProcessorOptions>) => {
+    this.options = { ...this.options, ...update }
+    const { redemptionFrames, preSpeechPadFrames, minSpeechFrames } =
+      calculateFrameParams(this.options, this.msPerFrame)
+    this.redemptionFrames = redemptionFrames
+    this.preSpeechPadFrames = preSpeechPadFrames
+    this.minSpeechFrames = minSpeechFrames
   }
 
   reset = () => {
@@ -138,7 +157,7 @@ export class FrameProcessor implements FrameProcessorInterface {
     this.speechFrameCount = 0
   }
 
-  pause = (handleEvent: (event: FrameProcessorEvent) => any) => {
+  pause = (handleEvent: (event: FrameProcessorEvent) => void) => {
     this.active = false
     if (this.options.submitUserSpeechOnPause) {
       this.endSegment(handleEvent)
@@ -151,7 +170,7 @@ export class FrameProcessor implements FrameProcessorInterface {
     this.active = true
   }
 
-  endSegment = (handleEvent: (event: FrameProcessorEvent) => any) => {
+  endSegment = (handleEvent: (event: FrameProcessorEvent) => void) => {
     const audioBuffer = this.audioBuffer
     this.audioBuffer = []
     const speaking = this.speaking
@@ -173,7 +192,7 @@ export class FrameProcessor implements FrameProcessorInterface {
 
   process = async (
     frame: Float32Array,
-    handleEvent: (event: FrameProcessorEvent) => any
+    handleEvent: (event: FrameProcessorEvent) => void
   ) => {
     if (!this.active) {
       return

@@ -30,6 +30,7 @@ interface SettableParameters {
   minSpeechMs: number
   startOnLoad: boolean
   userSpeakingThreshold: number
+  processorType: "auto" | "AudioWorklet" | "ScriptProcessor"
 
   // Custom parameters
   assetPaths: AssetPathsOption
@@ -57,6 +58,8 @@ const settableParameterDescriptions: Record<SettableParameter, string> = {
   minSpeechMs:
     "Minimum duration in milliseconds for a speech segment to be considered valid.",
   startOnLoad: "Whether to start VAD automatically when the component loads.",
+  processorType:
+    "The type of audio processor to use. 'auto' for automatic detection, 'AudioWorklet' for AudioWorklet, 'ScriptProcessor' for ScriptProcessor.",
   userSpeakingThreshold:
     "Threshold for determining when user is speaking (used for UI state).",
   customStream:
@@ -79,6 +82,8 @@ const settableParameterValidators: Record<
   startOnLoad: (value) => typeof value === "boolean",
   userSpeakingThreshold: (value) => typeof value === "number",
   customStream: (value) => typeof value === "boolean",
+  processorType: (value) =>
+    value === "auto" || value === "AudioWorklet" || value === "ScriptProcessor",
 }
 
 type SettableParameterFormElement = {
@@ -93,6 +98,12 @@ type SettableParameterFormElement = {
 const settableParameterFormElement: SettableParameterFormElement = {
   model: (newValue, setSettableParamsFn) => (
     <ModelSelect
+      newValue={newValue}
+      setSettableParamsFn={setSettableParamsFn}
+    />
+  ),
+  processorType: (newValue, setSettableParamsFn) => (
+    <ProcessorTypeSelect
       newValue={newValue}
       setSettableParamsFn={setSettableParamsFn}
     />
@@ -233,6 +244,41 @@ const AssetPathsSelect = ({
   </select>
 )
 
+const ProcessorTypeSelect = ({
+  newValue,
+  setSettableParamsFn,
+}: {
+  newValue: "auto" | "AudioWorklet" | "ScriptProcessor"
+  setSettableParamsFn: (
+    fn: (prevValues: SettableParameters) => SettableParameters
+  ) => void
+}) => (
+  <select
+    value={newValue}
+    onChange={(e) =>
+      setSettableParamsFn((prevValues) => {
+        if (
+          e.target.value != "auto" &&
+          e.target.value != "AudioWorklet" &&
+          e.target.value != "ScriptProcessor"
+        ) {
+          console.error(`Invalid value for processorType: ${e.target.value}`)
+          return prevValues
+        }
+        return {
+          ...prevValues,
+          processorType: e.target.value,
+        }
+      })
+    }
+    className="rounded mx-5"
+  >
+    <option value="auto">auto</option>
+    <option value="AudioWorklet">AudioWorklet</option>
+    <option value="ScriptProcessor">ScriptProcessor</option>
+  </select>
+)
+
 // Tooltip component using DaisyUI
 const Tooltip = ({
   children,
@@ -273,6 +319,7 @@ const defaultVADOptions: ReactRealTimeVADOptions =
 
 const defaultSettableParams: SettableParameters = {
   model: defaultVADOptions.model,
+  processorType: "auto",
   assetPaths: "root",
   submitUserSpeechOnPause: defaultVADOptions.submitUserSpeechOnPause,
   positiveSpeechThreshold: defaultVADOptions.positiveSpeechThreshold,
@@ -348,6 +395,7 @@ const settableParamsToVADParams = async (
   }
 
   const params: ReactRealTimeVADOptions = {
+    processorType: settableParams.processorType,
     positiveSpeechThreshold: settableParams.positiveSpeechThreshold,
     negativeSpeechThreshold: settableParams.negativeSpeechThreshold,
     redemptionMs: settableParams.redemptionMs,
@@ -556,6 +604,28 @@ function App() {
               <th>
                 {settableParameterFormElement.model(
                   settableParams.model,
+                  setSettableParams
+                )}
+              </th>
+            </tr>
+
+            <tr key="processorType">
+              <th>
+                <div className="flex items-center gap-2">
+                  processorType
+                  <Tooltip
+                    content={settableParameterDescriptions.processorType}
+                  >
+                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
+                      ?
+                    </span>
+                  </Tooltip>
+                </div>
+              </th>
+              <th>{settableParams.processorType}</th>
+              <th>
+                {settableParameterFormElement.processorType(
+                  settableParams.processorType,
                   setSettableParams
                 )}
               </th>
