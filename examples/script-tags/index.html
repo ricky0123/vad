@@ -10,7 +10,7 @@
       href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css"
     />
     <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.28/dist/bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.29/dist/bundle.min.js"></script>
     <script type="module">
       import { interpolateInferno } from "https://cdn.skypack.dev/d3-scale-chromatic@3"
 
@@ -65,7 +65,7 @@
             document.body.style.setProperty("--indicator-color", indicatorColor)
           }
         }
-        window.toggleVAD()
+        // window.toggleVAD()
         document.getElementById("toggle_vad_button").disabled = false
       } catch (e) {
         console.error("Failed:", e)

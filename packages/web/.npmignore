@@ -4,6 +4,7 @@ scripts/
 src/
 test-site/
 tests/
+test/
 webpack.config.js
 playwright.config.ts
 tsconfig*

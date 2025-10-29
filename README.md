@@ -7,11 +7,11 @@
 
 This package aims to provide an accurate, user-friendly voice activity detector (VAD) that runs in the browser. By using this package, you can prompt the user for microphone permissions, start recording audio, send segments of audio with speech to your server for processing, or show a certain animation or indicator when the user is speaking. Note that I have decided [discontinue node support](#important-update-about-node-support---oct-2024) in order to focus on the browser use case.
 
-* See a live [demo](https://www.vad.ricky0123.com)
-* Join us on [Discord](https://discord.gg/4WPeGEaSpF)!
-* Browse the [documentation](https://docs.vad.ricky0123.com/), the source code of which is located in the ./docs directory
-* If you would like to contribute, I have started writing some documentation on how to get started hacking on these packages [here](https://docs.vad.ricky0123.com/developer-guide/hacking/). If you have any questions, you can open an issue here or leave a message on Discord.
-* Please fill out this [survey](https://uaux2a2ppfv.typeform.com/to/iJG2gCQv) to let me know what you are building with these packages and how you are using them!
+- See a live [demo](https://www.vad.ricky0123.com)
+- Join us on [Discord](https://discord.gg/4WPeGEaSpF)!
+- Browse the [documentation](https://docs.vad.ricky0123.com/), the source code of which is located in the ./docs directory
+- If you would like to contribute, I have started writing some documentation on how to get started hacking on these packages [here](https://docs.vad.ricky0123.com/developer-guide/hacking/). If you have any questions, you can open an issue here or leave a message on Discord.
+- Please fill out this [survey](https://uaux2a2ppfv.typeform.com/to/iJG2gCQv) to let me know what you are building with these packages and how you are using them!
 
 Under the hood, these packages run [Silero VAD](https://github.com/snakers4/silero-vad) [[1]](#1) using [ONNX Runtime Web](https://github.com/microsoft/onnxruntime/tree/main/js/web) / [ONNX Runtime Node.js](https://github.com/microsoft/onnxruntime/tree/main/js/node). Thanks a lot to those folks for making this possible.
 
@@ -33,8 +33,8 @@ I am going to wind down support for `ricky0123/vad-node`, the voice activity det
 To use the VAD via a script tag in the browser, include the following script tags:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.27/dist/bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.wasm.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.29/dist/bundle.min.js"></script>
 <script>
   async function main() {
     const myvad = await vad.MicVAD.new({
@@ -44,8 +44,10 @@ To use the VAD via a script tag in the browser, include the following script tag
       onSpeechEnd: (audio) => {
         // do something with `audio` (Float32Array of audio samples at sample rate 16000)...
       },
-      onnxWASMBasePath: "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/",
-      baseAssetPath: "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.27/dist/",
+      onnxWASMBasePath:
+        "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/",
+      baseAssetPath:
+        "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.29/dist/",
     })
     myvad.start()
   }
