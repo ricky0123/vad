@@ -154,7 +154,7 @@ import { MicVAD } from "@ricky0123/vad-web"
 
 const myvad = await MicVAD.new({
   getStream: async () => {
-    return await navigator.mediaDevices.getUserMedia({
+    return navigator.mediaDevices.getUserMedia({
       audio: {
         channelCount: 2, // Stereo instead of mono
         echoCancellation: false, // Disable echo cancellation

@@ -31,7 +31,7 @@
     const MyComponent = () => {
     const vad = useMicVAD({
         getStream: async () => {
-            return await navigator.mediaDevices.getUserMedia({
+            return navigator.mediaDevices.getUserMedia({
                 audio: {
                     channelCount: 2,  // Stereo
                     echoCancellation: false,
