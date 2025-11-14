@@ -52,4 +52,11 @@ export class SileroLegacy {
     const notSpeech = 1 - isSpeech
     return { notSpeech, isSpeech }
   }
+
+  release = () => {
+    this._session.release()
+    this._h.dispose()
+    this._c.dispose()
+    this._sr.dispose()
+  }
 }

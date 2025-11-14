@@ -57,4 +57,10 @@ export class SileroV5 {
     const notSpeech = 1 - isSpeech
     return { notSpeech, isSpeech }
   }
+
+  release = () => {
+    this._session.release()
+    this._state.dispose()
+    this._sr.dispose()
+  }
 }

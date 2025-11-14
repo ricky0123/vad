@@ -234,6 +234,7 @@ export class MicVAD {
   private constructor(
     public options: RealTimeVADOptions,
     private readonly frameProcessor: FrameProcessor,
+    private readonly model: Model,
     private readonly frameSamples: 512 | 1536,
     public listening = false,
     public errored: string | null = null,
@@ -296,7 +297,7 @@ export class MicVAD {
       msPerFrame
     )
 
-    const micVad = new MicVAD(fullOptions, frameProcessor, frameSamples)
+    const micVad = new MicVAD(fullOptions, frameProcessor, model, frameSamples)
 
     // things would be simpler if we didn't have to startOnLoad by default, but we are locked in
     if (fullOptions.startOnLoad) {
@@ -481,6 +482,7 @@ export class MicVAD {
     if (this.listening) {
       this.pause()
     }
+    this.model.release()
     if (this.ownsAudioContext) {
       this._audioContext?.close()
     }
