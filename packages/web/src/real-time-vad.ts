@@ -357,7 +357,11 @@ export class MicVAD {
           }
           throw error
         }
-        if (!this.options.audioContext) {
+        if (this.options.audioContext) {
+          console.log("using custom audio context")
+          this._audioContext = this.options.audioContext
+        } else {
+          console.log("using default audio context")
           this._audioContext = new AudioContext()
           this.ownsAudioContext = true
         }

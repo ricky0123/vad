@@ -38,39 +38,38 @@ interface SettableParameters {
   customStream: boolean
 }
 
-type SettableParameter = keyof SettableParameters
-
 // Parameter descriptions for tooltips
-const settableParameterDescriptions: Record<SettableParameter, string> = {
-  model:
-    "The VAD model to use. 'v5' is the latest model, 'legacy' is the older version.",
-  assetPaths:
-    "Asset path configuration: 'root' for local root, 'subpath' for local subpath, 'cdn' for CDN delivery.",
-  submitUserSpeechOnPause:
-    "Whether to submit speech segments when VAD is paused.",
-  positiveSpeechThreshold:
-    "Threshold (0-1) above which a frame is considered to contain speech.",
-  negativeSpeechThreshold:
-    "Threshold (0-1) below which a frame is considered to not contain speech.",
-  redemptionMs:
-    "Number of milliseconds of non-speech frames to wait before ending a speech segment.",
-  preSpeechPadMs:
-    "Number of milliseconds of audio to prepend to a speech segment.",
-  minSpeechMs:
-    "Minimum duration in milliseconds for a speech segment to be considered valid.",
-  startOnLoad: "Whether to start VAD automatically when the component loads.",
-  processorType:
-    "The type of audio processor to use. 'auto' for automatic detection, 'AudioWorklet' for AudioWorklet, 'ScriptProcessor' for ScriptProcessor.",
-  userSpeakingThreshold:
-    "Threshold for determining when user is speaking (used for UI state).",
-  customStream:
-    "When enabled, supplies custom getStream, pauseStream, and resumeStream functions.",
-  useCustomAudioContext:
-    "When enabled, uses a custom AudioContext via the 'audioContext' micVAD option.",
-}
+const settableParameterDescriptions: Record<keyof SettableParameters, string> =
+  {
+    model:
+      "The VAD model to use. 'v5' is the latest model, 'legacy' is the older version.",
+    assetPaths:
+      "Asset path configuration: 'root' for local root, 'subpath' for local subpath, 'cdn' for CDN delivery.",
+    submitUserSpeechOnPause:
+      "Whether to submit speech segments when VAD is paused.",
+    positiveSpeechThreshold:
+      "Threshold (0-1) above which a frame is considered to contain speech.",
+    negativeSpeechThreshold:
+      "Threshold (0-1) below which a frame is considered to not contain speech.",
+    redemptionMs:
+      "Number of milliseconds of non-speech frames to wait before ending a speech segment.",
+    preSpeechPadMs:
+      "Number of milliseconds of audio to prepend to a speech segment.",
+    minSpeechMs:
+      "Minimum duration in milliseconds for a speech segment to be considered valid.",
+    startOnLoad: "Whether to start VAD automatically when the component loads.",
+    processorType:
+      "The type of audio processor to use. 'auto' for automatic detection, 'AudioWorklet' for AudioWorklet, 'ScriptProcessor' for ScriptProcessor.",
+    userSpeakingThreshold:
+      "Threshold for determining when user is speaking (used for UI state).",
+    customStream:
+      "When enabled, supplies custom getStream, pauseStream, and resumeStream functions.",
+    useCustomAudioContext:
+      "When enabled, uses a custom AudioContext via the 'audioContext' micVAD option.",
+  }
 
 const settableParameterValidators: Record<
-  SettableParameter,
+  keyof SettableParameters,
   (value: any) => boolean
 > = {
   model: (value) => value === "v5" || value === "legacy",
@@ -360,7 +359,7 @@ const getSettableParamsFromHash = (): SettableParameters => {
     )) {
       if (!validator(out[key])) {
         console.error(
-          `Invalid value for ${key}: ${out[key as SettableParameter]}`
+          `Invalid value for ${key}: ${out[key as keyof SettableParameters]}`
         )
         return defaultSettableParams
       }
@@ -466,7 +465,7 @@ const BooleanInput = ({
   newValue,
   setSettableParamsFn,
 }: {
-  optionName: SettableParameter
+  optionName: keyof SettableParameters
   newValue: boolean
   setSettableParamsFn: (
     fn: (prevValues: SettableParameters) => SettableParameters
@@ -493,7 +492,7 @@ const NumberInput = ({
   newValue,
   setSettableParamsFn,
 }: {
-  optionName: SettableParameter
+  optionName: keyof SettableParameters
   newValue: number
   setSettableParamsFn: (
     fn: (prevValues: SettableParameters) => SettableParameters
@@ -525,7 +524,7 @@ const FloatInput = ({
   newValue,
   setSettableParamsFn,
 }: {
-  optionName: SettableParameter
+  optionName: keyof SettableParameters
   newValue: number
   setSettableParamsFn: (
     fn: (prevValues: SettableParameters) => SettableParameters
@@ -670,7 +669,13 @@ function App() {
             value={JSON.stringify(vadParams, null, 2)}
             readOnly
             className="w-full h-40 p-2 border rounded font-mono text-sm bg-gray-50"
-            onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+            onClick={(e) => {
+              if (e.target instanceof HTMLTextAreaElement) {
+                e.target.select()
+              } else {
+                console.error("Unexpected target type")
+              }
+            }}
           />
           <p className="text-sm text-gray-600 mt-1">
             Click to select all - these are the actual parameters passed to the
