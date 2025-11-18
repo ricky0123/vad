@@ -31,6 +31,7 @@ interface SettableParameters {
   startOnLoad: boolean
   userSpeakingThreshold: number
   processorType: "auto" | "AudioWorklet" | "ScriptProcessor"
+  useCustomAudioContext: boolean
 
   // Custom parameters
   assetPaths: AssetPathsOption
@@ -64,6 +65,8 @@ const settableParameterDescriptions: Record<SettableParameter, string> = {
     "Threshold for determining when user is speaking (used for UI state).",
   customStream:
     "When enabled, supplies custom getStream, pauseStream, and resumeStream functions.",
+  useCustomAudioContext:
+    "When enabled, uses a custom AudioContext via the 'audioContext' micVAD option.",
 }
 
 const settableParameterValidators: Record<
@@ -84,6 +87,7 @@ const settableParameterValidators: Record<
   customStream: (value) => typeof value === "boolean",
   processorType: (value) =>
     value === "auto" || value === "AudioWorklet" || value === "ScriptProcessor",
+  useCustomAudioContext: (value) => typeof value === "boolean",
 }
 
 type SettableParameterFormElement = {
@@ -173,6 +177,13 @@ const settableParameterFormElement: SettableParameterFormElement = {
   customStream: (newValue, setSettableParamsFn) => (
     <BooleanInput
       optionName="customStream"
+      newValue={newValue}
+      setSettableParamsFn={setSettableParamsFn}
+    />
+  ),
+  useCustomAudioContext: (newValue, setSettableParamsFn) => (
+    <BooleanInput
+      optionName="useCustomAudioContext"
       newValue={newValue}
       setSettableParamsFn={setSettableParamsFn}
     />
@@ -330,6 +341,7 @@ const defaultSettableParams: SettableParameters = {
   startOnLoad: defaultVADOptions.startOnLoad,
   userSpeakingThreshold: defaultVADOptions.userSpeakingThreshold,
   customStream: false,
+  useCustomAudioContext: false,
 }
 
 const getSettableParamsFromHash = (): SettableParameters => {
@@ -540,6 +552,36 @@ const FloatInput = ({
   />
 )
 
+function embedForm<K extends keyof SettableParameters>(
+  settableParams: SettableParameters,
+  setSettableParams: (
+    fn: (prevValues: SettableParameters) => SettableParameters
+  ) => void,
+  key: K
+) {
+  return (
+    <tr key={key}>
+      <th>
+        <div className="flex items-center gap-2">
+          {key}
+          <Tooltip content={settableParameterDescriptions[key]}>
+            <span className="text-gray-500 hover:text-gray-700 cursor-help">
+              ?
+            </span>
+          </Tooltip>
+        </div>
+      </th>
+      <th>{settableParams[key].toString()}</th>
+      <th>
+        {settableParameterFormElement[key](
+          settableParams[key],
+          setSettableParams
+        )}
+      </th>
+    </tr>
+  )
+}
+
 function App() {
   const [settableParams, setSettableParams] = useState<SettableParameters>(
     initialSettableParams
@@ -548,8 +590,14 @@ function App() {
   const [vadParams, setVadParams] =
     useState<ReactRealTimeVADOptions>(defaultVADOptions)
   const [stream, setStream] = useState<MediaStream | null>(null)
+  const [audioContext, setAudioContext] = useState<AudioContext | undefined>(
+    undefined
+  )
 
   useEffect(() => {
+    if (settableParams.useCustomAudioContext) {
+      setAudioContext(new AudioContext())
+    }
     const setup = async () => {
       const { params, stream } = await settableParamsToVADParams(settableParams)
       setVadParams(params)
@@ -568,6 +616,14 @@ function App() {
     const opts = JSON.stringify(settableParams)
     window.location.hash = `#opts=${encodeURIComponent(opts)}`
 
+    if (audioContext) {
+      setAudioContext(undefined)
+    }
+
+    if (settableParams.useCustomAudioContext) {
+      setAudioContext(new AudioContext())
+    }
+
     const { params, stream } = await settableParamsToVADParams(settableParams)
     setVadParams(params)
     setStream(stream)
@@ -575,6 +631,9 @@ function App() {
     await new Promise((resolve) => setTimeout(resolve, 1000))
     setDemo(true)
   }
+
+  const _embedForm = (k: keyof SettableParameters) =>
+    embedForm(settableParams, setSettableParams, k)
 
   return (
     <div className="flex">
@@ -589,265 +648,19 @@ function App() {
             </tr>
           </thead>
           <tbody>
-            <tr key="model">
-              <th>
-                <div className="flex items-center gap-2">
-                  model
-                  <Tooltip content={settableParameterDescriptions.model}>
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.model}</th>
-              <th>
-                {settableParameterFormElement.model(
-                  settableParams.model,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="processorType">
-              <th>
-                <div className="flex items-center gap-2">
-                  processorType
-                  <Tooltip
-                    content={settableParameterDescriptions.processorType}
-                  >
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.processorType}</th>
-              <th>
-                {settableParameterFormElement.processorType(
-                  settableParams.processorType,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="assetPaths">
-              <th>
-                <div className="flex items-center gap-2">
-                  assetPaths
-                  <Tooltip content={settableParameterDescriptions.assetPaths}>
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.assetPaths}</th>
-              <th>
-                {settableParameterFormElement.assetPaths(
-                  settableParams.assetPaths,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="submitUserSpeechOnPause">
-              <th>
-                <div className="flex items-center gap-2">
-                  submitUserSpeechOnPause
-                  <Tooltip
-                    content={
-                      settableParameterDescriptions.submitUserSpeechOnPause
-                    }
-                  >
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.submitUserSpeechOnPause}</th>
-              <th>
-                {settableParameterFormElement.submitUserSpeechOnPause(
-                  settableParams.submitUserSpeechOnPause,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="positiveSpeechThreshold">
-              <th>
-                <div className="flex items-center gap-2">
-                  positiveSpeechThreshold
-                  <Tooltip
-                    content={
-                      settableParameterDescriptions.positiveSpeechThreshold
-                    }
-                  >
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.positiveSpeechThreshold}</th>
-              <th>
-                {settableParameterFormElement.positiveSpeechThreshold(
-                  settableParams.positiveSpeechThreshold,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="negativeSpeechThreshold">
-              <th>
-                <div className="flex items-center gap-2">
-                  negativeSpeechThreshold
-                  <Tooltip
-                    content={
-                      settableParameterDescriptions.negativeSpeechThreshold
-                    }
-                  >
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.negativeSpeechThreshold}</th>
-              <th>
-                {settableParameterFormElement.negativeSpeechThreshold(
-                  settableParams.negativeSpeechThreshold,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="redemptionMs">
-              <th>
-                <div className="flex items-center gap-2">
-                  redemptionMs
-                  <Tooltip content={settableParameterDescriptions.redemptionMs}>
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.redemptionMs}</th>
-              <th>
-                {settableParameterFormElement.redemptionMs(
-                  settableParams.redemptionMs,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="preSpeechPadMs">
-              <th>
-                <div className="flex items-center gap-2">
-                  preSpeechPadMs
-                  <Tooltip
-                    content={settableParameterDescriptions.preSpeechPadMs}
-                  >
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.preSpeechPadMs}</th>
-              <th>
-                {settableParameterFormElement.preSpeechPadMs(
-                  settableParams.preSpeechPadMs,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="minSpeechMs">
-              <th>
-                <div className="flex items-center gap-2">
-                  minSpeechMs
-                  <Tooltip content={settableParameterDescriptions.minSpeechMs}>
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.minSpeechMs}</th>
-              <th>
-                {settableParameterFormElement.minSpeechMs(
-                  settableParams.minSpeechMs,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="startOnLoad">
-              <th>
-                <div className="flex items-center gap-2">
-                  startOnLoad
-                  <Tooltip content={settableParameterDescriptions.startOnLoad}>
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.startOnLoad}</th>
-              <th>
-                {settableParameterFormElement.startOnLoad(
-                  settableParams.startOnLoad,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="userSpeakingThreshold">
-              <th>
-                <div className="flex items-center gap-2">
-                  userSpeakingThreshold
-                  <Tooltip
-                    content={
-                      settableParameterDescriptions.userSpeakingThreshold
-                    }
-                  >
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.userSpeakingThreshold}</th>
-              <th>
-                {settableParameterFormElement.userSpeakingThreshold(
-                  settableParams.userSpeakingThreshold,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="customStream">
-              <th>
-                <div className="flex items-center gap-2">
-                  customStream
-                  <Tooltip content={settableParameterDescriptions.customStream}>
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.customStream}</th>
-              <th>
-                {settableParameterFormElement.customStream(
-                  settableParams.customStream,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
+            {_embedForm("model")}
+            {_embedForm("processorType")}
+            {_embedForm("assetPaths")}
+            {_embedForm("submitUserSpeechOnPause")}
+            {_embedForm("positiveSpeechThreshold")}
+            {_embedForm("negativeSpeechThreshold")}
+            {_embedForm("redemptionMs")}
+            {_embedForm("preSpeechPadMs")}
+            {_embedForm("minSpeechMs")}
+            {_embedForm("startOnLoad")}
+            {_embedForm("userSpeakingThreshold")}
+            {_embedForm("customStream")}
+            {_embedForm("useCustomAudioContext")}
           </tbody>
         </table>
 
@@ -873,7 +686,13 @@ function App() {
         >
           Restart
         </button>
-        {demo && <VADDemo vadParams={vadParams} stream={stream} />}
+        {demo && (
+          <VADDemo
+            vadParams={vadParams}
+            stream={stream}
+            audioContext={audioContext}
+          />
+        )}
       </div>
     </div>
   )
@@ -882,9 +701,11 @@ function App() {
 function VADDemo({
   vadParams,
   stream,
+  audioContext,
 }: {
   vadParams: ReactRealTimeVADOptions
   stream: MediaStream | null
+  audioContext: AudioContext | undefined
 }) {
   const [audioList, setAudioList] = useState<string[]>([])
   const vad = useMicVAD({
@@ -896,7 +717,16 @@ function VADDemo({
       const url = `data:audio/wav;base64,${base64}`
       setAudioList((old) => [url, ...old])
     },
+    audioContext,
   })
+
+  useEffect(() => {
+    return () => {
+      if (audioContext) {
+        audioContext.close()
+      }
+    }
+  }, [])
 
   console.log("test re-render")
 
