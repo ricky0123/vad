@@ -14,7 +14,8 @@ export default defineConfig([
   {
     languageOptions: {
       parserOptions: {
-        projectService: true,
+        project: ["./tsconfig.json", "./packages/*/tsconfig.json"],
+        tsconfigRootDir: import.meta.dirname,
       },
     },
   },
@@ -27,5 +28,12 @@ export default defineConfig([
   },
   {
     ignores: ["**/*.d.ts", "**/dist/**", "packages/web/test/**"],
+  },
+  {
+    settings: {
+      react: {
+        version: "detect",
+      },
+    },
   },
 ])

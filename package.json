@@ -7,7 +7,7 @@
     "clean": "npm run clean --workspaces --if-present",
     "format": "prettier --write '{packages,examples,test-site}/**/*.{ts,tsx}'",
     "format-check": "prettier --check '{packages,examples,test-site}/**/*.{ts,tsx}'",
-    "lint": "eslint --config eslint.config.mts 'packages/**/*.{ts,tsx}' --max-warnings 0",
+    "lint": "./scripts/lint.sh",
     "lint:fix": "eslint --config eslint.config.mts 'packages/**/*.{ts,tsx}' --fix",
     "typecheck": "tsc --noEmit --project packages/web/tsconfig.json && tsc --noEmit --project packages/react/tsconfig.json && tsc --noEmit --project test-site/tsconfig.json",
     "build-test-site": "./test-site/build.sh",
