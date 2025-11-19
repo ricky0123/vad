@@ -26,6 +26,6 @@ export default defineConfig([
     },
   },
   {
-    ignores: ["**/*.d.ts", "**/dist/**"],
+    ignores: ["**/*.d.ts", "**/dist/**", "packages/web/test/**"],
   },
 ])

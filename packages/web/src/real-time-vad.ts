@@ -512,23 +512,23 @@ export class MicVAD {
   handleFrameProcessorEvent = (ev: FrameProcessorEvent) => {
     switch (ev.msg) {
       case Message.FrameProcessed:
-        this.options.onFrameProcessed(ev.probs, ev.frame as Float32Array)
+        void this.options.onFrameProcessed(ev.probs, ev.frame)
         break
 
       case Message.SpeechStart:
-        this.options.onSpeechStart()
+        void this.options.onSpeechStart()
         break
 
       case Message.SpeechRealStart:
-        this.options.onSpeechRealStart()
+        void this.options.onSpeechRealStart()
         break
 
       case Message.VADMisfire:
-        this.options.onVADMisfire()
+        void this.options.onVADMisfire()
         break
 
       case Message.SpeechEnd:
-        this.options.onSpeechEnd(ev.audio as Float32Array)
+        void this.options.onSpeechEnd(ev.audio)
         break
     }
   }
