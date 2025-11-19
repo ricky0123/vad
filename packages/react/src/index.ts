@@ -130,19 +130,19 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
             const isSpeaking =
               probs.isSpeech > reactOptions.userSpeakingThreshold
             updateUserSpeaking(isSpeaking)
-            onFrameProcessedRef.current(probs, frame)
+            void onFrameProcessedRef.current(probs, frame)
           },
           onSpeechEnd: (audio: Float32Array) => {
-            onSpeechEndRef.current(audio)
+            void onSpeechEndRef.current(audio)
           },
           onSpeechStart: () => {
-            onSpeechStartRef.current()
+            void onSpeechStartRef.current()
           },
           onSpeechRealStart: () => {
-            onSpeechRealStartRef.current()
+            void onSpeechRealStartRef.current()
           },
           onVADMisfire: () => {
-            onVADMisfireRef.current()
+            void onVADMisfireRef.current()
           },
           getStream: () => {
             return getStreamRef.current()
@@ -152,7 +152,7 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
         myvad = await MicVAD.new(finalVadOptions)
 
         if (canceled) {
-          myvad.destroy()
+          await myvad.destroy()
           return
         }
 
@@ -180,7 +180,7 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
     return function cleanUp() {
       canceled = true
       if (myvad) {
-        myvad.destroy()
+        void myvad.destroy()
       }
       if (!loading && !errored) {
         setListening(false)

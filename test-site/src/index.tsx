@@ -4,19 +4,20 @@ import {
   useMicVAD,
   utils,
 } from "@ricky0123/vad-react"
-import { SpeechProbabilities } from "@ricky0123/vad-web/dist/models/common"
 import React, { useEffect, useState } from "react"
 import { createRoot } from "react-dom/client"
 import NonRealTimeTest from "./non-real-time-test"
 
+// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 React // prevent prettier imports plugin from removing React
 
 const domContainer = document.querySelector("#demo")
 const nonRealTimeContainer = document.querySelector("#non-real-time-test")
 
-// @ts-ignore
+if (!domContainer || !nonRealTimeContainer) {
+  throw new Error("domContainer or nonRealTimeContainer doesn't exist")
+}
 createRoot(domContainer).render(<App />)
-// @ts-ignore
 createRoot(nonRealTimeContainer).render(<NonRealTimeTest />)
 
 interface SettableParameters {
@@ -68,25 +69,67 @@ const settableParameterDescriptions: Record<keyof SettableParameters, string> =
       "When enabled, uses a custom AudioContext via the 'audioContext' micVAD option.",
   }
 
-const settableParameterValidators: Record<
-  keyof SettableParameters,
-  (value: any) => boolean
-> = {
-  model: (value) => value === "v5" || value === "legacy",
-  assetPaths: (value) =>
-    value === "root" || value === "subpath" || value === "cdn",
-  submitUserSpeechOnPause: (value) => typeof value === "boolean",
-  positiveSpeechThreshold: (value) => typeof value === "number",
-  negativeSpeechThreshold: (value) => typeof value === "number",
-  redemptionMs: (value) => typeof value === "number",
-  preSpeechPadMs: (value) => typeof value === "number",
-  minSpeechMs: (value) => typeof value === "number",
-  startOnLoad: (value) => typeof value === "boolean",
-  userSpeakingThreshold: (value) => typeof value === "number",
-  customStream: (value) => typeof value === "boolean",
-  processorType: (value) =>
-    value === "auto" || value === "AudioWorklet" || value === "ScriptProcessor",
-  useCustomAudioContext: (value) => typeof value === "boolean",
+const settableParameterValidators: {
+  [K in keyof SettableParameters]: (value: unknown) => SettableParameters[K]
+} = {
+  model: (value: unknown) => {
+    if (value == "v5") return "v5"
+    if (value == "legacy") return "legacy"
+    throw new Error("Invalid model value")
+  },
+  assetPaths: (value: unknown) => {
+    if (value === "root" || value === "subpath" || value === "cdn") return value
+    throw new Error("Invalid assetPaths value")
+  },
+  submitUserSpeechOnPause: (value: unknown) => {
+    if (typeof value === "boolean") return value
+    throw new Error("Bad settable parameter")
+  },
+  positiveSpeechThreshold: (value: unknown) => {
+    if (typeof value === "number") return value
+    throw new Error("Bad settable parameter")
+  },
+  negativeSpeechThreshold: (value: unknown) => {
+    if (typeof value === "number") return value
+    throw new Error("Bad settable parameter")
+  },
+  redemptionMs: (value: unknown) => {
+    if (typeof value === "number") return value
+    throw new Error("Bad settable parameter")
+  },
+  preSpeechPadMs: (value: unknown) => {
+    if (typeof value === "number") return value
+    throw new Error("Bad settable parameter")
+  },
+  minSpeechMs: (value: unknown) => {
+    if (typeof value === "number") return value
+    throw new Error("Bad settable parameter")
+  },
+  startOnLoad: (value: unknown) => {
+    if (typeof value === "boolean") return value
+    throw new Error("Bad settable parameter")
+  },
+  userSpeakingThreshold: (value: unknown) => {
+    if (typeof value === "number") return value
+    throw new Error("Bad settable parameter")
+  },
+  customStream: (value: unknown) => {
+    if (typeof value === "boolean") return value
+    throw new Error("Bad settable parameter")
+  },
+  processorType: (value: unknown) => {
+    if (
+      value === "auto" ||
+      value === "AudioWorklet" ||
+      value === "ScriptProcessor"
+    )
+      return value
+    throw new Error("Bad processorType")
+  },
+  useCustomAudioContext: (value: unknown) => {
+    if (typeof value === "boolean") return value
+    throw new Error("Bad settable parameter")
+  },
 }
 
 type SettableParameterFormElement = {
@@ -200,7 +243,7 @@ const ModelSelect = ({
 }) => (
   <select
     value={newValue}
-    onChange={(e) =>
+    onChange={(e) => {
       setSettableParamsFn((prevValues) => {
         if (e.target.value != "legacy" && e.target.value != "v5") {
           console.error(`Invalid value for model: ${e.target.value}`)
@@ -211,7 +254,7 @@ const ModelSelect = ({
           model: e.target.value,
         }
       })
-    }
+    }}
     className="rounded mx-5"
   >
     <option value="legacy">legacy</option>
@@ -230,7 +273,7 @@ const AssetPathsSelect = ({
 }) => (
   <select
     value={newValue}
-    onChange={(e) =>
+    onChange={(e) => {
       setSettableParamsFn((prevValues) => {
         if (
           e.target.value != "root" &&
@@ -245,7 +288,7 @@ const AssetPathsSelect = ({
           assetPaths: e.target.value,
         }
       })
-    }
+    }}
     className="rounded mx-5"
   >
     <option value="root">root</option>
@@ -265,7 +308,7 @@ const ProcessorTypeSelect = ({
 }) => (
   <select
     value={newValue}
-    onChange={(e) =>
+    onChange={(e) => {
       setSettableParamsFn((prevValues) => {
         if (
           e.target.value != "auto" &&
@@ -280,7 +323,7 @@ const ProcessorTypeSelect = ({
           processorType: e.target.value,
         }
       })
-    }
+    }}
     className="rounded mx-5"
   >
     <option value="auto">auto</option>
@@ -350,20 +393,33 @@ const getSettableParamsFromHash = (): SettableParameters => {
   const opts = params.get("opts")
   if (!opts) return defaultSettableParams
   try {
-    const out = JSON.parse(decodeURIComponent(opts))
+    const out: unknown = JSON.parse(decodeURIComponent(opts))
     console.log("Parsed settable params from hash:", out)
 
-    // Validate the settable parameters
-    for (const [key, validator] of Object.entries(
-      settableParameterValidators
-    )) {
-      if (!validator(out[key])) {
-        console.error(`Invalid value for ${key}: ${out[key]}`)
-        return defaultSettableParams
-      }
+    if (!(typeof out === "object" && out)) {
+      throw new Error("Couldn't parse settable params")
     }
 
-    return out
+    return {
+      model: settableParameterValidators.model(out),
+      assetPaths: settableParameterValidators.assetPaths(out),
+      submitUserSpeechOnPause:
+        settableParameterValidators.submitUserSpeechOnPause(out),
+      positiveSpeechThreshold:
+        settableParameterValidators.positiveSpeechThreshold(out),
+      negativeSpeechThreshold:
+        settableParameterValidators.negativeSpeechThreshold(out),
+      redemptionMs: settableParameterValidators.redemptionMs(out),
+      preSpeechPadMs: settableParameterValidators.preSpeechPadMs(out),
+      minSpeechMs: settableParameterValidators.minSpeechMs(out),
+      startOnLoad: settableParameterValidators.startOnLoad(out),
+      userSpeakingThreshold:
+        settableParameterValidators.userSpeakingThreshold(out),
+      customStream: settableParameterValidators.customStream(out),
+      processorType: settableParameterValidators.processorType(out),
+      useCustomAudioContext:
+        settableParameterValidators.useCustomAudioContext(out),
+    }
   } catch (e) {
     console.error("Failed to parse settable params from hash:", e)
     return defaultSettableParams
@@ -394,7 +450,7 @@ const settableParamsToVADParams = async (
       console.log("called getStream")
       return _stream
     }
-    pauseStream = async (_stream: MediaStream) => {
+    pauseStream = async () => {
       console.log("called pauseStream")
     }
     resumeStream = async (_stream: MediaStream) => {
@@ -413,17 +469,14 @@ const settableParamsToVADParams = async (
     submitUserSpeechOnPause: settableParams.submitUserSpeechOnPause,
 
     // From RealTimeVADCallbacks
-    onFrameProcessed: (
-      _probabilities: SpeechProbabilities,
-      _frame: Float32Array
-    ) => {},
+    onFrameProcessed: () => {},
     onVADMisfire: () => {
       console.log("VAD misfire")
     },
     onSpeechStart: () => {
       console.log("Speech start")
     },
-    onSpeechEnd: (_audio: Float32Array) => {
+    onSpeechEnd: () => {
       console.log("Speech end")
     },
     onSpeechRealStart: () => {
@@ -472,14 +525,14 @@ const BooleanInput = ({
   <input
     type="checkbox"
     checked={newValue}
-    onChange={(e) =>
+    onChange={(e) => {
       setSettableParamsFn((prevValues) => {
         return {
           ...prevValues,
           [optionName]: e.target.checked,
         }
       })
-    }
+    }}
     className="rounded mx-5"
   />
 )
@@ -499,7 +552,7 @@ const NumberInput = ({
   <input
     type="number"
     value={newValue}
-    onChange={(e) =>
+    onChange={(e) => {
       setSettableParamsFn((prevValues) => {
         const parsedValue = parseFloat(e.target.value)
         if (isNaN(parsedValue)) {
@@ -511,7 +564,7 @@ const NumberInput = ({
           [optionName]: parsedValue,
         }
       })
-    }
+    }}
     className="rounded mx-5"
   />
 )
@@ -532,7 +585,7 @@ const FloatInput = ({
     type="number"
     step="0.01"
     value={newValue}
-    onChange={(e) =>
+    onChange={(e) => {
       setSettableParamsFn((prevValues) => {
         const parsedValue = parseFloat(e.target.value)
         if (isNaN(parsedValue)) {
@@ -544,11 +597,12 @@ const FloatInput = ({
           [optionName]: parsedValue,
         }
       })
-    }
+    }}
     className="rounded mx-5"
   />
 )
 
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
 function embedForm<K extends keyof SettableParameters>(
   settableParams: SettableParameters,
   setSettableParams: (
