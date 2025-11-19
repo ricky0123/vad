@@ -22,6 +22,7 @@ export default defineConfig([
   {
     rules: {
       "@typescript-eslint/no-deprecated": "off",
+      "@typescript-eslint/require-await": "off",
     },
   },
   {
