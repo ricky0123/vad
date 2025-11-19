@@ -37,5 +37,5 @@
     // Additional helpful options
     "skipLibCheck": true
   },
-  "exclude": ["node_modules", "dist", "examples"]
+  "exclude": ["node_modules", "dist"]
 }

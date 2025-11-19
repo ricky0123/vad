@@ -655,7 +655,7 @@ function App() {
       setStream(stream)
       setDemo(true)
     }
-    setup().catch((e) => {
+    setup().catch((e: unknown) => {
       console.error("Failed to setup VAD:", e)
     })
   }, [])
@@ -739,7 +739,9 @@ function App() {
         <h3>Run</h3>
         <button
           className="bg-violet-100 hover:bg-violet-200 rounded-full px-4 py-2"
-          onClick={handleRestart}
+          onClick={() => {
+            void handleRestart()
+          }}
         >
           Restart
         </button>
@@ -780,7 +782,7 @@ function VADDemo({
   useEffect(() => {
     return () => {
       if (audioContext) {
-        audioContext.close()
+        void audioContext.close()
       }
     }
   }, [])
@@ -805,7 +807,7 @@ function VADDemo({
       <button
         className="bg-violet-100 hover:bg-violet-200 rounded-full px-4 py-2 mx-1"
         onClick={() => {
-          vad.start()
+          void vad.start()
         }}
       >
         start
@@ -814,7 +816,7 @@ function VADDemo({
       <button
         className="bg-violet-100 hover:bg-violet-200 rounded-full px-4 py-2 mx-1"
         onClick={() => {
-          vad.pause()
+          void vad.pause()
         }}
       >
         pause
@@ -823,7 +825,7 @@ function VADDemo({
       <button
         className="bg-violet-100 hover:bg-violet-200 rounded-full px-4 py-2 mx-1"
         onClick={() => {
-          vad.toggle()
+          void vad.toggle()
         }}
       >
         toggle
