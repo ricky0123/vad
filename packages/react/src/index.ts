@@ -157,10 +157,10 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
         }
 
         setVAD(myvad)
-        setLoading(false)
 
         if (vadOptions.startOnLoad) {
-          myvad.start()
+          await myvad.start()
+          setLoading(false)
           setListening(true)
         }
       } catch (e) {
@@ -188,25 +188,25 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
     }
   }, [getStreamKey, model]) // Recreate when getStream changes or model changes
 
-  const pause = useCallback(() => {
+  const pause = useCallback(async () => {
     if (!loading && !errored) {
-      vad?.pause()
+      await vad?.pause()
       setListening(false)
     }
   }, [loading, errored, vad])
 
-  const start = useCallback(() => {
+  const start = useCallback(async () => {
     if (!loading && !errored) {
-      vad?.start()
+      await vad?.start()
       setListening(true)
     }
   }, [loading, errored, vad])
 
-  const toggle = useCallback(() => {
+  const toggle = useCallback(async () => {
     if (listening) {
-      pause()
+      await pause()
     } else {
-      start()
+      await start()
     }
   }, [listening, pause, start])
 

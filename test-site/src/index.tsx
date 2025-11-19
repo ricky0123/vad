@@ -358,9 +358,7 @@ const getSettableParamsFromHash = (): SettableParameters => {
       settableParameterValidators
     )) {
       if (!validator(out[key])) {
-        console.error(
-          `Invalid value for ${key}: ${out[key as keyof SettableParameters]}`
-        )
+        console.error(`Invalid value for ${key}: ${out[key]}`)
         return defaultSettableParams
       }
     }

@@ -26,25 +26,25 @@ interface RealTimeVADCallbacks {
   onFrameProcessed: (
     probabilities: SpeechProbabilities,
     frame: Float32Array
-  ) => Promise<void> | void
+  ) => any
 
   /** Callback to run if speech start was detected but `onSpeechEnd` will not be run because the
    * audio segment is smaller than `minSpeechFrames`.
    */
-  onVADMisfire: () => Promise<void> | void
+  onVADMisfire: () => any
 
   /** Callback to run when speech start is detected */
-  onSpeechStart: () => Promise<void> | void
+  onSpeechStart: () => any
 
   /**
    * Callback to run when speech end is detected.
    * Takes as arg a Float32Array of audio samples between -1 and 1, sample rate 16000.
    * This will not run if the audio segment is smaller than `minSpeechFrames`.
    */
-  onSpeechEnd: (audio: Float32Array) => Promise<void> | void
+  onSpeechEnd: (audio: Float32Array) => any
 
   /** Callback to run when speech is detected as valid. (i.e. not a misfire) */
-  onSpeechRealStart: () => Promise<void> | void
+  onSpeechRealStart: () => any
 }
 
 type AssetOptions = {

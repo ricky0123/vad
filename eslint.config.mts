@@ -10,9 +10,21 @@ export default defineConfig([
     extends: ["js/recommended"],
     languageOptions: { globals: globals.browser },
   },
-  tseslint.configs.recommended,
+  tseslint.configs.strictTypeChecked,
+  {
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+      },
+    },
+  },
   pluginReact.configs.flat.recommended,
   {
-    ignores: ["**/*.d.ts", "**/dist/**", "**/node_modules/**"],
+    rules: {
+      "@typescript-eslint/no-deprecated": "off",
+    },
+  },
+  {
+    ignores: ["**/*.d.ts", "**/dist/**"],
   },
 ])

@@ -48,18 +48,21 @@ export class SileroV5 {
     if (!out["stateN"]) {
       throw new Error("No state from model")
     }
-    this._state = out["stateN"] as ort.Tensor
+    this._state = out["stateN"]
 
     if (!out["output"]?.data) {
       throw new Error("No output from model")
     }
-    const [isSpeech] = out["output"]?.data as unknown as [number]
+    const isSpeech = out["output"].data[0]
+    if (typeof isSpeech != "number") {
+      throw new Error("Weird output data")
+    }
     const notSpeech = 1 - isSpeech
     return { notSpeech, isSpeech }
   }
 
-  release = () => {
-    this._session.release()
+  release = async () => {
+    await this._session.release()
     this._state.dispose()
     this._sr.dispose()
   }

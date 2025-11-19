@@ -18,5 +18,5 @@ export type ModelFactory = (
 export interface Model {
   reset_state: () => void
   process: (arr: Float32Array) => Promise<SpeechProbabilities>
-  release: () => void
+  release: () => Promise<void>
 }

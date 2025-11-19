@@ -53,8 +53,8 @@ export class SileroLegacy {
     return { notSpeech, isSpeech }
   }
 
-  release = () => {
-    this._session.release()
+  release = async () => {
+    await this._session.release()
     this._h.dispose()
     this._c.dispose()
     this._sr.dispose()
