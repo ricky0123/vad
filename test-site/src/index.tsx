@@ -73,62 +73,134 @@ const settableParameterValidators: {
   [K in keyof SettableParameters]: (value: unknown) => SettableParameters[K]
 } = {
   model: (value: unknown) => {
-    if (value == "v5") return "v5"
-    if (value == "legacy") return "legacy"
+    if (typeof value == "object" && value !== null && "model" in value) {
+      if (value.model == "v5") return "v5"
+      if (value.model == "legacy") return "legacy"
+    }
+    console.error("Invalid model value", value)
     throw new Error("Invalid model value")
   },
   assetPaths: (value: unknown) => {
-    if (value === "root" || value === "subpath" || value === "cdn") return value
+    if (typeof value == "object" && value !== null && "assetPaths" in value) {
+      if (value.assetPaths == "root") return "root"
+      if (value.assetPaths == "subpath") return "subpath"
+      if (value.assetPaths == "cdn") return "cdn"
+    }
+    console.error("Invalid assetPaths value", value)
     throw new Error("Invalid assetPaths value")
   },
   submitUserSpeechOnPause: (value: unknown) => {
-    if (typeof value === "boolean") return value
+    if (
+      typeof value == "object" &&
+      value !== null &&
+      "submitUserSpeechOnPause" in value
+    ) {
+      if (typeof value.submitUserSpeechOnPause === "boolean")
+        return value.submitUserSpeechOnPause
+    }
+    console.error("Invalid submitUserSpeechOnPause value", value)
     throw new Error("Bad settable parameter")
   },
   positiveSpeechThreshold: (value: unknown) => {
-    if (typeof value === "number") return value
-    throw new Error("Bad settable parameter")
+    if (
+      typeof value == "object" &&
+      value !== null &&
+      "positiveSpeechThreshold" in value
+    ) {
+      if (typeof value.positiveSpeechThreshold === "number")
+        return value.positiveSpeechThreshold
+    }
+    console.error("Invalid positiveSpeechThreshold value", value)
+    throw new Error("Invalid positiveSpeechThreshold value")
   },
   negativeSpeechThreshold: (value: unknown) => {
-    if (typeof value === "number") return value
-    throw new Error("Bad settable parameter")
+    if (
+      typeof value == "object" &&
+      value !== null &&
+      "negativeSpeechThreshold" in value
+    ) {
+      if (typeof value.negativeSpeechThreshold === "number")
+        return value.negativeSpeechThreshold
+    }
+    console.error("Invalid negativeSpeechThreshold value", value)
+    throw new Error("Invalid negativeSpeechThreshold value")
   },
   redemptionMs: (value: unknown) => {
+    if (typeof value == "object" && value !== null && "redemptionMs" in value) {
+      if (typeof value.redemptionMs === "number") return value.redemptionMs
+    }
+
     if (typeof value === "number") return value
     throw new Error("Bad settable parameter")
   },
   preSpeechPadMs: (value: unknown) => {
-    if (typeof value === "number") return value
-    throw new Error("Bad settable parameter")
+    if (
+      typeof value == "object" &&
+      value !== null &&
+      "preSpeechPadMs" in value
+    ) {
+      if (typeof value.preSpeechPadMs === "number") return value.preSpeechPadMs
+    }
+    console.error("Invalid preSpeechPadMs value", value)
+    throw new Error("Invalid preSpeechPadMs value")
   },
   minSpeechMs: (value: unknown) => {
-    if (typeof value === "number") return value
-    throw new Error("Bad settable parameter")
+    if (typeof value == "object" && value !== null && "minSpeechMs" in value) {
+      if (typeof value.minSpeechMs === "number") return value.minSpeechMs
+    }
+    console.error("Invalid minSpeechMs value", value)
+    throw new Error("Invalid minSpeechMs value")
   },
   startOnLoad: (value: unknown) => {
-    if (typeof value === "boolean") return value
-    throw new Error("Bad settable parameter")
+    if (typeof value == "object" && value !== null && "startOnLoad" in value) {
+      if (typeof value.startOnLoad === "boolean") return value.startOnLoad
+    }
+    console.error("Invalid startOnLoad value", value)
+    throw new Error("Invalid startOnLoad value")
   },
   userSpeakingThreshold: (value: unknown) => {
-    if (typeof value === "number") return value
-    throw new Error("Bad settable parameter")
+    if (
+      typeof value == "object" &&
+      value !== null &&
+      "userSpeakingThreshold" in value
+    ) {
+      if (typeof value.userSpeakingThreshold === "number")
+        return value.userSpeakingThreshold
+    }
+    console.error("Invalid userSpeakingThreshold value", value)
+    throw new Error("Invalid userSpeakingThreshold value")
   },
   customStream: (value: unknown) => {
-    if (typeof value === "boolean") return value
-    throw new Error("Bad settable parameter")
+    if (typeof value == "object" && value !== null && "customStream" in value) {
+      if (typeof value.customStream === "boolean") return value.customStream
+    }
+    console.error("Invalid customStream value", value)
+    throw new Error("Invalid customStream value")
   },
   processorType: (value: unknown) => {
     if (
-      value === "auto" ||
-      value === "AudioWorklet" ||
-      value === "ScriptProcessor"
-    )
-      return value
-    throw new Error("Bad processorType")
+      typeof value == "object" &&
+      value !== null &&
+      "processorType" in value
+    ) {
+      if (value.processorType == "auto") return "auto"
+      if (value.processorType == "AudioWorklet") return "AudioWorklet"
+      if (value.processorType == "ScriptProcessor") return "ScriptProcessor"
+    }
+    console.error("Invalid processorType value", value)
+    throw new Error("Invalid processorType value")
   },
   useCustomAudioContext: (value: unknown) => {
-    if (typeof value === "boolean") return value
-    throw new Error("Bad settable parameter")
+    if (
+      typeof value == "object" &&
+      value !== null &&
+      "useCustomAudioContext" in value
+    ) {
+      if (value.useCustomAudioContext == true) return true
+      if (value.useCustomAudioContext == false) return false
+    }
+    console.error("Invalid useCustomAudioContext value", value)
+    throw new Error("Invalid useCustomAudioContext value")
   },
 }
 
