@@ -160,9 +160,9 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
 
         if (vadOptions.startOnLoad) {
           await myvad.start()
-          setLoading(false)
           setListening(true)
         }
+        setLoading(false)
       } catch (e) {
         setLoading(false)
         if (e instanceof Error) {
