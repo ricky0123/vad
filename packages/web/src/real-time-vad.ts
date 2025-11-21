@@ -166,22 +166,20 @@ async function getVADNodeAsWorklet(
   audioNode.port.onmessage = async (ev: MessageEvent) => {
     const data: unknown = ev.data
 
-    if (typeof data === "object" && data && "message" in data) {
-      switch (data.message) {
-        case Message.AudioFrame: {
-          if (!("data" in data && data.data instanceof ArrayBuffer)) {
-            console.log("Audio frame message has no data")
-            return
-          }
-          let buffer: ArrayBuffer = data.data
-          if (!(buffer instanceof ArrayBuffer)) {
-            buffer = new ArrayBuffer(data.data.byteLength)
-            new Uint8Array(buffer).set(new Uint8Array(data.data))
-          }
-          const frame = new Float32Array(buffer)
-          await processFrame(frame)
-          break
+    if (!(typeof data === "object" && data && "message" in data)) {
+      console.error("Invalid message event", data)
+      return
+    }
+
+    switch (data.message) {
+      case Message.AudioFrame: {
+        if (!("data" in data && data.data instanceof ArrayBuffer)) {
+          console.log("Audio frame message has no data")
+          return
         }
+        const frame = new Float32Array(data.data)
+        await processFrame(frame)
+        break
       }
     }
   }
