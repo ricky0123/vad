@@ -11,10 +11,10 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    
+
     // Enable ALL strict type-checking options
     "strict": true,
-    
+
     // Additional strict options (some are included in strict: true, but being explicit)
     "noImplicitAny": true,
     "noImplicitReturns": true,
@@ -24,8 +24,8 @@
     "strictBindCallApply": true,
     "strictPropertyInitialization": true,
     "useUnknownInCatchVariables": true,
-    "exactOptionalPropertyTypes": true,
-    
+    "exactOptionalPropertyTypes": false,
+
     // Code quality checks
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
@@ -33,12 +33,9 @@
     "noPropertyAccessFromIndexSignature": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    
+
     // Additional helpful options
     "skipLibCheck": true
   },
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "exclude": ["node_modules", "dist"]
 }

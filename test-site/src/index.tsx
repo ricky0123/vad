@@ -4,19 +4,20 @@ import {
   useMicVAD,
   utils,
 } from "@ricky0123/vad-react"
-import { SpeechProbabilities } from "@ricky0123/vad-web/dist/models/common"
 import React, { useEffect, useState } from "react"
 import { createRoot } from "react-dom/client"
 import NonRealTimeTest from "./non-real-time-test"
 
+// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 React // prevent prettier imports plugin from removing React
 
 const domContainer = document.querySelector("#demo")
 const nonRealTimeContainer = document.querySelector("#non-real-time-test")
 
-// @ts-ignore
+if (!domContainer || !nonRealTimeContainer) {
+  throw new Error("domContainer or nonRealTimeContainer doesn't exist")
+}
 createRoot(domContainer).render(<App />)
-// @ts-ignore
 createRoot(nonRealTimeContainer).render(<NonRealTimeTest />)
 
 interface SettableParameters {
@@ -31,59 +32,176 @@ interface SettableParameters {
   startOnLoad: boolean
   userSpeakingThreshold: number
   processorType: "auto" | "AudioWorklet" | "ScriptProcessor"
+  useCustomAudioContext: boolean
 
   // Custom parameters
   assetPaths: AssetPathsOption
   customStream: boolean
 }
 
-type SettableParameter = keyof SettableParameters
-
 // Parameter descriptions for tooltips
-const settableParameterDescriptions: Record<SettableParameter, string> = {
-  model:
-    "The VAD model to use. 'v5' is the latest model, 'legacy' is the older version.",
-  assetPaths:
-    "Asset path configuration: 'root' for local root, 'subpath' for local subpath, 'cdn' for CDN delivery.",
-  submitUserSpeechOnPause:
-    "Whether to submit speech segments when VAD is paused.",
-  positiveSpeechThreshold:
-    "Threshold (0-1) above which a frame is considered to contain speech.",
-  negativeSpeechThreshold:
-    "Threshold (0-1) below which a frame is considered to not contain speech.",
-  redemptionMs:
-    "Number of milliseconds of non-speech frames to wait before ending a speech segment.",
-  preSpeechPadMs:
-    "Number of milliseconds of audio to prepend to a speech segment.",
-  minSpeechMs:
-    "Minimum duration in milliseconds for a speech segment to be considered valid.",
-  startOnLoad: "Whether to start VAD automatically when the component loads.",
-  processorType:
-    "The type of audio processor to use. 'auto' for automatic detection, 'AudioWorklet' for AudioWorklet, 'ScriptProcessor' for ScriptProcessor.",
-  userSpeakingThreshold:
-    "Threshold for determining when user is speaking (used for UI state).",
-  customStream:
-    "When enabled, supplies custom getStream, pauseStream, and resumeStream functions.",
-}
+const settableParameterDescriptions: Record<keyof SettableParameters, string> =
+  {
+    model:
+      "The VAD model to use. 'v5' is the latest model, 'legacy' is the older version.",
+    assetPaths:
+      "Asset path configuration: 'root' for local root, 'subpath' for local subpath, 'cdn' for CDN delivery.",
+    submitUserSpeechOnPause:
+      "Whether to submit speech segments when VAD is paused.",
+    positiveSpeechThreshold:
+      "Threshold (0-1) above which a frame is considered to contain speech.",
+    negativeSpeechThreshold:
+      "Threshold (0-1) below which a frame is considered to not contain speech.",
+    redemptionMs:
+      "Number of milliseconds of non-speech frames to wait before ending a speech segment.",
+    preSpeechPadMs:
+      "Number of milliseconds of audio to prepend to a speech segment.",
+    minSpeechMs:
+      "Minimum duration in milliseconds for a speech segment to be considered valid.",
+    startOnLoad: "Whether to start VAD automatically when the component loads.",
+    processorType:
+      "The type of audio processor to use. 'auto' for automatic detection, 'AudioWorklet' for AudioWorklet, 'ScriptProcessor' for ScriptProcessor.",
+    userSpeakingThreshold:
+      "Threshold for determining when user is speaking (used for UI state).",
+    customStream:
+      "When enabled, supplies custom getStream, pauseStream, and resumeStream functions.",
+    useCustomAudioContext:
+      "When enabled, uses a custom AudioContext via the 'audioContext' micVAD option.",
+  }
 
-const settableParameterValidators: Record<
-  SettableParameter,
-  (value: any) => boolean
-> = {
-  model: (value) => value === "v5" || value === "legacy",
-  assetPaths: (value) =>
-    value === "root" || value === "subpath" || value === "cdn",
-  submitUserSpeechOnPause: (value) => typeof value === "boolean",
-  positiveSpeechThreshold: (value) => typeof value === "number",
-  negativeSpeechThreshold: (value) => typeof value === "number",
-  redemptionMs: (value) => typeof value === "number",
-  preSpeechPadMs: (value) => typeof value === "number",
-  minSpeechMs: (value) => typeof value === "number",
-  startOnLoad: (value) => typeof value === "boolean",
-  userSpeakingThreshold: (value) => typeof value === "number",
-  customStream: (value) => typeof value === "boolean",
-  processorType: (value) =>
-    value === "auto" || value === "AudioWorklet" || value === "ScriptProcessor",
+const settableParameterValidators: {
+  [K in keyof SettableParameters]: (value: unknown) => SettableParameters[K]
+} = {
+  model: (value: unknown) => {
+    if (typeof value == "object" && value !== null && "model" in value) {
+      if (value.model == "v5") return "v5"
+      if (value.model == "legacy") return "legacy"
+    }
+    console.error("Invalid model value", value)
+    throw new Error("Invalid model value")
+  },
+  assetPaths: (value: unknown) => {
+    if (typeof value == "object" && value !== null && "assetPaths" in value) {
+      if (value.assetPaths == "root") return "root"
+      if (value.assetPaths == "subpath") return "subpath"
+      if (value.assetPaths == "cdn") return "cdn"
+    }
+    console.error("Invalid assetPaths value", value)
+    throw new Error("Invalid assetPaths value")
+  },
+  submitUserSpeechOnPause: (value: unknown) => {
+    if (
+      typeof value == "object" &&
+      value !== null &&
+      "submitUserSpeechOnPause" in value
+    ) {
+      if (typeof value.submitUserSpeechOnPause === "boolean")
+        return value.submitUserSpeechOnPause
+    }
+    console.error("Invalid submitUserSpeechOnPause value", value)
+    throw new Error("Bad settable parameter")
+  },
+  positiveSpeechThreshold: (value: unknown) => {
+    if (
+      typeof value == "object" &&
+      value !== null &&
+      "positiveSpeechThreshold" in value
+    ) {
+      if (typeof value.positiveSpeechThreshold === "number")
+        return value.positiveSpeechThreshold
+    }
+    console.error("Invalid positiveSpeechThreshold value", value)
+    throw new Error("Invalid positiveSpeechThreshold value")
+  },
+  negativeSpeechThreshold: (value: unknown) => {
+    if (
+      typeof value == "object" &&
+      value !== null &&
+      "negativeSpeechThreshold" in value
+    ) {
+      if (typeof value.negativeSpeechThreshold === "number")
+        return value.negativeSpeechThreshold
+    }
+    console.error("Invalid negativeSpeechThreshold value", value)
+    throw new Error("Invalid negativeSpeechThreshold value")
+  },
+  redemptionMs: (value: unknown) => {
+    if (typeof value == "object" && value !== null && "redemptionMs" in value) {
+      if (typeof value.redemptionMs === "number") return value.redemptionMs
+    }
+
+    if (typeof value === "number") return value
+    throw new Error("Bad settable parameter")
+  },
+  preSpeechPadMs: (value: unknown) => {
+    if (
+      typeof value == "object" &&
+      value !== null &&
+      "preSpeechPadMs" in value
+    ) {
+      if (typeof value.preSpeechPadMs === "number") return value.preSpeechPadMs
+    }
+    console.error("Invalid preSpeechPadMs value", value)
+    throw new Error("Invalid preSpeechPadMs value")
+  },
+  minSpeechMs: (value: unknown) => {
+    if (typeof value == "object" && value !== null && "minSpeechMs" in value) {
+      if (typeof value.minSpeechMs === "number") return value.minSpeechMs
+    }
+    console.error("Invalid minSpeechMs value", value)
+    throw new Error("Invalid minSpeechMs value")
+  },
+  startOnLoad: (value: unknown) => {
+    if (typeof value == "object" && value !== null && "startOnLoad" in value) {
+      if (typeof value.startOnLoad === "boolean") return value.startOnLoad
+    }
+    console.error("Invalid startOnLoad value", value)
+    throw new Error("Invalid startOnLoad value")
+  },
+  userSpeakingThreshold: (value: unknown) => {
+    if (
+      typeof value == "object" &&
+      value !== null &&
+      "userSpeakingThreshold" in value
+    ) {
+      if (typeof value.userSpeakingThreshold === "number")
+        return value.userSpeakingThreshold
+    }
+    console.error("Invalid userSpeakingThreshold value", value)
+    throw new Error("Invalid userSpeakingThreshold value")
+  },
+  customStream: (value: unknown) => {
+    if (typeof value == "object" && value !== null && "customStream" in value) {
+      if (typeof value.customStream === "boolean") return value.customStream
+    }
+    console.error("Invalid customStream value", value)
+    throw new Error("Invalid customStream value")
+  },
+  processorType: (value: unknown) => {
+    if (
+      typeof value == "object" &&
+      value !== null &&
+      "processorType" in value
+    ) {
+      if (value.processorType == "auto") return "auto"
+      if (value.processorType == "AudioWorklet") return "AudioWorklet"
+      if (value.processorType == "ScriptProcessor") return "ScriptProcessor"
+    }
+    console.error("Invalid processorType value", value)
+    throw new Error("Invalid processorType value")
+  },
+  useCustomAudioContext: (value: unknown) => {
+    if (
+      typeof value == "object" &&
+      value !== null &&
+      "useCustomAudioContext" in value
+    ) {
+      if (value.useCustomAudioContext == true) return true
+      if (value.useCustomAudioContext == false) return false
+    }
+    console.error("Invalid useCustomAudioContext value", value)
+    throw new Error("Invalid useCustomAudioContext value")
+  },
 }
 
 type SettableParameterFormElement = {
@@ -177,6 +295,13 @@ const settableParameterFormElement: SettableParameterFormElement = {
       setSettableParamsFn={setSettableParamsFn}
     />
   ),
+  useCustomAudioContext: (newValue, setSettableParamsFn) => (
+    <BooleanInput
+      optionName="useCustomAudioContext"
+      newValue={newValue}
+      setSettableParamsFn={setSettableParamsFn}
+    />
+  ),
 }
 
 const ModelSelect = ({
@@ -190,7 +315,7 @@ const ModelSelect = ({
 }) => (
   <select
     value={newValue}
-    onChange={(e) =>
+    onChange={(e) => {
       setSettableParamsFn((prevValues) => {
         if (e.target.value != "legacy" && e.target.value != "v5") {
           console.error(`Invalid value for model: ${e.target.value}`)
@@ -201,7 +326,7 @@ const ModelSelect = ({
           model: e.target.value,
         }
       })
-    }
+    }}
     className="rounded mx-5"
   >
     <option value="legacy">legacy</option>
@@ -220,7 +345,7 @@ const AssetPathsSelect = ({
 }) => (
   <select
     value={newValue}
-    onChange={(e) =>
+    onChange={(e) => {
       setSettableParamsFn((prevValues) => {
         if (
           e.target.value != "root" &&
@@ -235,7 +360,7 @@ const AssetPathsSelect = ({
           assetPaths: e.target.value,
         }
       })
-    }
+    }}
     className="rounded mx-5"
   >
     <option value="root">root</option>
@@ -255,7 +380,7 @@ const ProcessorTypeSelect = ({
 }) => (
   <select
     value={newValue}
-    onChange={(e) =>
+    onChange={(e) => {
       setSettableParamsFn((prevValues) => {
         if (
           e.target.value != "auto" &&
@@ -270,7 +395,7 @@ const ProcessorTypeSelect = ({
           processorType: e.target.value,
         }
       })
-    }
+    }}
     className="rounded mx-5"
   >
     <option value="auto">auto</option>
@@ -330,6 +455,7 @@ const defaultSettableParams: SettableParameters = {
   startOnLoad: defaultVADOptions.startOnLoad,
   userSpeakingThreshold: defaultVADOptions.userSpeakingThreshold,
   customStream: false,
+  useCustomAudioContext: false,
 }
 
 const getSettableParamsFromHash = (): SettableParameters => {
@@ -339,22 +465,33 @@ const getSettableParamsFromHash = (): SettableParameters => {
   const opts = params.get("opts")
   if (!opts) return defaultSettableParams
   try {
-    const out = JSON.parse(decodeURIComponent(opts))
+    const out: unknown = JSON.parse(decodeURIComponent(opts))
     console.log("Parsed settable params from hash:", out)
 
-    // Validate the settable parameters
-    for (const [key, validator] of Object.entries(
-      settableParameterValidators
-    )) {
-      if (!validator(out[key])) {
-        console.error(
-          `Invalid value for ${key}: ${out[key as SettableParameter]}`
-        )
-        return defaultSettableParams
-      }
+    if (!(typeof out === "object" && out)) {
+      throw new Error("Couldn't parse settable params")
     }
 
-    return out
+    return {
+      model: settableParameterValidators.model(out),
+      assetPaths: settableParameterValidators.assetPaths(out),
+      submitUserSpeechOnPause:
+        settableParameterValidators.submitUserSpeechOnPause(out),
+      positiveSpeechThreshold:
+        settableParameterValidators.positiveSpeechThreshold(out),
+      negativeSpeechThreshold:
+        settableParameterValidators.negativeSpeechThreshold(out),
+      redemptionMs: settableParameterValidators.redemptionMs(out),
+      preSpeechPadMs: settableParameterValidators.preSpeechPadMs(out),
+      minSpeechMs: settableParameterValidators.minSpeechMs(out),
+      startOnLoad: settableParameterValidators.startOnLoad(out),
+      userSpeakingThreshold:
+        settableParameterValidators.userSpeakingThreshold(out),
+      customStream: settableParameterValidators.customStream(out),
+      processorType: settableParameterValidators.processorType(out),
+      useCustomAudioContext:
+        settableParameterValidators.useCustomAudioContext(out),
+    }
   } catch (e) {
     console.error("Failed to parse settable params from hash:", e)
     return defaultSettableParams
@@ -385,7 +522,7 @@ const settableParamsToVADParams = async (
       console.log("called getStream")
       return _stream
     }
-    pauseStream = async (_stream: MediaStream) => {
+    pauseStream = async () => {
       console.log("called pauseStream")
     }
     resumeStream = async (_stream: MediaStream) => {
@@ -404,17 +541,14 @@ const settableParamsToVADParams = async (
     submitUserSpeechOnPause: settableParams.submitUserSpeechOnPause,
 
     // From RealTimeVADCallbacks
-    onFrameProcessed: (
-      _probabilities: SpeechProbabilities,
-      _frame: Float32Array
-    ) => {},
+    onFrameProcessed: () => {},
     onVADMisfire: () => {
       console.log("VAD misfire")
     },
     onSpeechStart: () => {
       console.log("Speech start")
     },
-    onSpeechEnd: (_audio: Float32Array) => {
+    onSpeechEnd: () => {
       console.log("Speech end")
     },
     onSpeechRealStart: () => {
@@ -454,7 +588,7 @@ const BooleanInput = ({
   newValue,
   setSettableParamsFn,
 }: {
-  optionName: SettableParameter
+  optionName: keyof SettableParameters
   newValue: boolean
   setSettableParamsFn: (
     fn: (prevValues: SettableParameters) => SettableParameters
@@ -463,14 +597,14 @@ const BooleanInput = ({
   <input
     type="checkbox"
     checked={newValue}
-    onChange={(e) =>
+    onChange={(e) => {
       setSettableParamsFn((prevValues) => {
         return {
           ...prevValues,
           [optionName]: e.target.checked,
         }
       })
-    }
+    }}
     className="rounded mx-5"
   />
 )
@@ -481,7 +615,7 @@ const NumberInput = ({
   newValue,
   setSettableParamsFn,
 }: {
-  optionName: SettableParameter
+  optionName: keyof SettableParameters
   newValue: number
   setSettableParamsFn: (
     fn: (prevValues: SettableParameters) => SettableParameters
@@ -490,7 +624,7 @@ const NumberInput = ({
   <input
     type="number"
     value={newValue}
-    onChange={(e) =>
+    onChange={(e) => {
       setSettableParamsFn((prevValues) => {
         const parsedValue = parseFloat(e.target.value)
         if (isNaN(parsedValue)) {
@@ -502,7 +636,7 @@ const NumberInput = ({
           [optionName]: parsedValue,
         }
       })
-    }
+    }}
     className="rounded mx-5"
   />
 )
@@ -513,7 +647,7 @@ const FloatInput = ({
   newValue,
   setSettableParamsFn,
 }: {
-  optionName: SettableParameter
+  optionName: keyof SettableParameters
   newValue: number
   setSettableParamsFn: (
     fn: (prevValues: SettableParameters) => SettableParameters
@@ -523,7 +657,7 @@ const FloatInput = ({
     type="number"
     step="0.01"
     value={newValue}
-    onChange={(e) =>
+    onChange={(e) => {
       setSettableParamsFn((prevValues) => {
         const parsedValue = parseFloat(e.target.value)
         if (isNaN(parsedValue)) {
@@ -535,10 +669,41 @@ const FloatInput = ({
           [optionName]: parsedValue,
         }
       })
-    }
+    }}
     className="rounded mx-5"
   />
 )
+
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
+function embedForm<K extends keyof SettableParameters>(
+  settableParams: SettableParameters,
+  setSettableParams: (
+    fn: (prevValues: SettableParameters) => SettableParameters
+  ) => void,
+  key: K
+) {
+  return (
+    <tr key={key}>
+      <th>
+        <div className="flex items-center gap-2">
+          {key}
+          <Tooltip content={settableParameterDescriptions[key]}>
+            <span className="text-gray-500 hover:text-gray-700 cursor-help">
+              ?
+            </span>
+          </Tooltip>
+        </div>
+      </th>
+      <th>{settableParams[key].toString()}</th>
+      <th>
+        {settableParameterFormElement[key](
+          settableParams[key],
+          setSettableParams
+        )}
+      </th>
+    </tr>
+  )
+}
 
 function App() {
   const [settableParams, setSettableParams] = useState<SettableParameters>(
@@ -548,15 +713,21 @@ function App() {
   const [vadParams, setVadParams] =
     useState<ReactRealTimeVADOptions>(defaultVADOptions)
   const [stream, setStream] = useState<MediaStream | null>(null)
+  const [audioContext, setAudioContext] = useState<AudioContext | undefined>(
+    undefined
+  )
 
   useEffect(() => {
+    if (settableParams.useCustomAudioContext) {
+      setAudioContext(new AudioContext())
+    }
     const setup = async () => {
       const { params, stream } = await settableParamsToVADParams(settableParams)
       setVadParams(params)
       setStream(stream)
       setDemo(true)
     }
-    setup().catch((e) => {
+    setup().catch((e: unknown) => {
       console.error("Failed to setup VAD:", e)
     })
   }, [])
@@ -568,6 +739,14 @@ function App() {
     const opts = JSON.stringify(settableParams)
     window.location.hash = `#opts=${encodeURIComponent(opts)}`
 
+    if (audioContext) {
+      setAudioContext(undefined)
+    }
+
+    if (settableParams.useCustomAudioContext) {
+      setAudioContext(new AudioContext())
+    }
+
     const { params, stream } = await settableParamsToVADParams(settableParams)
     setVadParams(params)
     setStream(stream)
@@ -575,6 +754,9 @@ function App() {
     await new Promise((resolve) => setTimeout(resolve, 1000))
     setDemo(true)
   }
+
+  const _embedForm = (k: keyof SettableParameters) =>
+    embedForm(settableParams, setSettableParams, k)
 
   return (
     <div className="flex">
@@ -589,265 +771,19 @@ function App() {
             </tr>
           </thead>
           <tbody>
-            <tr key="model">
-              <th>
-                <div className="flex items-center gap-2">
-                  model
-                  <Tooltip content={settableParameterDescriptions.model}>
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.model}</th>
-              <th>
-                {settableParameterFormElement.model(
-                  settableParams.model,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="processorType">
-              <th>
-                <div className="flex items-center gap-2">
-                  processorType
-                  <Tooltip
-                    content={settableParameterDescriptions.processorType}
-                  >
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.processorType}</th>
-              <th>
-                {settableParameterFormElement.processorType(
-                  settableParams.processorType,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="assetPaths">
-              <th>
-                <div className="flex items-center gap-2">
-                  assetPaths
-                  <Tooltip content={settableParameterDescriptions.assetPaths}>
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.assetPaths}</th>
-              <th>
-                {settableParameterFormElement.assetPaths(
-                  settableParams.assetPaths,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="submitUserSpeechOnPause">
-              <th>
-                <div className="flex items-center gap-2">
-                  submitUserSpeechOnPause
-                  <Tooltip
-                    content={
-                      settableParameterDescriptions.submitUserSpeechOnPause
-                    }
-                  >
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.submitUserSpeechOnPause}</th>
-              <th>
-                {settableParameterFormElement.submitUserSpeechOnPause(
-                  settableParams.submitUserSpeechOnPause,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="positiveSpeechThreshold">
-              <th>
-                <div className="flex items-center gap-2">
-                  positiveSpeechThreshold
-                  <Tooltip
-                    content={
-                      settableParameterDescriptions.positiveSpeechThreshold
-                    }
-                  >
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.positiveSpeechThreshold}</th>
-              <th>
-                {settableParameterFormElement.positiveSpeechThreshold(
-                  settableParams.positiveSpeechThreshold,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="negativeSpeechThreshold">
-              <th>
-                <div className="flex items-center gap-2">
-                  negativeSpeechThreshold
-                  <Tooltip
-                    content={
-                      settableParameterDescriptions.negativeSpeechThreshold
-                    }
-                  >
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.negativeSpeechThreshold}</th>
-              <th>
-                {settableParameterFormElement.negativeSpeechThreshold(
-                  settableParams.negativeSpeechThreshold,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="redemptionMs">
-              <th>
-                <div className="flex items-center gap-2">
-                  redemptionMs
-                  <Tooltip content={settableParameterDescriptions.redemptionMs}>
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.redemptionMs}</th>
-              <th>
-                {settableParameterFormElement.redemptionMs(
-                  settableParams.redemptionMs,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="preSpeechPadMs">
-              <th>
-                <div className="flex items-center gap-2">
-                  preSpeechPadMs
-                  <Tooltip
-                    content={settableParameterDescriptions.preSpeechPadMs}
-                  >
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.preSpeechPadMs}</th>
-              <th>
-                {settableParameterFormElement.preSpeechPadMs(
-                  settableParams.preSpeechPadMs,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="minSpeechMs">
-              <th>
-                <div className="flex items-center gap-2">
-                  minSpeechMs
-                  <Tooltip content={settableParameterDescriptions.minSpeechMs}>
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.minSpeechMs}</th>
-              <th>
-                {settableParameterFormElement.minSpeechMs(
-                  settableParams.minSpeechMs,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="startOnLoad">
-              <th>
-                <div className="flex items-center gap-2">
-                  startOnLoad
-                  <Tooltip content={settableParameterDescriptions.startOnLoad}>
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.startOnLoad}</th>
-              <th>
-                {settableParameterFormElement.startOnLoad(
-                  settableParams.startOnLoad,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="userSpeakingThreshold">
-              <th>
-                <div className="flex items-center gap-2">
-                  userSpeakingThreshold
-                  <Tooltip
-                    content={
-                      settableParameterDescriptions.userSpeakingThreshold
-                    }
-                  >
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.userSpeakingThreshold}</th>
-              <th>
-                {settableParameterFormElement.userSpeakingThreshold(
-                  settableParams.userSpeakingThreshold,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
-
-            <tr key="customStream">
-              <th>
-                <div className="flex items-center gap-2">
-                  customStream
-                  <Tooltip content={settableParameterDescriptions.customStream}>
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help">
-                      ?
-                    </span>
-                  </Tooltip>
-                </div>
-              </th>
-              <th>{settableParams.customStream}</th>
-              <th>
-                {settableParameterFormElement.customStream(
-                  settableParams.customStream,
-                  setSettableParams
-                )}
-              </th>
-            </tr>
+            {_embedForm("model")}
+            {_embedForm("processorType")}
+            {_embedForm("assetPaths")}
+            {_embedForm("submitUserSpeechOnPause")}
+            {_embedForm("positiveSpeechThreshold")}
+            {_embedForm("negativeSpeechThreshold")}
+            {_embedForm("redemptionMs")}
+            {_embedForm("preSpeechPadMs")}
+            {_embedForm("minSpeechMs")}
+            {_embedForm("startOnLoad")}
+            {_embedForm("userSpeakingThreshold")}
+            {_embedForm("customStream")}
+            {_embedForm("useCustomAudioContext")}
           </tbody>
         </table>
 
@@ -857,7 +793,13 @@ function App() {
             value={JSON.stringify(vadParams, null, 2)}
             readOnly
             className="w-full h-40 p-2 border rounded font-mono text-sm bg-gray-50"
-            onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+            onClick={(e) => {
+              if (e.target instanceof HTMLTextAreaElement) {
+                e.target.select()
+              } else {
+                console.error("Unexpected target type")
+              }
+            }}
           />
           <p className="text-sm text-gray-600 mt-1">
             Click to select all - these are the actual parameters passed to the
@@ -869,11 +811,19 @@ function App() {
         <h3>Run</h3>
         <button
           className="bg-violet-100 hover:bg-violet-200 rounded-full px-4 py-2"
-          onClick={handleRestart}
+          onClick={() => {
+            void handleRestart()
+          }}
         >
           Restart
         </button>
-        {demo && <VADDemo vadParams={vadParams} stream={stream} />}
+        {demo && (
+          <VADDemo
+            vadParams={vadParams}
+            stream={stream}
+            audioContext={audioContext}
+          />
+        )}
       </div>
     </div>
   )
@@ -882,9 +832,11 @@ function App() {
 function VADDemo({
   vadParams,
   stream,
+  audioContext,
 }: {
   vadParams: ReactRealTimeVADOptions
   stream: MediaStream | null
+  audioContext: AudioContext | undefined
 }) {
   const [audioList, setAudioList] = useState<string[]>([])
   const vad = useMicVAD({
@@ -896,7 +848,16 @@ function VADDemo({
       const url = `data:audio/wav;base64,${base64}`
       setAudioList((old) => [url, ...old])
     },
+    audioContext,
   })
+
+  useEffect(() => {
+    return () => {
+      if (audioContext) {
+        void audioContext.close()
+      }
+    }
+  }, [])
 
   console.log("test re-render")
 
@@ -918,7 +879,7 @@ function VADDemo({
       <button
         className="bg-violet-100 hover:bg-violet-200 rounded-full px-4 py-2 mx-1"
         onClick={() => {
-          vad.start()
+          void vad.start()
         }}
       >
         start
@@ -927,7 +888,7 @@ function VADDemo({
       <button
         className="bg-violet-100 hover:bg-violet-200 rounded-full px-4 py-2 mx-1"
         onClick={() => {
-          vad.pause()
+          void vad.pause()
         }}
       >
         pause
@@ -936,7 +897,7 @@ function VADDemo({
       <button
         className="bg-violet-100 hover:bg-violet-200 rounded-full px-4 py-2 mx-1"
         onClick={() => {
-          vad.toggle()
+          void vad.toggle()
         }}
       >
         toggle

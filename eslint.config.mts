@@ -10,9 +10,30 @@ export default defineConfig([
     extends: ["js/recommended"],
     languageOptions: { globals: globals.browser },
   },
-  tseslint.configs.recommended,
+  tseslint.configs.strictTypeChecked,
+  {
+    languageOptions: {
+      parserOptions: {
+        project: ["./tsconfig.json", "./packages/*/tsconfig.json"],
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
   pluginReact.configs.flat.recommended,
   {
-    ignores: ["**/*.d.ts", "**/dist/**", "**/node_modules/**"],
+    rules: {
+      "@typescript-eslint/no-deprecated": "off",
+      "@typescript-eslint/require-await": "off",
+    },
+  },
+  {
+    ignores: ["**/*.d.ts", "**/dist/**", "packages/web/test/**"],
+  },
+  {
+    settings: {
+      react: {
+        version: "detect",
+      },
+    },
   },
 ])

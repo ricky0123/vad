@@ -152,6 +152,7 @@ async function getVADNodeAsWorklet(
 ): Promise<AudioWorkletNode> {
   await audioContext.audioWorklet.addModule(workletURL)
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   workletOptions.processorOptions = {
     ...(workletOptions.processorOptions ?? {}),
     frameSamples: frameSamples,
@@ -163,14 +164,20 @@ async function getVADNodeAsWorklet(
     workletOptions
   )
   audioNode.port.onmessage = async (ev: MessageEvent) => {
-    switch (ev.data?.message) {
+    const data: unknown = ev.data
+
+    if (!(typeof data === "object" && data && "message" in data)) {
+      console.error("Invalid message event", data)
+      return
+    }
+
+    switch (data.message) {
       case Message.AudioFrame: {
-        let buffer: ArrayBuffer = ev.data.data
-        if (!(buffer instanceof ArrayBuffer)) {
-          buffer = new ArrayBuffer(ev.data.data.byteLength)
-          new Uint8Array(buffer).set(new Uint8Array(ev.data.data))
+        if (!("data" in data && data.data instanceof ArrayBuffer)) {
+          console.log("Audio frame message has no data")
+          return
         }
-        const frame = new Float32Array(buffer)
+        const frame = new Float32Array(data.data)
         await processFrame(frame)
         break
       }
@@ -188,7 +195,7 @@ async function getVADNodeAsScriptProcessor(
   const resampler = new Resampler({
     nativeSampleRate: audioContext.sampleRate,
     targetSampleRate: 16000, // VAD models expect 16kHz
-    targetFrameSize: frameSamples ?? 480,
+    targetFrameSize: frameSamples,
   })
   log.debug("using script processor")
 
@@ -208,11 +215,9 @@ async function getVADNodeAsScriptProcessor(
       output.fill(0)
 
       // Process through resampler
-      if (resampler) {
-        const frames = resampler.process(input)
-        for (const frame of frames) {
-          await processFrame(frame)
-        }
+      const frames = resampler.process(input)
+      for (const frame of frames) {
+        await processFrame(frame)
       }
     } catch (error) {
       console.error("Error processing audio:", error)
@@ -357,10 +362,15 @@ export class MicVAD {
           }
           throw error
         }
-        if (!this.options.audioContext) {
+        if (this.options.audioContext) {
+          console.log("using custom audio context")
+          this._audioContext = this.options.audioContext
+        } else {
+          console.log("using default audio context")
           this._audioContext = new AudioContext()
           this.ownsAudioContext = true
         }
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!this._audioContext) {
           this.setErrored("Audio context is null")
           throw Error("Audio context is null")
@@ -376,7 +386,7 @@ export class MicVAD {
             {
               this._vadNode = await getVADNodeAsWorklet(
                 this.options.baseAssetPath + workletFile,
-                this.options.workletOptions ?? {},
+                this.options.workletOptions,
                 this._audioContext,
                 this.frameSamples,
                 this.processFrame
@@ -396,6 +406,7 @@ export class MicVAD {
 
           default: {
             throw new Error(
+              // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
               `Unsupported audio processor adapter type: ${this._audioProcessorAdapterType}`
             )
           }
@@ -470,7 +481,7 @@ export class MicVAD {
     this.frameProcessor.pause(this.handleFrameProcessorEvent)
   }
 
-  destroy = () => {
+  destroy = async () => {
     log.debug("destroy called")
     this.initializationState = "destroyed"
 
@@ -480,11 +491,11 @@ export class MicVAD {
     }
 
     if (this.listening) {
-      this.pause()
+      await this.pause()
     }
-    this.model.release()
+    await this.model.release()
     if (this.ownsAudioContext) {
-      this._audioContext?.close()
+      await this._audioContext?.close()
     }
   }
 
@@ -499,23 +510,23 @@ export class MicVAD {
   handleFrameProcessorEvent = (ev: FrameProcessorEvent) => {
     switch (ev.msg) {
       case Message.FrameProcessed:
-        this.options.onFrameProcessed(ev.probs, ev.frame as Float32Array)
+        void this.options.onFrameProcessed(ev.probs, ev.frame)
         break
 
       case Message.SpeechStart:
-        this.options.onSpeechStart()
+        void this.options.onSpeechStart()
         break
 
       case Message.SpeechRealStart:
-        this.options.onSpeechRealStart()
+        void this.options.onSpeechRealStart()
         break
 
       case Message.VADMisfire:
-        this.options.onVADMisfire()
+        void this.options.onVADMisfire()
         break
 
       case Message.SpeechEnd:
-        this.options.onSpeechEnd(ev.audio as Float32Array)
+        void this.options.onSpeechEnd(ev.audio)
         break
     }
   }

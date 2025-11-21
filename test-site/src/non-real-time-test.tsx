@@ -84,7 +84,12 @@ const NonRealTimeTest: React.FC = () => {
         the start and end times of each detected segment.
       </p>
 
-      <form onSubmit={handleFileUpload} className="mb-4">
+      <form
+        onSubmit={(ev) => {
+          void handleFileUpload(ev)
+        }}
+        className="mb-4"
+      >
         <input
           ref={fileInputRef}
           className="bg-violet-100 hover:bg-violet-200 rounded-full px-4 py-2 mr-2"

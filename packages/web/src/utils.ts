@@ -100,7 +100,7 @@ export async function audioFileToArray(audioFileData: Blob) {
   await new Promise<void>((res) => {
     reader.addEventListener("loadend", () => {
       const audioData = reader.result as ArrayBuffer
-      ctx.decodeAudioData(
+      void ctx.decodeAudioData(
         audioData,
         (buffer) => {
           audioBuffer = buffer
@@ -110,17 +110,18 @@ export async function audioFileToArray(audioFileData: Blob) {
               console.log("Rendering completed successfully")
               res()
             })
-            .catch((err) => {
-              console.error(`Rendering failed: ${err}`)
+            .catch((err: unknown) => {
+              console.error("Rendering failed: ", err)
             })
         },
         (e) => {
-          console.log(`Error with decoding audio data: ${e}`)
+          console.log("Error with decoding audio data: ", e)
         }
       )
     })
     reader.readAsArrayBuffer(audioFileData)
   })
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (audioBuffer === null) {
     throw Error("some shit")
   }

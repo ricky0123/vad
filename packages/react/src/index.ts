@@ -130,19 +130,19 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
             const isSpeaking =
               probs.isSpeech > reactOptions.userSpeakingThreshold
             updateUserSpeaking(isSpeaking)
-            onFrameProcessedRef.current(probs, frame)
+            void onFrameProcessedRef.current(probs, frame)
           },
           onSpeechEnd: (audio: Float32Array) => {
-            onSpeechEndRef.current(audio)
+            void onSpeechEndRef.current(audio)
           },
           onSpeechStart: () => {
-            onSpeechStartRef.current()
+            void onSpeechStartRef.current()
           },
           onSpeechRealStart: () => {
-            onSpeechRealStartRef.current()
+            void onSpeechRealStartRef.current()
           },
           onVADMisfire: () => {
-            onVADMisfireRef.current()
+            void onVADMisfireRef.current()
           },
           getStream: () => {
             return getStreamRef.current()
@@ -152,17 +152,17 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
         myvad = await MicVAD.new(finalVadOptions)
 
         if (canceled) {
-          myvad.destroy()
+          await myvad.destroy()
           return
         }
 
         setVAD(myvad)
-        setLoading(false)
 
         if (vadOptions.startOnLoad) {
-          myvad.start()
+          await myvad.start()
           setListening(true)
         }
+        setLoading(false)
       } catch (e) {
         setLoading(false)
         if (e instanceof Error) {
@@ -180,7 +180,7 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
     return function cleanUp() {
       canceled = true
       if (myvad) {
-        myvad.destroy()
+        void myvad.destroy()
       }
       if (!loading && !errored) {
         setListening(false)
@@ -188,25 +188,25 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
     }
   }, [getStreamKey, model]) // Recreate when getStream changes or model changes
 
-  const pause = useCallback(() => {
+  const pause = useCallback(async () => {
     if (!loading && !errored) {
-      vad?.pause()
+      await vad?.pause()
       setListening(false)
     }
   }, [loading, errored, vad])
 
-  const start = useCallback(() => {
+  const start = useCallback(async () => {
     if (!loading && !errored) {
-      vad?.start()
+      await vad?.start()
       setListening(true)
     }
   }, [loading, errored, vad])
 
-  const toggle = useCallback(() => {
+  const toggle = useCallback(async () => {
     if (listening) {
-      pause()
+      await pause()
     } else {
-      start()
+      await start()
     }
   }, [listening, pause, start])
 

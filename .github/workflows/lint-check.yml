@@ -16,11 +16,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18.x"
+          node-version: "23.x"
           cache: "npm"
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Build all packages
+        run: npm run build
 
       - name: Check if code is linted
         run: |
