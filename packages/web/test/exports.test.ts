@@ -14,7 +14,7 @@ it("should export MicVAD", async function () {
 })
 
 it("should toggle listening state on start and pause", async function () {
-  this.timeout(10000)
+  this.timeout(5000)
   const vad = await MicVAD.new({
     onnxWASMBasePath:
       "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/",
@@ -22,7 +22,6 @@ it("should toggle listening state on start and pause", async function () {
       "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.28/dist/",
     startOnLoad: false,
   })
-  console.log("what the fuck")
   assert.isFalse(vad.listening)
   await vad.start()
   console.log("started")
