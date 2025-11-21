@@ -10,3 +10,6 @@ playwright.config.ts
 tsconfig*
 !*.onnx
 test-results/
+web-test-runner.config.mjs
+webpack.config.index.js
+webpack.config.worklet.js
