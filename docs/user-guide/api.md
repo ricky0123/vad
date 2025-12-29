@@ -42,6 +42,7 @@ New instances of `MicVAD` are created by calling the async static method `MicVAD
 | `redemptionMs`            | `number`                                                                           | `1400`                                               | [see algorithm configuration](algorithm.md#configuration)                                                                                                                                                                                                                                                  |
 | `preSpeechPadMs`          | `number`                                                                           | `800`                                                | [see algorithm configuration](algorithm.md#configuration)                                                                                                                                                                                                                                                  |
 | `minSpeechMs`             | `number`                                                                           | `400`                                                | [see algorithm configuration](algorithm.md#configuration)                                                                                                                                                                                                                                                  |
+| `maxSpeechMs`             | `number`                                                                           | `Infinity`                                           | [see algorithm configuration](algorithm.md#configuration)                                                                                                                                                                                                                                                  |
 | `submitUserSpeechOnPause` | `boolean`                                                                          | `false`                                              | If true, pausing the VAD triggers `onSpeechEnd` (if speaking with sufficient frames) or `onVADMisfire`                                                                                                                                                                                                     |
 | `model`                   | `"v5" or "legacy"`                                                                 | `"legacy"`                                           | whether to use the new Silero model or not                                                                                                                                                                                                                                                                 |
 | `baseAssetPath`           | `string`                                                                           | `/`                                                  | URL or path relative to webroot where `vad.worklet.bundle.min.js`, `silero_vad_legacy.onnx`, and `silero_vad_v5.onnx` will be loaded from                                                                                                                                                                  |
@@ -96,6 +97,7 @@ New instances of `MicVAD` are created by calling the async static method `MicVAD
 
 | `preSpeechPadMs` | `number` | `30` | [see algorithm configuration](algorithm.md#configuration) |
 | `minSpeechMs` | `number` | `250` | [see algorithm configuration](algorithm.md#configuration) |
+| `maxSpeechMs` | `number` | `Infinity` | [see algorithm configuration](algorithm.md#configuration) |
 
 ### Attributes
 
@@ -150,6 +152,7 @@ The `useMicVAD` hook takes an options object with the following fields (all are 
 
 | `preSpeechPadMs` | `number` | `800` | [see algorithm configuration](algorithm.md#configuration) |
 | `minSpeechMs` | `number` | `400` | [see algorithm configuration](algorithm.md#configuration) |
+| `maxSpeechMs` | `number` | `Infinity` | [see algorithm configuration](algorithm.md#configuration) |
 
 ### Returns
 

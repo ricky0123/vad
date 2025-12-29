@@ -18,3 +18,4 @@ All of the main APIs accept certain common configuration parameters that modify 
 * `redemptionMs: number` - number of milliseconds of speech-negative frames to wait before ending a speech segment. default: `1400`
 * `preSpeechPadMs: number` - number of milliseconds of audio to prepend to a speech segment. default: `800`
 * `minSpeechMs: number` - minimum duration in milliseconds for a speech segment. default: `400`
+* `maxSpeechMs: number` - maximum duration in milliseconds for a speech segment. If a speech segment exceeds this duration, it will be force-cut and emitted, and a new segment will start if speech is still detected. default: `Infinity`

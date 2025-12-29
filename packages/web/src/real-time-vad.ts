@@ -298,6 +298,7 @@ export class MicVAD {
         preSpeechPadMs: fullOptions.preSpeechPadMs,
         minSpeechMs: fullOptions.minSpeechMs,
         submitUserSpeechOnPause: fullOptions.submitUserSpeechOnPause,
+        maxSpeechMs: fullOptions.maxSpeechMs,
       },
       msPerFrame
     )

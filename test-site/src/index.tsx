@@ -29,6 +29,7 @@ interface SettableParameters {
   redemptionMs: number
   preSpeechPadMs: number
   minSpeechMs: number
+  maxSpeechMs: number
   startOnLoad: boolean
   userSpeakingThreshold: number
   processorType: "auto" | "AudioWorklet" | "ScriptProcessor"
@@ -58,6 +59,8 @@ const settableParameterDescriptions: Record<keyof SettableParameters, string> =
       "Number of milliseconds of audio to prepend to a speech segment.",
     minSpeechMs:
       "Minimum duration in milliseconds for a speech segment to be considered valid.",
+    maxSpeechMs:
+      "Maximum duration in milliseconds for a speech segment. Segments longer than this will be force-cut.",
     startOnLoad: "Whether to start VAD automatically when the component loads.",
     processorType:
       "The type of audio processor to use. 'auto' for automatic detection, 'AudioWorklet' for AudioWorklet, 'ScriptProcessor' for ScriptProcessor.",
@@ -150,6 +153,13 @@ const settableParameterValidators: {
     }
     console.error("Invalid minSpeechMs value", value)
     throw new Error("Invalid minSpeechMs value")
+  },
+  maxSpeechMs: (value: unknown) => {
+    if (typeof value == "object" && value !== null && "maxSpeechMs" in value) {
+      if (typeof value.maxSpeechMs === "number") return value.maxSpeechMs
+    }
+    console.error("Invalid maxSpeechMs value", value)
+    throw new Error("Invalid maxSpeechMs value")
   },
   startOnLoad: (value: unknown) => {
     if (typeof value == "object" && value !== null && "startOnLoad" in value) {
@@ -270,6 +280,13 @@ const settableParameterFormElement: SettableParameterFormElement = {
   minSpeechMs: (newValue, setSettableParamsFn) => (
     <NumberInput
       optionName="minSpeechMs"
+      newValue={newValue}
+      setSettableParamsFn={setSettableParamsFn}
+    />
+  ),
+  maxSpeechMs: (newValue, setSettableParamsFn) => (
+    <NumberInput
+      optionName="maxSpeechMs"
       newValue={newValue}
       setSettableParamsFn={setSettableParamsFn}
     />
@@ -452,6 +469,7 @@ const defaultSettableParams: SettableParameters = {
   redemptionMs: defaultVADOptions.redemptionMs,
   preSpeechPadMs: defaultVADOptions.preSpeechPadMs,
   minSpeechMs: defaultVADOptions.minSpeechMs,
+  maxSpeechMs: defaultVADOptions.maxSpeechMs,
   startOnLoad: defaultVADOptions.startOnLoad,
   userSpeakingThreshold: defaultVADOptions.userSpeakingThreshold,
   customStream: false,
@@ -484,6 +502,7 @@ const getSettableParamsFromHash = (): SettableParameters => {
       redemptionMs: settableParameterValidators.redemptionMs(out),
       preSpeechPadMs: settableParameterValidators.preSpeechPadMs(out),
       minSpeechMs: settableParameterValidators.minSpeechMs(out),
+      maxSpeechMs: settableParameterValidators.maxSpeechMs(out),
       startOnLoad: settableParameterValidators.startOnLoad(out),
       userSpeakingThreshold:
         settableParameterValidators.userSpeakingThreshold(out),
@@ -538,6 +557,7 @@ const settableParamsToVADParams = async (
     redemptionMs: settableParams.redemptionMs,
     preSpeechPadMs: settableParams.preSpeechPadMs,
     minSpeechMs: settableParams.minSpeechMs,
+    maxSpeechMs: settableParams.maxSpeechMs,
     submitUserSpeechOnPause: settableParams.submitUserSpeechOnPause,
 
     // From RealTimeVADCallbacks
@@ -780,6 +800,7 @@ function App() {
             {_embedForm("redemptionMs")}
             {_embedForm("preSpeechPadMs")}
             {_embedForm("minSpeechMs")}
+            {_embedForm("maxSpeechMs")}
             {_embedForm("startOnLoad")}
             {_embedForm("userSpeakingThreshold")}
             {_embedForm("customStream")}

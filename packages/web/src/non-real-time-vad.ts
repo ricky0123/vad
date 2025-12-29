@@ -58,6 +58,7 @@ export class NonRealTimeVAD {
         redemptionMs: fullOptions.redemptionMs,
         preSpeechPadMs: fullOptions.preSpeechPadMs,
         minSpeechMs: fullOptions.minSpeechMs,
+        maxSpeechMs: fullOptions.maxSpeechMs,
         submitUserSpeechOnPause: fullOptions.submitUserSpeechOnPause,
       },
       1536 / 16
@@ -105,6 +106,8 @@ export class NonRealTimeVAD {
           case Message.SpeechEnd:
             end = ((frameIndex + 1) * this.frameSamples) / 16
             yield { audio: event.audio, start, end }
+            // Reset start for potential new segment (maxSpeechMs force-cut case)
+            start = end
             break
 
           default:
