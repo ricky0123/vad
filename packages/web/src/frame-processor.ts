@@ -121,7 +121,12 @@ function calculateFrameParams(
   const preSpeechPadFrames = Math.floor(options.preSpeechPadMs / msPerFrame)
   const minSpeechFrames = Math.floor(options.minSpeechMs / msPerFrame)
   const maxSpeechFrames = Math.floor(options.maxSpeechMs / msPerFrame)
-  return { redemptionFrames, preSpeechPadFrames, minSpeechFrames, maxSpeechFrames }
+  return {
+    redemptionFrames,
+    preSpeechPadFrames,
+    minSpeechFrames,
+    maxSpeechFrames,
+  }
 }
 
 export class FrameProcessor implements FrameProcessorInterface {
@@ -145,8 +150,12 @@ export class FrameProcessor implements FrameProcessorInterface {
     public msPerFrame: number
   ) {
     this.audioBuffer = []
-    const { redemptionFrames, preSpeechPadFrames, minSpeechFrames, maxSpeechFrames } =
-      calculateFrameParams(this.options, this.msPerFrame)
+    const {
+      redemptionFrames,
+      preSpeechPadFrames,
+      minSpeechFrames,
+      maxSpeechFrames,
+    } = calculateFrameParams(this.options, this.msPerFrame)
     this.redemptionFrames = redemptionFrames
     this.preSpeechPadFrames = preSpeechPadFrames
     this.minSpeechFrames = minSpeechFrames
@@ -156,8 +165,12 @@ export class FrameProcessor implements FrameProcessorInterface {
 
   setOptions = (update: Partial<FrameProcessorOptions>) => {
     this.options = { ...this.options, ...update }
-    const { redemptionFrames, preSpeechPadFrames, minSpeechFrames, maxSpeechFrames } =
-      calculateFrameParams(this.options, this.msPerFrame)
+    const {
+      redemptionFrames,
+      preSpeechPadFrames,
+      minSpeechFrames,
+      maxSpeechFrames,
+    } = calculateFrameParams(this.options, this.msPerFrame)
     this.redemptionFrames = redemptionFrames
     this.preSpeechPadFrames = preSpeechPadFrames
     this.minSpeechFrames = minSpeechFrames
