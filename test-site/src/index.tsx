@@ -12,13 +12,11 @@ import NonRealTimeTest from "./non-real-time-test"
 React // prevent prettier imports plugin from removing React
 
 const domContainer = document.querySelector("#demo")
-const nonRealTimeContainer = document.querySelector("#non-real-time-test")
 
-if (!domContainer || !nonRealTimeContainer) {
-  throw new Error("domContainer or nonRealTimeContainer doesn't exist")
+if (!domContainer) {
+  throw new Error("domContainer doesn't exist")
 }
 createRoot(domContainer).render(<App />)
-createRoot(nonRealTimeContainer).render(<NonRealTimeTest />)
 
 interface SettableParameters {
   // Directly translatable VAD parameters
@@ -779,8 +777,9 @@ function App() {
     embedForm(settableParams, setSettableParams, k)
 
   return (
-    <div className="flex">
-      <div className="mr-5">
+    <div>
+      <div className="flex">
+        <div className="mr-5">
         <h3>Configuration Parameters</h3>
         <table>
           <thead>
@@ -846,6 +845,15 @@ function App() {
           />
         )}
       </div>
+      </div>
+      <NonRealTimeTest
+        positiveSpeechThreshold={settableParams.positiveSpeechThreshold}
+        negativeSpeechThreshold={settableParams.negativeSpeechThreshold}
+        redemptionMs={settableParams.redemptionMs}
+        preSpeechPadMs={settableParams.preSpeechPadMs}
+        minSpeechMs={settableParams.minSpeechMs}
+        maxSpeechMs={settableParams.maxSpeechMs}
+      />
     </div>
   )
 }
