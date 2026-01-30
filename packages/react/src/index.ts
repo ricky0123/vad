@@ -45,6 +45,7 @@ function useOptions(
     redemptionMs: fullOptions.redemptionMs,
     preSpeechPadMs: fullOptions.preSpeechPadMs,
     minSpeechMs: fullOptions.minSpeechMs,
+    maxSpeechMs: fullOptions.maxSpeechMs,
     submitUserSpeechOnPause: fullOptions.submitUserSpeechOnPause,
     onFrameProcessed: fullOptions.onFrameProcessed,
     onVADMisfire: fullOptions.onVADMisfire,

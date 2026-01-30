@@ -7,7 +7,23 @@ interface AudioSegment {
   end: number
 }
 
-const NonRealTimeTest: React.FC = () => {
+interface NonRealTimeTestProps {
+  positiveSpeechThreshold: number
+  negativeSpeechThreshold: number
+  redemptionMs: number
+  preSpeechPadMs: number
+  minSpeechMs: number
+  maxSpeechMs: number
+}
+
+const NonRealTimeTest: React.FC<NonRealTimeTestProps> = ({
+  positiveSpeechThreshold,
+  negativeSpeechThreshold,
+  redemptionMs,
+  preSpeechPadMs,
+  minSpeechMs,
+  maxSpeechMs,
+}) => {
   const [segments, setSegments] = useState<AudioSegment[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [showMs, setShowMs] = useState(true)
@@ -47,7 +63,15 @@ const NonRealTimeTest: React.FC = () => {
               // Use default CDN assets in production
             }
 
-      const myvad = await NonRealTimeVAD.new(vadConfig)
+      const myvad = await NonRealTimeVAD.new({
+        ...vadConfig,
+        positiveSpeechThreshold,
+        negativeSpeechThreshold,
+        redemptionMs,
+        preSpeechPadMs,
+        minSpeechMs,
+        maxSpeechMs,
+      })
       const audioFile = fileInputRef.current.files[0]
       const { audio, sampleRate } = await utils.audioFileToArray(audioFile)
 

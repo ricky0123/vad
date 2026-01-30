@@ -12,13 +12,11 @@ import NonRealTimeTest from "./non-real-time-test"
 React // prevent prettier imports plugin from removing React
 
 const domContainer = document.querySelector("#demo")
-const nonRealTimeContainer = document.querySelector("#non-real-time-test")
 
-if (!domContainer || !nonRealTimeContainer) {
-  throw new Error("domContainer or nonRealTimeContainer doesn't exist")
+if (!domContainer) {
+  throw new Error("domContainer doesn't exist")
 }
 createRoot(domContainer).render(<App />)
-createRoot(nonRealTimeContainer).render(<NonRealTimeTest />)
 
 interface SettableParameters {
   // Directly translatable VAD parameters
@@ -29,6 +27,7 @@ interface SettableParameters {
   redemptionMs: number
   preSpeechPadMs: number
   minSpeechMs: number
+  maxSpeechMs: number
   startOnLoad: boolean
   userSpeakingThreshold: number
   processorType: "auto" | "AudioWorklet" | "ScriptProcessor"
@@ -58,6 +57,8 @@ const settableParameterDescriptions: Record<keyof SettableParameters, string> =
       "Number of milliseconds of audio to prepend to a speech segment.",
     minSpeechMs:
       "Minimum duration in milliseconds for a speech segment to be considered valid.",
+    maxSpeechMs:
+      "Maximum duration in milliseconds for a speech segment. Segments longer than this will be force-cut.",
     startOnLoad: "Whether to start VAD automatically when the component loads.",
     processorType:
       "The type of audio processor to use. 'auto' for automatic detection, 'AudioWorklet' for AudioWorklet, 'ScriptProcessor' for ScriptProcessor.",
@@ -150,6 +151,13 @@ const settableParameterValidators: {
     }
     console.error("Invalid minSpeechMs value", value)
     throw new Error("Invalid minSpeechMs value")
+  },
+  maxSpeechMs: (value: unknown) => {
+    if (typeof value == "object" && value !== null && "maxSpeechMs" in value) {
+      if (typeof value.maxSpeechMs === "number") return value.maxSpeechMs
+    }
+    console.error("Invalid maxSpeechMs value", value)
+    throw new Error("Invalid maxSpeechMs value")
   },
   startOnLoad: (value: unknown) => {
     if (typeof value == "object" && value !== null && "startOnLoad" in value) {
@@ -270,6 +278,13 @@ const settableParameterFormElement: SettableParameterFormElement = {
   minSpeechMs: (newValue, setSettableParamsFn) => (
     <NumberInput
       optionName="minSpeechMs"
+      newValue={newValue}
+      setSettableParamsFn={setSettableParamsFn}
+    />
+  ),
+  maxSpeechMs: (newValue, setSettableParamsFn) => (
+    <NumberInput
+      optionName="maxSpeechMs"
       newValue={newValue}
       setSettableParamsFn={setSettableParamsFn}
     />
@@ -452,6 +467,7 @@ const defaultSettableParams: SettableParameters = {
   redemptionMs: defaultVADOptions.redemptionMs,
   preSpeechPadMs: defaultVADOptions.preSpeechPadMs,
   minSpeechMs: defaultVADOptions.minSpeechMs,
+  maxSpeechMs: defaultVADOptions.maxSpeechMs,
   startOnLoad: defaultVADOptions.startOnLoad,
   userSpeakingThreshold: defaultVADOptions.userSpeakingThreshold,
   customStream: false,
@@ -484,6 +500,7 @@ const getSettableParamsFromHash = (): SettableParameters => {
       redemptionMs: settableParameterValidators.redemptionMs(out),
       preSpeechPadMs: settableParameterValidators.preSpeechPadMs(out),
       minSpeechMs: settableParameterValidators.minSpeechMs(out),
+      maxSpeechMs: settableParameterValidators.maxSpeechMs(out),
       startOnLoad: settableParameterValidators.startOnLoad(out),
       userSpeakingThreshold:
         settableParameterValidators.userSpeakingThreshold(out),
@@ -538,6 +555,7 @@ const settableParamsToVADParams = async (
     redemptionMs: settableParams.redemptionMs,
     preSpeechPadMs: settableParams.preSpeechPadMs,
     minSpeechMs: settableParams.minSpeechMs,
+    maxSpeechMs: settableParams.maxSpeechMs,
     submitUserSpeechOnPause: settableParams.submitUserSpeechOnPause,
 
     // From RealTimeVADCallbacks
@@ -759,72 +777,83 @@ function App() {
     embedForm(settableParams, setSettableParams, k)
 
   return (
-    <div className="flex">
-      <div className="mr-5">
-        <h3>Configuration Parameters</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Option</th>
-              <th>Current Value</th>
-              <th>New Value</th>
-            </tr>
-          </thead>
-          <tbody>
-            {_embedForm("model")}
-            {_embedForm("processorType")}
-            {_embedForm("assetPaths")}
-            {_embedForm("submitUserSpeechOnPause")}
-            {_embedForm("positiveSpeechThreshold")}
-            {_embedForm("negativeSpeechThreshold")}
-            {_embedForm("redemptionMs")}
-            {_embedForm("preSpeechPadMs")}
-            {_embedForm("minSpeechMs")}
-            {_embedForm("startOnLoad")}
-            {_embedForm("userSpeakingThreshold")}
-            {_embedForm("customStream")}
-            {_embedForm("useCustomAudioContext")}
-          </tbody>
-        </table>
+    <div>
+      <div className="flex">
+        <div className="mr-5">
+          <h3>Configuration Parameters</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Option</th>
+                <th>Current Value</th>
+                <th>New Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {_embedForm("model")}
+              {_embedForm("processorType")}
+              {_embedForm("assetPaths")}
+              {_embedForm("submitUserSpeechOnPause")}
+              {_embedForm("positiveSpeechThreshold")}
+              {_embedForm("negativeSpeechThreshold")}
+              {_embedForm("redemptionMs")}
+              {_embedForm("preSpeechPadMs")}
+              {_embedForm("minSpeechMs")}
+              {_embedForm("maxSpeechMs")}
+              {_embedForm("startOnLoad")}
+              {_embedForm("userSpeakingThreshold")}
+              {_embedForm("customStream")}
+              {_embedForm("useCustomAudioContext")}
+            </tbody>
+          </table>
 
-        <h3>Final VAD Parameters</h3>
-        <div className="mb-4">
-          <textarea
-            value={JSON.stringify(vadParams, null, 2)}
-            readOnly
-            className="w-full h-40 p-2 border rounded font-mono text-sm bg-gray-50"
-            onClick={(e) => {
-              if (e.target instanceof HTMLTextAreaElement) {
-                e.target.select()
-              } else {
-                console.error("Unexpected target type")
-              }
+          <h3>Final VAD Parameters</h3>
+          <div className="mb-4">
+            <textarea
+              value={JSON.stringify(vadParams, null, 2)}
+              readOnly
+              className="w-full h-40 p-2 border rounded font-mono text-sm bg-gray-50"
+              onClick={(e) => {
+                if (e.target instanceof HTMLTextAreaElement) {
+                  e.target.select()
+                } else {
+                  console.error("Unexpected target type")
+                }
+              }}
+            />
+            <p className="text-sm text-gray-600 mt-1">
+              Click to select all - these are the actual parameters passed to
+              the VAD
+            </p>
+          </div>
+        </div>
+        <div>
+          <h3>Run</h3>
+          <button
+            className="bg-violet-100 hover:bg-violet-200 rounded-full px-4 py-2"
+            onClick={() => {
+              void handleRestart()
             }}
-          />
-          <p className="text-sm text-gray-600 mt-1">
-            Click to select all - these are the actual parameters passed to the
-            VAD
-          </p>
+          >
+            Restart
+          </button>
+          {demo && (
+            <VADDemo
+              vadParams={vadParams}
+              stream={stream}
+              audioContext={audioContext}
+            />
+          )}
         </div>
       </div>
-      <div>
-        <h3>Run</h3>
-        <button
-          className="bg-violet-100 hover:bg-violet-200 rounded-full px-4 py-2"
-          onClick={() => {
-            void handleRestart()
-          }}
-        >
-          Restart
-        </button>
-        {demo && (
-          <VADDemo
-            vadParams={vadParams}
-            stream={stream}
-            audioContext={audioContext}
-          />
-        )}
-      </div>
+      <NonRealTimeTest
+        positiveSpeechThreshold={settableParams.positiveSpeechThreshold}
+        negativeSpeechThreshold={settableParams.negativeSpeechThreshold}
+        redemptionMs={settableParams.redemptionMs}
+        preSpeechPadMs={settableParams.preSpeechPadMs}
+        minSpeechMs={settableParams.minSpeechMs}
+        maxSpeechMs={settableParams.maxSpeechMs}
+      />
     </div>
   )
 }
