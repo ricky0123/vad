@@ -58,6 +58,7 @@ export class NonRealTimeVAD {
         redemptionMs: fullOptions.redemptionMs,
         preSpeechPadMs: fullOptions.preSpeechPadMs,
         minSpeechMs: fullOptions.minSpeechMs,
+        framesToEmitMs: fullOptions.framesToEmitMs,
         submitUserSpeechOnPause: fullOptions.submitUserSpeechOnPause,
       },
       1536 / 16

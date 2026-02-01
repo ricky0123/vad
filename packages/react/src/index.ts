@@ -45,11 +45,13 @@ function useOptions(
     redemptionMs: fullOptions.redemptionMs,
     preSpeechPadMs: fullOptions.preSpeechPadMs,
     minSpeechMs: fullOptions.minSpeechMs,
+    framesToEmitMs: fullOptions.framesToEmitMs,
     submitUserSpeechOnPause: fullOptions.submitUserSpeechOnPause,
     onFrameProcessed: fullOptions.onFrameProcessed,
     onVADMisfire: fullOptions.onVADMisfire,
     onSpeechStart: fullOptions.onSpeechStart,
     onSpeechEnd: fullOptions.onSpeechEnd,
+    onEmitChunk: fullOptions.onEmitChunk,
     onSpeechRealStart: fullOptions.onSpeechRealStart,
     baseAssetPath: fullOptions.baseAssetPath,
     onnxWASMBasePath: fullOptions.onnxWASMBasePath,
@@ -82,6 +84,7 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
   // Use refs to store the latest callbacks so they can be called without recreating the VAD
   const onFrameProcessedRef = useRef(vadOptions.onFrameProcessed)
   const onSpeechEndRef = useRef(vadOptions.onSpeechEnd)
+  const onEmitChunkRef = useRef(vadOptions.onEmitChunk)
   const onSpeechStartRef = useRef(vadOptions.onSpeechStart)
   const onSpeechRealStartRef = useRef(vadOptions.onSpeechRealStart)
   const onVADMisfireRef = useRef(vadOptions.onVADMisfire)
@@ -91,12 +94,14 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
   useEffect(() => {
     onFrameProcessedRef.current = vadOptions.onFrameProcessed
     onSpeechEndRef.current = vadOptions.onSpeechEnd
+    onEmitChunkRef.current = vadOptions.onEmitChunk
     onSpeechStartRef.current = vadOptions.onSpeechStart
     onSpeechRealStartRef.current = vadOptions.onSpeechRealStart
     onVADMisfireRef.current = vadOptions.onVADMisfire
   }, [
     vadOptions.onFrameProcessed,
     vadOptions.onSpeechEnd,
+    vadOptions.onEmitChunk,
     vadOptions.onSpeechStart,
     vadOptions.onSpeechRealStart,
     vadOptions.onVADMisfire,
@@ -134,6 +139,9 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
           },
           onSpeechEnd: (audio: Float32Array) => {
             void onSpeechEndRef.current(audio)
+          },
+          onEmitChunk: (audio: Float32Array) => {
+            void onEmitChunkRef.current(audio)
           },
           onSpeechStart: () => {
             void onSpeechStartRef.current()

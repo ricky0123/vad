@@ -18,3 +18,4 @@ All of the main APIs accept certain common configuration parameters that modify 
 * `redemptionMs: number` - number of milliseconds of speech-negative frames to wait before ending a speech segment. default: `1400`
 * `preSpeechPadMs: number` - number of milliseconds of audio to prepend to a speech segment. default: `800`
 * `minSpeechMs: number` - minimum duration in milliseconds for a speech segment. default: `400`
+* `framesToEmitMs: number` - determines length of audio in milliseconds that should be accumulated before an intermediate audio chunk is emitted. default: `0` disabled
