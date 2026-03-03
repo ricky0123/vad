@@ -77,6 +77,59 @@ const workletFile = "vad.worklet.bundle.min.js"
 const sileroV5File = "silero_vad_v5.onnx"
 const sileroLegacyFile = "silero_vad_legacy.onnx"
 
+const modelCache = new Map<string, Model>()
+
+/**
+ * Preloads the ONNX model into memory so that VAD instantiation is instantaneous.
+ * This is useful if you want to avoid network latency sequentially after getting media permissions.
+ */
+export const preloadVADModel = async (
+  options: Partial<RealTimeVADOptions> = {}
+): Promise<void> => {
+  const fullOptions: RealTimeVADOptions = {
+    ...getDefaultRealTimeVADOptions(options.model ?? DEFAULT_MODEL),
+    ...options,
+  }
+  
+  ort.env.wasm.wasmPaths = fullOptions.onnxWASMBasePath
+  if (fullOptions.ortConfig !== undefined) {
+    fullOptions.ortConfig(ort)
+  }
+
+  const modelFile = fullOptions.model === "v5" ? sileroV5File : sileroLegacyFile
+  const modelURL = fullOptions.baseAssetPath + modelFile
+
+  if (modelCache.has(modelURL)) {
+    return
+  }
+
+  try {
+    const modelFactory: ModelFactory =
+      fullOptions.model === "v5" ? SileroV5.new : SileroLegacy.new
+    const model = await modelFactory(ort, () => defaultModelFetcher(modelURL))
+    modelCache.set(modelURL, model)
+    log.debug(`Preloaded model from ${modelURL}`)
+  } catch (e) {
+    console.error(`Failed to preload VAD model from ${modelURL}`, e)
+    throw e
+  }
+}
+
+export const releaseVADModels = async (): Promise<void> => {
+  for (const model of modelCache.values()) {
+    try {
+      await model.release()
+    } catch (e) {
+      // ignore
+    }
+  }
+  modelCache.clear()
+}
+
+/*
+===============================
+*/
+
 export const getDefaultRealTimeVADOptions = (
   model: "v5" | "legacy"
 ): RealTimeVADOptions => {
@@ -279,7 +332,14 @@ export class MicVAD {
       fullOptions.model === "v5" ? SileroV5.new : SileroLegacy.new
     let model: Model
     try {
-      model = await modelFactory(ort, () => defaultModelFetcher(modelURL))
+      if (modelCache.has(modelURL)) {
+        log.debug(`Using cached model instance for ${modelURL}`)
+        model = modelCache.get(modelURL)!
+        model.reset_state()
+      } else {
+        model = await modelFactory(ort, () => defaultModelFetcher(modelURL))
+        modelCache.set(modelURL, model)
+      }
     } catch (e) {
       console.error(`Encountered an error while loading model file ${modelURL}`)
       throw e
@@ -494,6 +554,14 @@ export class MicVAD {
       await this.pause()
     }
     await this.model.release()
+
+    // Remove the model from the cache
+    for (const [key, value] of modelCache) {
+      if (value === this.model) {
+        modelCache.delete(key)
+      }
+    }
+
     if (this.ownsAudioContext) {
       await this._audioContext?.close()
     }
