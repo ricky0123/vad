@@ -57,6 +57,10 @@ To use the VAD via a script tag in the browser, include the following script tag
 
 Documentation for bundling the voice activity detector for the browser or using it in node or React projects can be found on [vad.ricky0123.com](https://www.vad.ricky0123.com).
 
+## Cool projects using this library
+
+- [lonestone/micdrop](https://github.com/lonestone/micdrop)
+
 ## References
 
 <a id="1">[1]</a>

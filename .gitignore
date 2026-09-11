@@ -32,6 +32,10 @@ yarn-error.log
 testem.log
 /typings
 
+# sim (scripts/sim) - generated audio and run output
+.sim-cache
+sim-out
+
 # System Files
 .DS_Store
 Thumbs.db

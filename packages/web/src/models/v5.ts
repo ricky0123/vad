@@ -2,12 +2,19 @@ import * as ort from "onnxruntime-web/wasm"
 import { log } from "../logging"
 import { ModelFactory, ModelFetcher, SpeechProbabilities } from "./common"
 
+// Silero v5 scores a frame against the tail of the frame before it, so an onset
+// straddling a frame boundary is still seen whole. 64 samples at 16 kHz, matching
+// `OnnxWrapper.__call__` in silero-vad's utils_vad.py.
+const CONTEXT_SAMPLES = 64
+
 function getNewState(ortInstance: typeof ort) {
   const zeroes = Array(2 * 128).fill(0)
   return new ortInstance.Tensor("float32", zeroes, [2, 1, 128])
 }
 
 export class SileroV5 {
+  private _context = new Float32Array(CONTEXT_SAMPLES)
+
   constructor(
     private _session: ort.InferenceSession,
     private _state: ort.Tensor,
@@ -31,12 +38,18 @@ export class SileroV5 {
 
   reset_state = () => {
     this._state = getNewState(this.ortInstance)
+    this._context = new Float32Array(CONTEXT_SAMPLES)
   }
 
   process = async (audioFrame: Float32Array): Promise<SpeechProbabilities> => {
-    const t = new this.ortInstance.Tensor("float32", audioFrame, [
+    const withContext = new Float32Array(CONTEXT_SAMPLES + audioFrame.length)
+    withContext.set(this._context, 0)
+    withContext.set(audioFrame, CONTEXT_SAMPLES)
+    this._context = audioFrame.slice(-CONTEXT_SAMPLES)
+
+    const t = new this.ortInstance.Tensor("float32", withContext, [
       1,
-      audioFrame.length,
+      withContext.length,
     ])
     const inputs = {
       input: t,
