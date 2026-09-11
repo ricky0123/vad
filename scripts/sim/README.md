@@ -17,7 +17,7 @@ npm run sim -- --help
 | `--gap` | silence between and around phrases, default 2000ms |
 | `--voice` | piper voice, default `en_US-lessac-medium` |
 | `--gain` `--noise` `--seed` | amplitude scale, noise floor amplitude, noise seed |
-| `--model` | `v5` or `legacy` |
+| `--model` | `v5`, `v6` or `legacy` |
 | `--positive` `--negative` `--redemption` `--pre-speech-pad` `--min-speech` | the matching `FrameProcessorOptions`, defaulted to the library's own defaults |
 | `--out` | output directory, default `sim-out` |
 | `--compare` | an earlier `run.json` to overlay on the chart and summary |

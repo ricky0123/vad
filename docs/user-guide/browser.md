@@ -54,7 +54,7 @@ myvad.start()
 
 Then, make sure these files are available under the paths you specified:
 
-1. serve the `silero_vad_legacy.onnx` and `silero_vad_v5.onnx` files that come distributed with `@ricky0123/vad-web` (under `baseAssetPath`)
+1. serve the `silero_vad_legacy.onnx`, `silero_vad_v5.onnx`, and `silero_vad_v6.onnx` files that come distributed with `@ricky0123/vad-web` (under `baseAssetPath`)
 2. serve the `vad.worklet.bundle.min.js` file that comes distributed with `@ricky0123/vad-web` (under `baseAssetPath`)
 3. serve the wasm files that come distributed with the package `onnxruntime-web` (under `onnxWASMBasePath`)
 4. **Important for newer versions of onnxruntime-web**: Also serve the `.mjs` files that come distributed with `onnxruntime-web` (under `onnxWASMBasePath`). These JavaScript bindings are required for proper initialization of the WebAssembly modules.
@@ -105,6 +105,10 @@ export default defineConfig({
           dest: "./",
         },
         {
+          src: "node_modules/@ricky0123/vad-web/dist/silero_vad_v6.onnx",
+          dest: "./",
+        },
+        {
           src: "node_modules/@ricky0123/vad-web/dist/silero_vad_legacy.onnx",
           dest: "./",
         },
@@ -134,7 +138,7 @@ There are a number of files that the VAD loads from the browser when it is invok
 
 There are now exactly two configuration parameters that control where VAD looks for these files.
 
-- `baseAssetPath` - the base path under which VAD looks for the worklet file and onnx files. The worklet file name is `vad.worklet.bundle.min.js`. Therefore, if you have set `baseAssetPath` to `example.com`, it will try to load the worklet file from `example.com/vad.worklet.bundle.min.js`. Similarly, it uses this same base path to look for `silero_vad_legacy.onnx` or `silero_vad_v5.onnx`.
+- `baseAssetPath` - the base path under which VAD looks for the worklet file and onnx files. The worklet file name is `vad.worklet.bundle.min.js`. Therefore, if you have set `baseAssetPath` to `example.com`, it will try to load the worklet file from `example.com/vad.worklet.bundle.min.js`. Similarly, it uses this same base path to look for `silero_vad_legacy.onnx`, `silero_vad_v5.onnx`, or `silero_vad_v6.onnx`.
 - `onnxWASMBasePath` - the base path under which VAD looks for wasm files needed for onnxruntime.
 
 By default, these are both set to the appropriate CDN paths. In other words, unless you have overridden these options, the worklet/onnx/wasm files will be loaded from a CDN. If you want to serve these files yourself, you have to specifiy those options yourself and make sure that you have made the files available at the correct location. Hopefully, this both makes it easy to get started with the package and also clears up any ambiguity about where the files are supposed to be.

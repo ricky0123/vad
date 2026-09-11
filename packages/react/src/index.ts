@@ -20,7 +20,7 @@ const defaultReactOptions: ReactOptions = {
 }
 
 export const getDefaultReactRealTimeVADOptions = (
-  model: "legacy" | "v5"
+  model: "legacy" | "v5" | "v6"
 ): ReactRealTimeVADOptions => {
   return {
     ...getDefaultRealTimeVADOptions(model),

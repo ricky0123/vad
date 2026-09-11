@@ -6,10 +6,10 @@ import {
   FrameProcessorEvent,
 } from "../../packages/web/src/frame-processor"
 import { Message } from "../../packages/web/src/messages"
-import { SileroLegacy, SileroV5 } from "../../packages/web/src/models"
+import { Silero, SileroLegacy } from "../../packages/web/src/models"
 
 export interface SimParams {
-  model: "v5" | "legacy"
+  model: "v5" | "v6" | "legacy"
   positiveSpeechThreshold: number
   negativeSpeechThreshold: number
   redemptionMs: number
@@ -45,12 +45,10 @@ async function runSim(params: SimParams): Promise<SimResult> {
 
   const modelFetcher = async () =>
     await (await fetch(params.modelUrl)).arrayBuffer()
-  const model =
-    params.model === "v5"
-      ? await SileroV5.new(ort, modelFetcher)
-      : await SileroLegacy.new(ort, modelFetcher)
+  const modelFactory = params.model === "legacy" ? SileroLegacy.new : Silero.new
+  const model = await modelFactory(ort, modelFetcher)
 
-  const frameSamples = params.model === "v5" ? 512 : 1536
+  const frameSamples = params.model === "legacy" ? 1536 : 512
   const msPerFrame = frameSamples / 16
 
   const frameProcessor = new FrameProcessor(

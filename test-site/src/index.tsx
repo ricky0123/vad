@@ -22,7 +22,7 @@ createRoot(nonRealTimeContainer).render(<NonRealTimeTest />)
 
 interface SettableParameters {
   // Directly translatable VAD parameters
-  model: "v5" | "legacy"
+  model: "v5" | "v6" | "legacy"
   submitUserSpeechOnPause: boolean
   positiveSpeechThreshold: number
   negativeSpeechThreshold: number
@@ -308,7 +308,7 @@ const ModelSelect = ({
   newValue,
   setSettableParamsFn,
 }: {
-  newValue: "v5" | "legacy"
+  newValue: "v5" | "v6" | "legacy"
   setSettableParamsFn: (
     fn: (prevValues: SettableParameters) => SettableParameters
   ) => void
@@ -317,7 +317,11 @@ const ModelSelect = ({
     value={newValue}
     onChange={(e) => {
       setSettableParamsFn((prevValues) => {
-        if (e.target.value != "legacy" && e.target.value != "v5") {
+        if (
+          e.target.value != "legacy" &&
+          e.target.value != "v5" &&
+          e.target.value != "v6"
+        ) {
           console.error(`Invalid value for model: ${e.target.value}`)
           return prevValues
         }
@@ -331,6 +335,7 @@ const ModelSelect = ({
   >
     <option value="legacy">legacy</option>
     <option value="v5">v5</option>
+    <option value="v6">v6</option>
   </select>
 )
 

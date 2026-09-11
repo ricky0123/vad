@@ -2,9 +2,14 @@ import * as ort from "onnxruntime-web/wasm"
 import { log } from "../logging"
 import { ModelFactory, ModelFetcher, SpeechProbabilities } from "./common"
 
-// Silero v5 scores a frame against the tail of the frame before it, so an onset
-// straddling a frame boundary is still seen whole. 64 samples at 16 kHz, matching
-// `OnnxWrapper.__call__` in silero-vad's utils_vad.py.
+// Silero v5 and v6 share an interface: 512-sample frames, a single state
+// tensor, and a 64-sample context window carrying the tail of the previous
+// frame so an onset straddling a frame boundary is still seen whole. 64 samples
+// at 16 kHz, matching `OnnxWrapper.__call__` in silero-vad's utils_vad.py.
+//
+// Only the weights differ between the two, so which version you get is decided
+// by the .onnx file handed to `new`, not by this class. v4 is different enough
+// to need its own implementation, in legacy.ts.
 const CONTEXT_SAMPLES = 64
 
 function getNewState(ortInstance: typeof ort) {
@@ -12,7 +17,7 @@ function getNewState(ortInstance: typeof ort) {
   return new ortInstance.Tensor("float32", zeroes, [2, 1, 128])
 }
 
-export class SileroV5 {
+export class Silero {
   private _context = new Float32Array(CONTEXT_SAMPLES)
 
   constructor(
@@ -33,7 +38,7 @@ export class SileroV5 {
     const _sr = new ortInstance.Tensor("int64", [16000n])
     const _state = getNewState(ortInstance)
     log.debug("...finished loading VAD")
-    return new SileroV5(_session, _state, _sr, ortInstance)
+    return new Silero(_session, _state, _sr, ortInstance)
   }
 
   reset_state = () => {
@@ -45,6 +50,8 @@ export class SileroV5 {
     const withContext = new Float32Array(CONTEXT_SAMPLES + audioFrame.length)
     withContext.set(this._context, 0)
     withContext.set(audioFrame, CONTEXT_SAMPLES)
+    // slice rather than subarray: the worklet reuses its frame buffer, so a
+    // view would be overwritten before the next call reads it.
     this._context = audioFrame.slice(-CONTEXT_SAMPLES)
 
     const t = new this.ortInstance.Tensor("float32", withContext, [

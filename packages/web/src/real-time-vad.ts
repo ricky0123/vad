@@ -13,8 +13,8 @@ import {
   Model,
   ModelFactory,
   OrtOptions,
+  Silero,
   SileroLegacy,
-  SileroV5,
   SpeechProbabilities,
 } from "./models"
 import { Resampler } from "./resampler"
@@ -54,7 +54,7 @@ type AssetOptions = {
 }
 
 type ModelOptions = {
-  model: "v5" | "legacy"
+  model: "v5" | "v6" | "legacy"
 }
 
 export interface RealTimeVADOptions
@@ -74,11 +74,14 @@ export interface RealTimeVADOptions
 export const ort = ortInstance
 
 const workletFile = "vad.worklet.bundle.min.js"
-const sileroV5File = "silero_vad_v5.onnx"
-const sileroLegacyFile = "silero_vad_legacy.onnx"
+const modelFiles: Record<ModelOptions["model"], string> = {
+  legacy: "silero_vad_legacy.onnx",
+  v5: "silero_vad_v5.onnx",
+  v6: "silero_vad_v6.onnx",
+}
 
 export const getDefaultRealTimeVADOptions = (
-  model: "v5" | "legacy"
+  model: "v5" | "v6" | "legacy"
 ): RealTimeVADOptions => {
   return {
     ...defaultFrameProcessorOptions,
@@ -272,11 +275,10 @@ export class MicVAD {
       fullOptions.ortConfig(ort)
     }
 
-    const modelFile =
-      fullOptions.model === "v5" ? sileroV5File : sileroLegacyFile
-    const modelURL = fullOptions.baseAssetPath + modelFile
+    const modelURL = fullOptions.baseAssetPath + modelFiles[fullOptions.model]
+    // v5 and v6 differ only in weights, so they share an implementation.
     const modelFactory: ModelFactory =
-      fullOptions.model === "v5" ? SileroV5.new : SileroLegacy.new
+      fullOptions.model === "legacy" ? SileroLegacy.new : Silero.new
     let model: Model
     try {
       model = await modelFactory(ort, () => defaultModelFetcher(modelURL))
@@ -285,7 +287,7 @@ export class MicVAD {
       throw e
     }
 
-    const frameSamples = fullOptions.model === "v5" ? 512 : 1536
+    const frameSamples = fullOptions.model === "legacy" ? 1536 : 512
     const msPerFrame = frameSamples / 16
 
     const frameProcessor = new FrameProcessor(
