@@ -61,8 +61,8 @@ function parseCliArgs() {
     process.exit(0)
   }
   const merged = { ...DEFAULTS, ...values }
-  if (merged.model !== "v5" && merged.model !== "legacy") {
-    throw new Error(`--model must be v5 or legacy, got ${merged.model}`)
+  if (!["v5", "v6", "legacy"].includes(merged.model)) {
+    throw new Error(`--model must be v5, v6 or legacy, got ${merged.model}`)
   }
   return {
     text: merged.text,
@@ -95,7 +95,7 @@ Audio
   --seed <int>          seed for the noise (default 0)
 
 VAD
-  --model v5|legacy     (default v5)
+  --model v5|v6|legacy  (default v5)
   --positive <float>    positiveSpeechThreshold (default 0.3)
   --negative <float>    negativeSpeechThreshold (default 0.25)
   --redemption <ms>     redemptionMs (default 1400)

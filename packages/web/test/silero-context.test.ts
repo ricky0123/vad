@@ -1,6 +1,6 @@
 import { assert } from "@esm-bundle/chai"
 import type * as ort from "onnxruntime-web/wasm"
-import { SileroV5 } from "../src/models/v5"
+import { Silero } from "../src/models/silero"
 
 const FRAME_SAMPLES = 512
 const CONTEXT_SAMPLES = 64
@@ -53,11 +53,11 @@ function rampFrame(seed: number) {
 
 async function newModel() {
   const { ortInstance, inputs } = fakeOrt()
-  const model = await SileroV5.new(ortInstance, async () => new ArrayBuffer(0))
+  const model = await Silero.new(ortInstance, async () => new ArrayBuffer(0))
   return { model, inputs }
 }
 
-describe("SileroV5 context window", () => {
+describe("Silero context window", () => {
   it("passes 576 samples, not the bare 512-sample frame", async () => {
     const { model, inputs } = await newModel()
     await model.process(rampFrame(1))
