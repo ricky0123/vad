@@ -2,6 +2,7 @@
 
 [![npm vad-web](https://img.shields.io/npm/v/@ricky0123/vad-web?color=blue&label=%40ricky0123%2Fvad-web&style=flat-square)](https://www.npmjs.com/package/@ricky0123/vad-web)
 [![npm vad-react](https://img.shields.io/npm/v/@ricky0123/vad-react?color=blue&label=%40ricky0123%2Fvad-react&style=flat-square)](https://www.npmjs.com/package/@ricky0123/vad-react)
+[![Become a Sponsor](https://img.shields.io/static/v1?label=Become%20a%20Sponsor&message=%E2%9D%A4&logo=GitHub&style=flat&color=d42f2d)](https://github.com/sponsors/ricky0123)
 
 > Run callbacks on segments of audio with user speech in a few lines of code
 
@@ -16,7 +17,8 @@ Under the hood, these packages run [Silero VAD](https://github.com/snakers4/sile
 
 ## Sponsorship
 
-I greatly appreciate all sponsors. [![Become a Sponsor](https://img.shields.io/static/v1?label=Become%20a%20Sponsor&message=%E2%9D%A4&logo=GitHub&style=flat&color=d42f2d)](https://github.com/sponsors/ricky0123)
+Please consider [sponsoring](https://github.com/sponsors/ricky0123) this project if you have found it useful!
+
 
 ## Quick Start
 
