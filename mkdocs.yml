@@ -29,13 +29,20 @@ nav:
       - React: user-guide/react.md
       - API: user-guide/api.md
       - Algorithm: user-guide/algorithm.md
-      - Silero V5: user-guide/silero-v5.md
+      - Models: user-guide/models.md
   - Developer Guide:
       - Hacking: developer-guide/hacking.md
   - Links:
       - GitHub: https://github.com/ricky0123/vad
       - Discord: https://discord.gg/4WPeGEaSpF
       - Buy me a cup of coffee!: https://github.com/sponsors/ricky0123
+plugins:
+  - search
+  - redirects:
+      redirect_maps:
+        # The Silero V5 page became the general Models page. Keep the old URL
+        # working, since it has been linked to from Discord and issues.
+        user-guide/silero-v5.md: user-guide/models.md
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true

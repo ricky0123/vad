@@ -8,7 +8,7 @@ The VAD can be used via script tags as follows:
 
 ```html linenums="1"
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.wasm.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.29/dist/bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.31/dist/bundle.min.js"></script>
 <script>
   async function main() {
     const myvad = await vad.MicVAD.new({
@@ -18,7 +18,7 @@ The VAD can be used via script tags as follows:
       onnxWASMBasePath:
         "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/",
       baseAssetPath:
-        "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.29/dist/",
+        "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.31/dist/",
     })
     myvad.start()
   }

@@ -1,5 +1,0 @@
-# Silero V5
-
-We now support the newest Silero model, Silero v5. It is not activated unless you set the `model` configuration parameter to the string `"v5"`. You can test it out [here](https://test.vad.ricky0123.com/#opts=%7B%22positiveSpeechThreshold%22%3A0.5%2C%22negativeSpeechThreshold%22%3A0.35%2C%22preSpeechPadMs%22%3A30%2C%22redemptionMs%22%3A500%2C%22minSpeechMs%22%3A250%2C%22submitUserSpeechOnPause%22%3Afalse%2C%22baseAssetPath%22%3A%22https%3A%2F%2Fcdn.jsdelivr.net%2Fnpm%2F%40ricky0123%2Fvad-web%400.0.20%2Fdist%2F%22%2C%22onnxWASMBasePath%22%3A%22https%3A%2F%2Fcdn.jsdelivr.net%2Fnpm%2Fonnxruntime-web%401.14.0%2Fdist%2F%22%2C%22model%22%3A%22v5%22%2C%22startOnLoad%22%3Atrue%2C%22userSpeakingThreshold%22%3A0.6%7D). The reason it is not the default is that if you have tweaked some of the parameters such as `positiveSpeechThreshold`, `redemptionMs`, etc, you will likely have to find new values that work better with v5.
-
-The frame size is automatically set based on the model: 512 samples for the "v5" model and 1536 samples for the "legacy" model. You no longer need to configure `frameSamples` manually.
