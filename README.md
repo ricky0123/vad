@@ -47,7 +47,7 @@ To use the VAD via a script tag in the browser, include the following script tag
 </script>
 ```
 
-Documentation for bundling the voice activity detector for the browser or using it in node or React projects can be found on [vad.ricky0123.com](https://www.vad.ricky0123.com).
+Documentation for bundling the voice activity detector for the browser or using it in node or React projects can be found on [docs.vad.ricky0123.com](https://docs.vad.ricky0123.com).
 
 ## Cool projects using this library
 
